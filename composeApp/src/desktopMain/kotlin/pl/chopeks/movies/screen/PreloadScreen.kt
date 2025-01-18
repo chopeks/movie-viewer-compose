@@ -3,6 +3,9 @@ package pl.chopeks.movies.screen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -17,7 +20,11 @@ class PreloadScreen : Screen {
     val screenModel = rememberScreenModel<PreloadScreenModel>()
     val navigator = LocalNavigator.current
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-
+      LazyColumn(Modifier.fillMaxSize()) {
+        items(screenModel.events) {
+          Text(it, color = Color.Gray)
+        }
+      }
     }
 
     LaunchedEffect(Unit) {

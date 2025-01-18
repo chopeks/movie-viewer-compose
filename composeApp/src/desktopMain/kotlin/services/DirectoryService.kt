@@ -39,7 +39,7 @@ fun Route.directoryService() {
       }
       call.respond("{}")
     }
-    thread { RefreshUtils.refresh() }
+    thread { RefreshUtils.refresh {} }
   }
   post("/directory/remove") {
     kotlin.runCatching { call.receiveNullable<PathPojo>() }.getOrNull()?.let { json ->

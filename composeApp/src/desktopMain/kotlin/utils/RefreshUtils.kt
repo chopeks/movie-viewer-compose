@@ -9,14 +9,19 @@ import java.util.*
 import javax.imageio.ImageIO
 
 object RefreshUtils {
-  fun refresh() {
+  fun refresh(onEvent: (String) -> Unit) {
     transaction {
       PathsTable.selectAll().map { Pair(File(it[PathsTable.path]), it[PathsTable.count]) }
     }.forEach {
+      onEvent("Checking ${it.first.absolutePath}.")
       val fileCount = getFiles(it.first).size.toLong()
 
       val shouldCheckFiles = transaction {
-        MovieTable.selectAll().where { MovieTable.path like "${it.first.absolutePath}%" }.count() != fileCount
+        val dbCount = MovieTable.selectAll().where { MovieTable.path like "${it.first.absolutePath}%" }.count()
+        if (dbCount != fileCount) {
+          onEvent("File count different, checking which files were removed or added.")
+        }
+        dbCount != fileCount
       }
 
       if (shouldCheckFiles) {
@@ -24,6 +29,7 @@ object RefreshUtils {
           transaction {
             MovieTable.selectAll().where { MovieTable.path eq it.absolutePath }.also { query ->
               if (query.firstOrNull() == null) {
+                onEvent("Adding ${it.absolutePath}.")
                 MovieTable.insert { new ->
                   new[MovieTable.name] = it.nameWithoutExtension
                   new[MovieTable.path] = it.absolutePath
@@ -52,6 +58,7 @@ object RefreshUtils {
             }
             img.delete()
           }
+          onEvent("Added thumbnail of ${movie.second}.")
         } catch (e: Throwable) {
         }
         tempDir.delete()
@@ -69,7 +76,9 @@ object RefreshUtils {
             })
           }
         }
+        onEvent("Added duration of ${movie.second}.")
       }
+      onEvent("Directory check completed.")
     }
   }
 }

@@ -1,6 +1,7 @@
 package pl.chopeks.movies.screen
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import cafe.adriel.voyager.core.model.ScreenModel
@@ -20,9 +21,11 @@ import java.sql.Connection
 class PreloadScreenModel: ScreenModel {
 
   var isDone by mutableStateOf(false)
+  val events = mutableStateListOf<String>()
 
   fun init() {
     Database.connect("jdbc:sqlite:${findDatabase().absolutePath}", driver = "org.sqlite.JDBC")
+    events.add("Database connected.")
     TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED
     transaction {
       SchemaUtils.create(SchemaVerionsTable)
@@ -46,6 +49,7 @@ class PreloadScreenModel: ScreenModel {
           else -> break@loop
         }
       }
+      events.add("Schema updated.")
     }
     // delete files that were removed
     transaction {
@@ -60,9 +64,11 @@ class PreloadScreenModel: ScreenModel {
           it[count] = getFiles(File(table[path])).size
         }
       }
+      events.add("Removed files purged.")
     }
 
-    RefreshUtils.refresh()
+    RefreshUtils.refresh(events::add)
+    events.add("New files added.")
     isDone = true
   }
 }
