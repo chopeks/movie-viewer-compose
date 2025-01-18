@@ -241,12 +241,14 @@ class VideosScreen(
             GridCells.Fixed(3)
           ) {
             items(screenModel.actors) { actor ->
-              val video = screenModel.videos[editedVideoChips]
-              Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(video.chips?.actors?.firstOrNull { it.id == actor.id } != null, {
-                  screenModel.toggle(video, actor)
-                })
-                Text(actor.name)
+              if (screenModel.videos.isNotEmpty()) {
+                val video = screenModel.videos[editedVideoChips]
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                  Checkbox(video.chips?.actors?.firstOrNull { it.id == actor.id } != null, {
+                    screenModel.toggle(video, actor)
+                  })
+                  Text(actor.name)
+                }
               }
             }
           }
@@ -266,12 +268,14 @@ class VideosScreen(
             GridCells.Fixed(3)
           ) {
             items(screenModel.categories) { category ->
-              val video = screenModel.videos[editedVideoChips]
-              Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(video.chips?.categories?.firstOrNull { it.id == category.id } != null, {
-                  screenModel.toggle(video, category)
-                })
-                Text(category.name)
+              if (screenModel.videos.isNotEmpty()) {
+                val video = screenModel.videos[editedVideoChips]
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                  Checkbox(video.chips?.categories?.firstOrNull { it.id == category.id } != null, {
+                    screenModel.toggle(video, category)
+                  })
+                  Text(category.name)
+                }
               }
             }
           }
@@ -306,6 +310,19 @@ class VideosScreen(
         }
       }
     }
+    if (event.isShiftPressed) {
+      when (event.key) {
+        Key.DirectionLeft, Key.Z -> {
+          screenModel.changePage(-10)
+          return true
+        }
+
+        Key.DirectionRight, Key.X -> {
+          screenModel.changePage(10)
+          return true
+        }
+      }
+    }
     when (event.key) {
       Key(49) -> return shortCutPlayVideo(0, screenModel)
       Key(50) -> return shortCutPlayVideo(1, screenModel)
@@ -322,6 +339,16 @@ class VideosScreen(
       Key.D -> return shortCutPlayVideo(12, screenModel)
       Key.F -> return shortCutPlayVideo(13, screenModel)
       Key.G -> return shortCutPlayVideo(14, screenModel)
+
+      Key.DirectionLeft, Key.Z -> {
+        screenModel.changePage(-1)
+        return true
+      }
+
+      Key.DirectionRight, Key.X -> {
+        screenModel.changePage(1)
+        return true
+      }
     }
     return false
   }

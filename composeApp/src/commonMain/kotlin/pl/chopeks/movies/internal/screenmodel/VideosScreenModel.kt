@@ -48,6 +48,8 @@ class VideosScreenModel(
   }
 
   fun changePage(page: Int) {
+    if (videos.size == 0)
+      return
     videos.clear()
     currentPage = min(count, max(0, currentPage + page))
     getVideos()
