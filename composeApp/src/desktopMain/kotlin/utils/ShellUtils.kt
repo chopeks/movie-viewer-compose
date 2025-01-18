@@ -1,0 +1,30 @@
+package utils
+
+import java.io.File
+import java.io.IOException
+import java.util.concurrent.TimeUnit
+
+fun Array<String>.executeCommand(workingDir: File): String? {
+  return try {
+    val proc = ProcessBuilder(*this)
+      .directory(workingDir)
+      .redirectOutput(ProcessBuilder.Redirect.PIPE)
+      .redirectError(ProcessBuilder.Redirect.PIPE)
+      .start()
+
+    proc.waitFor(2000, TimeUnit.MILLISECONDS)
+    proc.inputStream.bufferedReader().readText()
+  } catch (e: IOException) {
+    e.printStackTrace()
+    null
+  }
+}
+
+fun Array<String>.runCommand(workingDir: File) {
+  ProcessBuilder(*this)
+    .directory(workingDir)
+    .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+    .redirectError(ProcessBuilder.Redirect.INHERIT)
+    .start()
+    .waitFor(1, TimeUnit.SECONDS)
+}

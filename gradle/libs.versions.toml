@@ -9,7 +9,7 @@ napier = "2.7.1"
 voyagerNavigator = "1.1.0-beta03"
 ktor = "3.0.3"
 coil3 = "3.0.3"
-
+exposed = "0.58.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -32,10 +32,20 @@ ktor-client-logging =  { module = "io.ktor:ktor-client-logging" , version.ref = 
 ktor-client-okhttp =  { module = "io.ktor:ktor-client-okhttp" , version.ref = "ktor" }
 ktor-client-js =  { module = "io.ktor:ktor-client-js" , version.ref = "ktor" }
 
+ktor-server-core =  { module = "io.ktor:ktor-server-core" , version.ref = "ktor" }
+ktor-server-netty =  { module = "io.ktor:ktor-server-netty" , version.ref = "ktor" }
+ktor-server-gson =  { module = "io.ktor:ktor-serialization-gson" , version.ref = "ktor" }
+ktor-server-cors =  { module = "io.ktor:ktor-server-cors" , version.ref = "ktor" }
+ktor-server-contentnegotiation =  { module = "io.ktor:ktor-server-content-negotiation" , version.ref = "ktor" }
+
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil3" }
 coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil3" }
 coil-mp = { module = "io.coil-kt.coil3:coil", version.ref = "coil3" }
 coil-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil3" }
+
+exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
+exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposed" }
+exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
 
 [plugins]
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }

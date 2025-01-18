@@ -69,6 +69,20 @@ kotlin {
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.coil.okhttp)
+
+            implementation(libs.exposed.core)
+            implementation(libs.exposed.dao)
+            implementation(libs.exposed.jdbc)
+
+            implementation(libs.ktor.server.core)
+            implementation(libs.ktor.server.netty)
+            implementation(libs.ktor.server.cors)
+            implementation(libs.ktor.server.contentnegotiation)
+            implementation(libs.ktor.server.gson)
+
+            implementation("org.imgscalr:imgscalr-lib:4.2")
+            implementation("org.xerial:sqlite-jdbc:3.48.0.0")
+            implementation("org.apache.jdbm:jdbm:3.0-alpha5")
         }
 
         wasmJsMain.dependencies {
