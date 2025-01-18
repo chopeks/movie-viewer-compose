@@ -10,6 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.onKeyEvent
 import kotlinx.coroutines.CoroutineScope
 
 @Composable
@@ -17,6 +19,7 @@ fun ScreenSkeleton(
   title: String,
   textActions: @Composable RowScope.() -> Unit = {},
   actions: @Composable RowScope.() -> Unit = {},
+  onKeyEvent: (KeyEvent) -> Boolean = { false },
   content: @Composable (scope: CoroutineScope) -> Unit
 ) {
   val drawerState = rememberDrawerState(DrawerValue.Closed)

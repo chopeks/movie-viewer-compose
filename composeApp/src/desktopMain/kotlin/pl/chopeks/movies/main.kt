@@ -25,8 +25,8 @@ import io.ktor.client.plugins.logging.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.*
 import okhttp3.OkHttpClient
-import org.kodein.di.DI
-import org.kodein.di.bindProvider
+import org.kodein.di.*
+import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.screen.HomeScreen
 import java.awt.Toolkit
 
@@ -53,6 +53,7 @@ fun main() = application {
     )
   }
   val di = DI.lazy {
+    bindSingleton { KeyEventManager() }
     bindProvider {
       HttpClient(OkHttp) {
         engine {
@@ -100,6 +101,9 @@ fun main() = application {
     },
     state = windowState,
     title = "Movie Viewer",
+    onKeyEvent = {
+      di.direct.instance<KeyEventManager>().propagateKeyEvent(it)
+    }
   ) {
     MaterialTheme {
       Navigator(HomeScreen(di))
