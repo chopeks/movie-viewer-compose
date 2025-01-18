@@ -25,7 +25,7 @@ class ActorsAPI(
   }
 
   suspend fun getImage(actor: Actor): String? {
-    return get("image/actor/${actor.id}").body<Array<String>>().firstOrNull()
+    return get("image/actor/${actor.id}").body<Array<String?>>().firstOrNull()
       ?.substringAfter(",")
   }
 

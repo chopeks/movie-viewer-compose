@@ -27,12 +27,12 @@ class VideosAPI(
   }
 
   suspend fun getImage(video: Video): String? {
-    return get("/image/movie/${video.id}").body<Array<String>>().firstOrNull()
+    return get("/image/movie/${video.id}").body<Array<String?>>().firstOrNull()
       ?.substringAfter(",")
   }
 
   suspend fun refreshImage(video: Video): String? {
-    return get("/image/movie/${video.id}?refresh=true").body<Array<String>>().firstOrNull()
+    return get("/image/movie/${video.id}?refresh=true").body<Array<String?>>().firstOrNull()
       ?.substringAfter(",")
   }
 

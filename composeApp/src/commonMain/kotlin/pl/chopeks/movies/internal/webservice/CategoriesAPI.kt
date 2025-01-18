@@ -25,7 +25,7 @@ class CategoriesAPI(
   }
 
   suspend fun getImage(category: Category): String? {
-    return get("/image/category/${category.id}").body<Array<String>>().firstOrNull()
+    return get("/image/category/${category.id}").body<Array<String?>>().firstOrNull()
       ?.substringAfter(",")
   }
 
