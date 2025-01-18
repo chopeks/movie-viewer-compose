@@ -6,6 +6,7 @@ import cafe.adriel.voyager.navigator.Navigator
 import org.kodein.di.DI
 import org.kodein.di.DIAware
 import org.kodein.di.compose.withDI
+import pl.chopeks.movies.getStartingScreen
 import pl.chopeks.movies.internal.internalModule
 
 class HomeScreen(platformDI: DI) : Screen, DIAware {
@@ -18,7 +19,7 @@ class HomeScreen(platformDI: DI) : Screen, DIAware {
   @Composable
   override fun Content() {
     withDI(di) {
-      Navigator(ActorsScreen())
+      Navigator(getStartingScreen())
     }
   }
 }

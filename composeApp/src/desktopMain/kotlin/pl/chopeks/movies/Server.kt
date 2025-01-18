@@ -10,6 +10,7 @@ import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import services.*
+import java.io.File
 import java.text.DateFormat
 import kotlin.time.Duration.Companion.days
 
@@ -51,4 +52,11 @@ fun Application.module() {
     duplicatesService()
     settingsService()
   }
+}
+
+fun findDatabase(): File {
+  val dir = File(System.getProperty("user.dir"))
+  if (File(dir, "movies.sqlite").exists())
+    return File(dir, "movies.sqlite")
+  return File(File(dir, ".."), "movies.sqlite")
 }
