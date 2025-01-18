@@ -41,6 +41,8 @@ class VideosScreen(
     val editActorsBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
     val categoriesBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
     val editCategoriesBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+    var removeConfirmDialog = remember { mutableStateOf(false) }
+
     val keyEventManager = localDI().direct.instance<KeyEventManager>()
     val navigator = LocalNavigator.current
     keyEventManager.setListener { onKeyEvent(it, navigator, screenModel) }
@@ -93,7 +95,8 @@ class VideosScreen(
                 }, onThumbnailClick = {
                   screenModel.generateThumbnail(video)
                 }, onRemoveClick = {
-
+                  editedVideoChips = screenModel.videos.indexOf(video)
+                  removeConfirmDialog.value = true
                 })
               }
             }
@@ -111,6 +114,7 @@ class VideosScreen(
       CategoriesBottomSheet(screenModel, scope, categoriesBottomSheetState)
       EditActorsBottomSheet(screenModel, editActorsBottomSheetState)
       EditCategoriesBottomSheet(screenModel, editCategoriesBottomSheetState)
+      RemoveVideoDialog(removeConfirmDialog, screenModel)
     }
 
     LaunchedEffect(screenModel) {
@@ -285,8 +289,34 @@ class VideosScreen(
     }
   }
 
+  @Composable
+  fun RemoveVideoDialog(show: MutableState<Boolean>, screenModel: VideosScreenModel) {
+    if (show.value) {
+      if (editedVideoChips < screenModel.videos.size) {
+        val video = screenModel.videos[editedVideoChips]
+        AlertDialog(
+          onDismissRequest = { show.value = false },
+          title = { Text("Do you really want to delete this file?") },
+          text = { Text("${video.name} will be deleted from harddrive. This operation can't be reversed.") },
+          confirmButton = {
+            Button(onClick = {
+              show.value = false
+              screenModel.remove(video)
+            }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)) {
+              Text("Delete", color = Color.White)
+            }
+          },
+          dismissButton = {
+            Button(onClick = { show.value = false }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+              Text("Cancel", color = Color.LightGray)
+            }
+          }
+        )
+      }
+    }
+  }
+
   private fun shortCutPlayVideo(index: Int, screenModel: VideosScreenModel): Boolean {
-    Napier.d("called for $index")
     if (screenModel.videos.size > index)
       screenModel.play(screenModel.videos[index])
     return true

@@ -58,7 +58,6 @@ class VideosScreenModel(
   fun getVideos() {
     if (!isInitialized)
       return
-    Napier.d("getVideos")
     screenModelScope.launch(bestConcurrencyDispatcher()) {
       val data = webService.getVideos(currentPage, selectedActors, selectedCategories, filter)
       videos.clear()
