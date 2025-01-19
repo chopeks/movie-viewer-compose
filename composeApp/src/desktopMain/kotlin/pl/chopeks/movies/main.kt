@@ -34,6 +34,13 @@ import pl.chopeks.movies.screen.HomeScreen
 import pl.chopeks.movies.utils.KeyEventManager
 import java.awt.Toolkit
 
+object BackgroundTasks {
+  val serverJob = Job()
+  val duplicatesJob = Job()
+
+  val scopes = mutableListOf<CoroutineScope>()
+}
+
 fun getAsyncImageLoader(context: PlatformContext) =
   ImageLoader.Builder(context)
     .crossfade(true)
@@ -82,17 +89,16 @@ fun main() = application {
     getAsyncImageLoader(context)
   }
 
-  val serverJob = Job()
-  val serverScope = CoroutineScope(Dispatchers.IO + serverJob)
-
-  serverScope.launch(Dispatchers.IO) {
+  BackgroundTasks.scopes.add(CoroutineScope(Dispatchers.IO + BackgroundTasks.serverJob))
+  BackgroundTasks.scopes.last().launch(Dispatchers.IO) {
     embeddedServer(Netty, port = 15551, module = Application::module).start(wait = true)
   }
 
   Window(
     onCloseRequest = {
-      serverJob.cancel()
-      serverScope.cancel()
+      BackgroundTasks.serverJob.cancel()
+      BackgroundTasks.duplicatesJob.cancel()
+      BackgroundTasks.scopes.forEach { it.cancel() }
       exitApplication()
     },
     state = windowState,

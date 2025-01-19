@@ -61,7 +61,7 @@ def main():
     print(f"Average PSNR: {avg_psnr} out of {len(psnrs)} frames compared")
 
     # Determine if the videos are visually identical or not
-    if avg_ssim >= 0.95 and avg_psnr >= 40:
+    if avg_ssim >= 0.90 and avg_psnr >= 30:
         exit(0)  # Exit with code 0 for identical
     else:
         exit(1)  # Exit with code 1 for not identical

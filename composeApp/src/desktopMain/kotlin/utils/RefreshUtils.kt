@@ -1,8 +1,8 @@
 package utils
 
 import db.MovieTable
+import db.MoviesToBeCheckedTable
 import db.PathsTable
-import io.github.aakira.napier.Napier
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
@@ -58,6 +58,7 @@ object RefreshUtils {
               MovieTable.update({ MovieTable.id eq movie.first }, body = {
                 it[MovieTable.thumbnail] = "data:image/jpg;base64," + String(Base64.getMimeEncoder().encode(img.readBytes()))
               })
+              MoviesToBeCheckedTable.insert { it[MoviesToBeCheckedTable.id] = movie.first }
             }
             img.delete()
           }
@@ -83,41 +84,17 @@ object RefreshUtils {
       }
       onEvent("Directory check completed.")
     }
-    return
 
+//    markAllMoviesToBeChecked()
+  }
 
+  fun markAllMoviesToBeChecked() {
     transaction {
-      // Select all movies with a self-join on MovieTable
-      val aliasOther = MovieTable.alias("other")
-      // The duration of the "other" movie should be within ±5 seconds of the current movie's duration
-      val query = MovieTable
-        .join(aliasOther, JoinType.LEFT, onColumn = MovieTable.duration, otherColumn = aliasOther[MovieTable.duration])
-        .selectAll().where {
-          (MovieTable.duration.minus(5000) lessEq aliasOther[MovieTable.duration]) and (MovieTable.duration.plus(5000) greaterEq aliasOther[MovieTable.duration])
-        }
-
-      val movies = query.map { it[MovieTable.id].value to it[aliasOther[MovieTable.id]].value }
-        .groupBy({ it.first }, { it.second })
-        .map { PossibleDuplicate(it.key, it.value.filter { v -> v != it.key }) }
-        .filter { it.candidates.isNotEmpty() }
-        .sortedBy { it.candidates.size }
-
-      movies.forEach {
-        println("Movie: ${it.id}, Other Movies: ${it.candidates}")
-      }
-      println("Movie count: ${movies.size}")
-
-      movies.take(10).forEach {
-        val movie = MovieTable.selectAll().where { MovieTable.id eq it.id }.first()[MovieTable.path]
-        it.candidates.forEach {
-          val candidate = transaction { MovieTable.selectAll().where { MovieTable.id eq it }.first()[MovieTable.path] }
-          Python.compareVideos(movie, candidate).also {
-            Napier.d("movie $movie params $it")
-          }
-        }
+      MoviesToBeCheckedTable.deleteAll()
+      MovieTable.select(MovieTable.id).map { it[MovieTable.id] }.forEach { movieId ->
+        MoviesToBeCheckedTable.insert { it[MoviesToBeCheckedTable.id] = movieId }
       }
     }
   }
-
 
 }

@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.kodein.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
+import pl.chopeks.movies.tasks.DuplicatesSearchTask
 
 class PreloadScreen : Screen {
   @Composable
@@ -32,6 +33,7 @@ class PreloadScreen : Screen {
     }
     LaunchedEffect(screenModel.isDone) {
       if (screenModel.isDone) {
+        DuplicatesSearchTask.run()
         navigator?.replace(ActorsScreen())
       }
     }

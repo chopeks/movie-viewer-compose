@@ -37,6 +37,13 @@ object PathsTable : Table("paths") {
   val count = integer("files").default(0)
 }
 
+object MoviesToBeCheckedTable : IntIdTable("tbc")
+
+object DetectedDuplicates: Table("dup") {
+  val movie = integer("movie")
+  val otherMovie = integer("other")
+}
+
 object SchemaVerionsTable : Table("schemasVer") {
   val version = integer("version")
 
