@@ -1,8 +1,13 @@
 package pl.chopeks.movies.internal.screenmodel
 
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import pl.chopeks.movies.bestConcurrencyDispatcher
 import pl.chopeks.movies.internal.webservice.DuplicatesAPI
@@ -14,8 +19,17 @@ class DuplicatesScreenModel(
   private val webService: DuplicatesAPI,
   private val videoWebService: VideosAPI
 ) : ScreenModel {
-
+  var count by mutableStateOf(0)
   val duplicates = mutableStateListOf<Duplicates>()
+
+  init {
+    screenModelScope.launch(bestConcurrencyDispatcher()) {
+      while (isActive) {
+        count = webService.count()
+        delay(10000)
+      }
+    }
+  }
 
   fun getDuplicates() {
     screenModelScope.launch(bestConcurrencyDispatcher()) {

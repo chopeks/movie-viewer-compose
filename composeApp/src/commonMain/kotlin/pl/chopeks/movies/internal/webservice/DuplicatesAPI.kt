@@ -4,6 +4,7 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import pl.chopeks.movies.model.Duplicates
+import pl.chopeks.movies.model.DuplicatesCount
 
 class DuplicatesAPI(
   private val httpClient: HttpClient
@@ -21,5 +22,9 @@ class DuplicatesAPI(
 
   override fun close() {
     httpClient.close()
+  }
+
+  suspend fun count(): Int {
+    return get("/duplicates/left").body<DuplicatesCount>().count
   }
 }

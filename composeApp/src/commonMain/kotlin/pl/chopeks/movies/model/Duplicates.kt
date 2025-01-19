@@ -6,3 +6,8 @@ import kotlinx.serialization.Serializable
 data class Duplicates(
   val list: List<Video>
 )
+
+@Serializable
+data class DuplicatesCount(
+  val count: Int
+)
