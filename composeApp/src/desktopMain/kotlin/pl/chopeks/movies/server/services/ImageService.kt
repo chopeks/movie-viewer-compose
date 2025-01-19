@@ -1,18 +1,18 @@
-package services
+package pl.chopeks.movies.server.services
 
-import db.MovieTable
-import db.MovieTable.thumbnail
+import pl.chopeks.movies.server.db.MovieTable
+import pl.chopeks.movies.server.db.MovieTable.thumbnail
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import model.Actor
-import model.Category
+import pl.chopeks.movies.server.model.Actor
+import pl.chopeks.movies.server.model.Category
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
-import utils.makeScreenshot
-import utils.makeScreenshots
-import utils.normalizeImage
+import pl.chopeks.movies.server.utils.makeScreenshot
+import pl.chopeks.movies.server.utils.makeScreenshots
+import pl.chopeks.movies.server.utils.normalizeImage
 import java.io.File
 import java.util.*
 import javax.imageio.ImageIO

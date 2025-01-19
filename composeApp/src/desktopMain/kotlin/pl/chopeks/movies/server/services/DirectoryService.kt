@@ -1,22 +1,21 @@
-package services
+package pl.chopeks.movies.server.services
 
-import db.MovieTable
-import db.PathsTable
-import db.PathsTable.count
-import db.PathsTable.path
-import io.ktor.http.HttpStatusCode
+import pl.chopeks.movies.server.db.MovieTable
+import pl.chopeks.movies.server.db.PathsTable
+import pl.chopeks.movies.server.db.PathsTable.count
+import pl.chopeks.movies.server.db.PathsTable.path
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import model.PathPojo
+import pl.chopeks.movies.server.model.PathPojo
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.like
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
-import utils.RefreshUtils
-import utils.getFiles
+import pl.chopeks.movies.server.utils.RefreshUtils
+import pl.chopeks.movies.server.utils.getFiles
 import java.io.File
 import kotlin.concurrent.thread
 

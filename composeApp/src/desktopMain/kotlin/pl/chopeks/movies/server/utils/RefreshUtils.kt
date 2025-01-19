@@ -1,8 +1,8 @@
-package utils
+package pl.chopeks.movies.server.utils
 
-import db.MovieTable
-import db.MoviesToBeCheckedTable
-import db.PathsTable
+import pl.chopeks.movies.server.db.MovieTable
+import pl.chopeks.movies.server.db.MoviesToBeCheckedTable
+import pl.chopeks.movies.server.db.PathsTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File

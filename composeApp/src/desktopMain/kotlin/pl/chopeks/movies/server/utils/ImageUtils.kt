@@ -1,4 +1,4 @@
-package utils
+package pl.chopeks.movies.server.utils
 
 import okhttp3.OkHttpClient
 import okhttp3.Request

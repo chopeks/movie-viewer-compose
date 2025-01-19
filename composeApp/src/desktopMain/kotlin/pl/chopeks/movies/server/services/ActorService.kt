@@ -1,17 +1,17 @@
-package services
+package pl.chopeks.movies.server.services
 
-import db.ActorTable
-import db.MovieActors
+import pl.chopeks.movies.server.db.ActorTable
+import pl.chopeks.movies.server.db.MovieActors
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import model.Actor
-import model.ActorPojo
+import pl.chopeks.movies.server.model.Actor
+import pl.chopeks.movies.server.model.ActorPojo
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
-import utils.urlImageToBase64
+import pl.chopeks.movies.server.utils.urlImageToBase64
 
 fun Route.actorService() {
   // get all actors

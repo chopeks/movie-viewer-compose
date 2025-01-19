@@ -9,7 +9,7 @@ import io.ktor.server.plugins.cors.*
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import services.*
+import pl.chopeks.movies.server.services.*
 import java.io.File
 import java.text.DateFormat
 import kotlin.time.Duration.Companion.days

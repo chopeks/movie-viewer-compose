@@ -1,17 +1,17 @@
-package services
+package pl.chopeks.movies.server.services
 
-import db.CategoryTable
-import db.MovieCategories
+import pl.chopeks.movies.server.db.CategoryTable
+import pl.chopeks.movies.server.db.MovieCategories
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import model.Category
-import model.CategoryPojo
+import pl.chopeks.movies.server.model.Category
+import pl.chopeks.movies.server.model.CategoryPojo
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
-import utils.urlImageToBase64
+import pl.chopeks.movies.server.utils.urlImageToBase64
 
 fun Route.categoryService() {
   get("/categories") { call.respond(transaction { Category.all().sortedBy { it.name }.map { it.pojo } }) }

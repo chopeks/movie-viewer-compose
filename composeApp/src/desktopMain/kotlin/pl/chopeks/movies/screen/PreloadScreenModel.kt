@@ -6,9 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import db.*
-import db.PathsTable.path
-import db.SchemaVerionsTable.version
+import pl.chopeks.movies.server.db.PathsTable.path
+import pl.chopeks.movies.server.db.SchemaVerionsTable.version
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.*
@@ -16,8 +15,9 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import pl.chopeks.movies.findDatabase
-import utils.RefreshUtils
-import utils.getFiles
+import pl.chopeks.movies.server.db.*
+import pl.chopeks.movies.server.utils.RefreshUtils
+import pl.chopeks.movies.server.utils.getFiles
 import java.io.File
 import java.sql.Connection
 

@@ -1,12 +1,12 @@
-package services
+package pl.chopeks.movies.server.services
 
-import db.DetectedDuplicatesTable
-import db.MovieTable
+import pl.chopeks.movies.server.db.DetectedDuplicatesTable
+import pl.chopeks.movies.server.db.MovieTable
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import model.DuplicatePojo
-import model.DuplicatesPojo
-import model.MoviePojo
+import pl.chopeks.movies.server.model.DuplicatePojo
+import pl.chopeks.movies.server.model.DuplicatesPojo
+import pl.chopeks.movies.server.model.MoviePojo
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.lessEq

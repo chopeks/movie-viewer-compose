@@ -1,15 +1,15 @@
-package services
+package pl.chopeks.movies.server.services
 
-import db.*
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import model.MoviePojo
+import pl.chopeks.movies.server.model.MoviePojo
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
-import utils.Cache
-import utils.runCommand
+import pl.chopeks.movies.server.db.*
+import pl.chopeks.movies.server.utils.Cache
+import pl.chopeks.movies.server.utils.runCommand
 import java.io.File
 
 fun Route.movieService() {

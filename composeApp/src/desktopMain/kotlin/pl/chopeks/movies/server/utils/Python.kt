@@ -1,6 +1,6 @@
-package utils
+package pl.chopeks.movies.server.utils
 
-import model.VideoCompareResult
+import pl.chopeks.movies.server.model.VideoCompareResult
 
 object Python {
   fun call(script: String, vararg params: String): Pair<Int, String> {

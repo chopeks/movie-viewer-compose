@@ -1,8 +1,8 @@
-package utils
+package pl.chopeks.movies.server.utils
 
-import model.SettingsPojo
+import pl.chopeks.movies.server.model.SettingsPojo
 import org.apache.jdbm.DBMaker
-import utils.OsCheck.OSType.*
+import pl.chopeks.movies.server.utils.OsCheck.OSType.*
 import java.util.*
 import java.util.Locale
 

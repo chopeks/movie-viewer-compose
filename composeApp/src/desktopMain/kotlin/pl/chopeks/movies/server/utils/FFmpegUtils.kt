@@ -1,4 +1,4 @@
-package utils
+package pl.chopeks.movies.server.utils
 
 import java.io.File
 import java.util.concurrent.TimeUnit

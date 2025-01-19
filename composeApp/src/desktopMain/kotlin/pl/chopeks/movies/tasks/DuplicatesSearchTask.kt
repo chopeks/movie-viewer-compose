@@ -1,8 +1,8 @@
 package pl.chopeks.movies.tasks
 
-import db.DetectedDuplicatesTable
-import db.MovieTable
-import db.MoviesToBeCheckedTable
+import pl.chopeks.movies.server.db.DetectedDuplicatesTable
+import pl.chopeks.movies.server.db.MovieTable
+import pl.chopeks.movies.server.db.MoviesToBeCheckedTable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -10,7 +10,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import pl.chopeks.movies.BackgroundTasks
-import utils.Python
+import pl.chopeks.movies.server.utils.Python
 
 object DuplicatesSearchTask {
   data class PossibleDuplicate(val id: Int, val candidates: List<Int>)

@@ -1,4 +1,4 @@
-package model
+package pl.chopeks.movies.server.model
 
 data class SettingsPojo(
   val browser: String,
