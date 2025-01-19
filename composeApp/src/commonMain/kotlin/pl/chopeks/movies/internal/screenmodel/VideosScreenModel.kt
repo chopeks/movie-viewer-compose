@@ -62,7 +62,7 @@ class VideosScreenModel(
       val data = webService.getVideos(currentPage, selectedActors, selectedCategories, filter)
       videos.clear()
       videos.addAll(data.movies)
-      count = data.count / 15
+      count = (data.count - 1) / 15
       for (video in data.movies) {
         screenModelScope.launch(bestConcurrencyDispatcher()) {
           val index = videos.indexOf(video)
@@ -136,6 +136,7 @@ class VideosScreenModel(
   fun remove(video: Video) {
     screenModelScope.launch(bestConcurrencyDispatcher()) {
       webService.remove(video)
+      videos.clear()
       getVideos()
     }
   }

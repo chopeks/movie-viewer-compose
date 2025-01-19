@@ -70,8 +70,11 @@ class VideosScreen(
       TextButton({
         scope.launch { categoriesBottomSheetState.show() }
       }) { Text("Categories", color = Color.Gray) }
+      TextButton({
+        screenModel.videos.clear()
+        screenModel.filter = (screenModel.filter + 1) % 2
+      }) { Text(listOf("Sorted by Date", "Sorted by Duration")[screenModel.filter], color = Color.Gray) }
     }, actions = {
-      SortDropdownMenu(screenModel)
       Text("Page ${screenModel.currentPage} of ${screenModel.count}", color = Color.Green.copy(alpha = 0.6f))
     }) { scope ->
       Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -124,31 +127,6 @@ class VideosScreen(
     }
     LaunchedEffect(screenModel.currentPage, screenModel.filter) {
       screenModel.getVideos()
-    }
-  }
-
-  @OptIn(ExperimentalMaterialApi::class)
-  @Composable
-  fun SortDropdownMenu(screenModel: VideosScreenModel) {
-    var expanded by remember { mutableStateOf(false) }
-    val options = listOf("Sort by Date", "Sort by Duration")
-
-    Column {
-      ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
-        Text(
-          text = options[screenModel.filter], color = Color.Gray, modifier = Modifier.width(180.dp)
-        )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-          options.forEachIndexed { index, option ->
-            DropdownMenuItem(onClick = {
-              screenModel.filter = options.indexOf(option)
-              expanded = false
-            }) {
-              Text(text = option)
-            }
-          }
-        }
-      }
     }
   }
 
