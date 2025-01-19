@@ -27,25 +27,25 @@ class VideosAPI(
   }
 
   suspend fun getImage(video: Video): String? {
-    return get("/image/movie/${video.id}").body<Array<String?>>().firstOrNull()
+    return get("image/movie/${video.id}").body<Array<String?>>().firstOrNull()
       ?.substringAfter(",")
   }
 
   suspend fun refreshImage(video: Video): String? {
-    return get("/image/movie/${video.id}?refresh=true").body<Array<String?>>().firstOrNull()
+    return get("image/movie/${video.id}?refresh=true").body<Array<String?>>().firstOrNull()
       ?.substringAfter(",")
   }
 
   suspend fun getInfo(video: Video): VideoInfo {
-    return get("/movie/${video.id}").body()
+    return get("movie/${video.id}").body()
   }
 
   suspend fun play(video: Video) {
-    get("/movie/play/${video.id}").body<Any>()
+    get("movie/play/${video.id}").body<Any>()
   }
 
   suspend fun remove(video: Video) {
-    delete("/movie/${video.id}").body<Any>()
+    delete("movie/${video.id}").body<Any>()
   }
 
   override fun close() {

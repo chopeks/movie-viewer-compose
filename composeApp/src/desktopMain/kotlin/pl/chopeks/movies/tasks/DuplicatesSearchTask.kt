@@ -1,6 +1,6 @@
 package pl.chopeks.movies.tasks
 
-import db.DetectedDuplicates
+import db.DetectedDuplicatesTable
 import db.MovieTable
 import db.MoviesToBeCheckedTable
 import kotlinx.coroutines.CoroutineScope
@@ -81,9 +81,9 @@ object DuplicatesSearchTask {
       println("for $candidate $result")
       if (result.isValid) {
         transaction {
-          DetectedDuplicates.insert { new ->
-            new[DetectedDuplicates.movie] = model.id
-            new[DetectedDuplicates.otherMovie] = candidate
+          DetectedDuplicatesTable.insert { new ->
+            new[DetectedDuplicatesTable.movie] = model.id
+            new[DetectedDuplicatesTable.otherMovie] = candidate
           }
         }
         println("added ${model.id} -> $candidate to possible duplicates")

@@ -1,10 +1,16 @@
 package services
 
+import db.DetectedDuplicatesTable
 import db.MovieTable
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import model.DuplicatePojo
+import model.DuplicatesPojo
 import model.MoviePojo
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.lessEq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 
@@ -33,5 +39,48 @@ fun Route.duplicatesService() {
           )
         }
     })
+  }
+
+  get("/certain_duplicates") {
+    call.respond(transaction {
+      DetectedDuplicatesTable.deleteWhere {
+        (DetectedDuplicatesTable.movie neq DetectedDuplicatesTable.otherMovie) and (DetectedDuplicatesTable.movie lessEq DetectedDuplicatesTable.otherMovie)
+      }
+      val alias = MovieTable.alias("otherMovieAlias")
+      val query = DetectedDuplicatesTable
+        .join(MovieTable, JoinType.INNER, onColumn = DetectedDuplicatesTable.movie, otherColumn = MovieTable.id)
+        .join(alias, JoinType.INNER, onColumn = DetectedDuplicatesTable.otherMovie, otherColumn = MovieTable.alias("otherMovieAlias")[MovieTable.id])
+        .select(
+          DetectedDuplicatesTable.movie, DetectedDuplicatesTable.otherMovie,
+          MovieTable.id, MovieTable.name, MovieTable.duration, MovieTable.path,
+          alias[MovieTable.id],
+          alias[MovieTable.name],
+          alias[MovieTable.duration],
+          alias[MovieTable.path],
+        )
+        .limit(8)
+      query.map { row ->
+        DuplicatesPojo(
+          listOf(
+            DuplicatePojo(row[MovieTable.id].value, row[MovieTable.name], row[MovieTable.duration] ?: 0, "%.2f MB".format(File(row[MovieTable.path]).length() / 1024.0 / 1024.0)),
+            DuplicatePojo(row[alias[MovieTable.id]].value, row[alias[MovieTable.name]], row[alias[MovieTable.duration]] ?: 0, "%.2f MB".format(File(row[alias[MovieTable.path]]).length() / 1024.0 / 1024.0))
+          )
+        )
+      }
+    })
+  }
+
+  delete("/duplicates/cancel/{id}/{otherId}") {
+    val id = call.parameters["id"]?.toIntOrNull()!!
+    val otherId = call.parameters["otherId"]?.toIntOrNull()!!
+    (id to otherId).also { pair ->
+      DetectedDuplicatesTable.deleteWhere {
+        (DetectedDuplicatesTable.movie eq pair.first) and (DetectedDuplicatesTable.otherMovie eq pair.second)
+      }
+      DetectedDuplicatesTable.deleteWhere {
+        (DetectedDuplicatesTable.otherMovie eq pair.first) and (DetectedDuplicatesTable.movie eq pair.second)
+      }
+      call.respond("{}")
+    }
   }
 }

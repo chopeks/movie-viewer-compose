@@ -1,8 +1,6 @@
 package services
 
-import db.MovieActors
-import db.MovieCategories
-import db.MovieTable
+import db.*
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -106,6 +104,9 @@ fun Route.movieService() {
         MovieTable.deleteWhere { MovieTable.id eq id }
         MovieActors.deleteWhere { MovieActors.movie eq id }
         MovieCategories.deleteWhere { MovieCategories.movie eq id }
+        DetectedDuplicatesTable.deleteWhere { DetectedDuplicatesTable.movie eq id }
+        DetectedDuplicatesTable.deleteWhere { DetectedDuplicatesTable.otherMovie eq id }
+        MoviesToBeCheckedTable.deleteWhere { MoviesToBeCheckedTable.id eq id }
         ret
       }
       File(path).delete()

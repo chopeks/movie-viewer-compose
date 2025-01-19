@@ -51,7 +51,7 @@ class PreloadScreenModel: ScreenModel {
             }
 
             3 -> { // add file count for each path
-              SchemaUtils.createMissingTablesAndColumns(MoviesToBeCheckedTable, DetectedDuplicates)
+              SchemaUtils.createMissingTablesAndColumns(MoviesToBeCheckedTable, DetectedDuplicatesTable)
               SchemaVerionsTable.inc()
             }
 
