@@ -1,24 +1,21 @@
 package pl.chopeks.movies.tasks
 
-import pl.chopeks.movies.server.db.DetectedDuplicatesTable
-import pl.chopeks.movies.server.db.MovieTable
-import pl.chopeks.movies.server.db.MoviesToBeCheckedTable
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
-import pl.chopeks.movies.BackgroundTasks
+import pl.chopeks.movies.BGTasks
+import pl.chopeks.movies.server.db.DetectedDuplicatesTable
+import pl.chopeks.movies.server.db.MovieTable
+import pl.chopeks.movies.server.db.MoviesToBeCheckedTable
 import pl.chopeks.movies.server.utils.Python
 
 object DuplicatesSearchTask {
   data class PossibleDuplicate(val id: Int, val candidates: List<Int>)
 
   fun run() {
-    BackgroundTasks.scopes.add(CoroutineScope(Dispatchers.IO + BackgroundTasks.duplicatesJob))
-    BackgroundTasks.scopes.last().launch(Dispatchers.IO) {
-      while(true)
+    BGTasks.scope.launch(Dispatchers.IO) {
+      while (true)
         if (!checkNextMovie())
           break
     }
@@ -75,19 +72,25 @@ object DuplicatesSearchTask {
   private fun checkMovie(model: PossibleDuplicate): Boolean {
     println("checking possible duplicates for ${model.id}")
     val mainPath = transaction { MovieTable.selectAll().where { MovieTable.id eq model.id }.first()[MovieTable.path] }
-    for (candidate in model.candidates) {
-      val path = transaction { MovieTable.selectAll().where { MovieTable.id eq candidate }.first()[MovieTable.path] }
-      val result = Python.compareVideos(mainPath, path) ?: continue
-      println("for $candidate $result")
-      if (result.isValid) {
-        transaction {
-          DetectedDuplicatesTable.insert { new ->
-            new[DetectedDuplicatesTable.movie] = model.id
-            new[DetectedDuplicatesTable.otherMovie] = candidate
+    runBlocking {
+      model.candidates.map { candidate ->
+        async(Dispatchers.IO) {
+          val path = transaction { MovieTable.selectAll().where { MovieTable.id eq candidate }.first()[MovieTable.path] }
+          val result = Python.compareVideos(mainPath, path)
+          println("for $candidate $result")
+          if (result != null) {
+            if (result.isValid) {
+              transaction {
+                DetectedDuplicatesTable.insert { new ->
+                  new[DetectedDuplicatesTable.movie] = model.id
+                  new[DetectedDuplicatesTable.otherMovie] = candidate
+                }
+              }
+              println("added ${model.id} -> $candidate to possible duplicates")
+            }
           }
         }
-        println("added ${model.id} -> $candidate to possible duplicates")
-      }
+      }.awaitAll()
     }
     return transaction { cleanUp(model.id) }
   }

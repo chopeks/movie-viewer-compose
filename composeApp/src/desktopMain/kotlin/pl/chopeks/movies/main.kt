@@ -34,11 +34,9 @@ import pl.chopeks.movies.screen.HomeScreen
 import pl.chopeks.movies.utils.KeyEventManager
 import java.awt.Toolkit
 
-object BackgroundTasks {
-  val serverJob = Job()
-  val duplicatesJob = Job()
-
-  val scopes = mutableListOf<CoroutineScope>()
+object BGTasks {
+  val job = Job()
+  val scope = CoroutineScope(job)
 }
 
 fun getAsyncImageLoader(context: PlatformContext) =
@@ -53,6 +51,7 @@ fun getAsyncImageLoader(context: PlatformContext) =
 //    .logger(DebugLogger())
     .build()
 
+@OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 fun main() = application {
   val screenSize = Toolkit.getDefaultToolkit().screenSize
   val density = LocalDensity.current.density
@@ -89,16 +88,14 @@ fun main() = application {
     getAsyncImageLoader(context)
   }
 
-  BackgroundTasks.scopes.add(CoroutineScope(Dispatchers.IO + BackgroundTasks.serverJob))
-  BackgroundTasks.scopes.last().launch(Dispatchers.IO) {
+  BGTasks.scope.launch(newSingleThreadContext("server-thread")) {
     embeddedServer(Netty, port = 15551, module = Application::module).start(wait = true)
   }
 
   Window(
     onCloseRequest = {
-      BackgroundTasks.serverJob.cancel()
-      BackgroundTasks.duplicatesJob.cancel()
-      BackgroundTasks.scopes.forEach { it.cancel() }
+      BGTasks.job.cancel()
+      BGTasks.scope.cancel()
       exitApplication()
     },
     state = windowState,
