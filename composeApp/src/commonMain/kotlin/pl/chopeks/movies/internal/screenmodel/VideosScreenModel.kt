@@ -8,6 +8,7 @@ import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pl.chopeks.movies.bestConcurrencyDispatcher
 import pl.chopeks.movies.internal.webservice.ActorsAPI
@@ -26,6 +27,8 @@ class VideosScreenModel(
   private val categoryWebService: CategoriesAPI,
 ) : ScreenModel {
   private var isInitialized = false
+  var isBusy = false
+    private set
 
   val actors = mutableStateListOf<Actor>()
   val categories = mutableStateListOf<Category>()
@@ -48,16 +51,20 @@ class VideosScreenModel(
   }
 
   fun changePage(page: Int) {
+    if (isBusy)
+      return
     if (videos.size == 0)
       return
     videos.clear()
-    currentPage = min(count, max(0, currentPage + page))
+    val newPage = min(count, max(0, currentPage + page))
+    currentPage = newPage
     getVideos()
   }
 
   fun getVideos() {
     if (!isInitialized)
       return
+    isBusy = true
     screenModelScope.launch(bestConcurrencyDispatcher()) {
       val data = webService.getVideos(currentPage, selectedActors, selectedCategories, filter)
       videos.clear()
@@ -78,6 +85,8 @@ class VideosScreenModel(
           )
         }
       }
+      delay(500)
+      isBusy = false
     }
   }
 

@@ -71,8 +71,8 @@ class VideosScreen(
         scope.launch { categoriesBottomSheetState.show() }
       }) { Text("Categories", color = Color.Gray) }
       TextButton({
-        screenModel.videos.clear()
         screenModel.filter = (screenModel.filter + 1) % 2
+        screenModel.changePage(Int.MIN_VALUE)
       }) { Text(listOf("Sorted by Date", "Sorted by Duration")[screenModel.filter], color = Color.Gray) }
     }, actions = {
       Text("Page ${screenModel.currentPage} of ${screenModel.count}", color = Color.Green.copy(alpha = 0.6f))
@@ -125,9 +125,6 @@ class VideosScreen(
       category?.also { screenModel.selectedCategories.add(it) }
       screenModel.init()
     }
-    LaunchedEffect(screenModel.currentPage, screenModel.filter) {
-      screenModel.getVideos()
-    }
   }
 
   @Composable
@@ -147,7 +144,7 @@ class VideosScreen(
                   screenModel.selectedActors.add(actor)
                 else
                   screenModel.selectedActors.remove(currentActor)
-                scope.launch { screenModel.getVideos() }
+                screenModel.changePage(Int.MIN_VALUE)
               })
               Text(actor.name)
             }
@@ -161,7 +158,7 @@ class VideosScreen(
                   screenModel.selectedActors.add(actor)
                 else
                   screenModel.selectedActors.remove(currentActor)
-                scope.launch { screenModel.getVideos() }
+                screenModel.changePage(Int.MIN_VALUE)
               })
               Text(actor.name)
             }

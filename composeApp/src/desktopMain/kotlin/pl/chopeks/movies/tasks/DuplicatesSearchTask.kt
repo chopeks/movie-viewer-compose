@@ -25,18 +25,18 @@ object DuplicatesSearchTask {
    * @return false if there are no more movies to be checked
    * @return true if a movie was checked and is ready to check next
    */
-  private fun checkNextMovie(threshold: Int = 5000): Boolean {
+  private fun checkNextMovie(threshold: Int = 10000): Boolean {
     val result = transaction {
       val movieWithDuration = MoviesToBeCheckedTable
         .join(MovieTable, JoinType.INNER, onColumn = MoviesToBeCheckedTable.id, otherColumn = MovieTable.id) { MoviesToBeCheckedTable.id eq MovieTable.id }
         .select(MoviesToBeCheckedTable.id, MovieTable.duration, MovieTable.path)
         .where { MovieTable.duration.isNotNull() }
-        .orderBy(MovieTable.duration, SortOrder.ASC)
+        .orderBy(MovieTable.duration, SortOrder.DESC)
         .limit(1)
         .singleOrNull()
       if (movieWithDuration == null)
         return@transaction false
-      println("checking possible duplicates for ${movieWithDuration[MovieTable.id]} (${convertMillisToDuration(movieWithDuration[MovieTable.duration])}) ${movieWithDuration[MovieTable.path]}")
+      println("checking possible duplicates for ${movieWithDuration[MoviesToBeCheckedTable.id]} (${convertMillisToDuration(movieWithDuration[MovieTable.duration])}) ${movieWithDuration[MovieTable.path]}")
       // query movies, that have duration within threshold
       val movieId = movieWithDuration[MoviesToBeCheckedTable.id].value
       val aliasOther = MovieTable.select(MovieTable.id, MovieTable.duration).alias("other")
