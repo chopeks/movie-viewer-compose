@@ -36,6 +36,7 @@ object DuplicatesSearchTask {
         .singleOrNull()
       if (movieWithDuration == null)
         return@transaction false
+      println("checking possible duplicates for ${movieWithDuration[MovieTable.id]} (${convertMillisToDuration(movieWithDuration[MovieTable.duration])})")
       // query movies, that have duration within threshold
       val movieId = movieWithDuration[MoviesToBeCheckedTable.id].value
       val aliasOther = MovieTable.select(MovieTable.id, MovieTable.duration).alias("other")
@@ -70,7 +71,6 @@ object DuplicatesSearchTask {
   }
 
   private fun checkMovie(model: PossibleDuplicate): Boolean {
-    println("checking possible duplicates for ${model.id}")
     val mainPath = transaction { MovieTable.selectAll().where { MovieTable.id eq model.id }.first()[MovieTable.path] }
     runBlocking {
       model.candidates.map { candidate ->
@@ -99,5 +99,20 @@ object DuplicatesSearchTask {
     println("Removing with id $movieId")
     MoviesToBeCheckedTable.deleteWhere { MoviesToBeCheckedTable.id eq movieId }
     return true
+  }
+
+  private fun convertMillisToDuration(millis: Int?): String {
+    if (millis == null)
+      return ""
+
+    val hours = millis / 3600000
+    val minutes = (millis % 3600000) / 60000
+    val seconds = (millis % 60000) / 1000
+
+    return buildString {
+      if (hours > 0) append("$hours:")
+      append("${if (minutes < 10) "0$minutes" else minutes}:")
+      append("${if (seconds < 10) "0$seconds" else seconds}")
+    }
   }
 }
