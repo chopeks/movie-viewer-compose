@@ -29,14 +29,14 @@ object DuplicatesSearchTask {
     val result = transaction {
       val movieWithDuration = MoviesToBeCheckedTable
         .join(MovieTable, JoinType.INNER, onColumn = MoviesToBeCheckedTable.id, otherColumn = MovieTable.id) { MoviesToBeCheckedTable.id eq MovieTable.id }
-        .select(MoviesToBeCheckedTable.id, MovieTable.duration)
+        .select(MoviesToBeCheckedTable.id, MovieTable.duration, MovieTable.path)
         .where { MovieTable.duration.isNotNull() }
         .orderBy(MovieTable.duration, SortOrder.ASC)
         .limit(1)
         .singleOrNull()
       if (movieWithDuration == null)
         return@transaction false
-      println("checking possible duplicates for ${movieWithDuration[MovieTable.id]} (${convertMillisToDuration(movieWithDuration[MovieTable.duration])})")
+      println("checking possible duplicates for ${movieWithDuration[MovieTable.id]} (${convertMillisToDuration(movieWithDuration[MovieTable.duration])}) ${movieWithDuration[MovieTable.path]}")
       // query movies, that have duration within threshold
       val movieId = movieWithDuration[MoviesToBeCheckedTable.id].value
       val aliasOther = MovieTable.select(MovieTable.id, MovieTable.duration).alias("other")
