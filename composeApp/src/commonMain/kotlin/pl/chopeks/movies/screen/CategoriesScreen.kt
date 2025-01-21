@@ -38,7 +38,9 @@ class CategoriesScreen : Screen {
     keyEventManager.setListener { onKeyEvent(it, navigator) }
 
     ScreenSkeleton(title = "Categories", textActions = {
-      TextButton({}) { Text("Add category".uppercase(), color = Color.Green.copy(alpha = 0.5f)) }
+      TextButton({
+        addDialog.value = true
+      }) { Text("Add category".uppercase(), color = Color.Green.copy(alpha = 0.5f)) }
     }) { scope ->
       Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         val items = screenModel.categories.chunked(6)
