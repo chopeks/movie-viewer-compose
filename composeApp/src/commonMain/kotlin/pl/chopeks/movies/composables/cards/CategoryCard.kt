@@ -19,7 +19,6 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.size.Size
-import pl.chopeks.movies.model.Actor
 import pl.chopeks.movies.model.Category
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -30,6 +29,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 fun CategoryCard(
   category: Category,
   onClick: (Category) -> Unit,
+  onEditClick: (Category) -> Unit
 ) {
   Card(Modifier.fillMaxWidth().clickable { onClick(category) }, backgroundColor = Color.Black, elevation = 0.dp) {
     Box(Modifier.fillMaxWidth().aspectRatio(1.77f)) {
@@ -52,7 +52,7 @@ fun CategoryCard(
           .background(Color.Black.copy(alpha = 0.6f)),
         verticalAlignment = Alignment.CenterVertically
       ) {
-        IconButton({}, modifier = Modifier.size(32.dp)) {
+        IconButton({ onEditClick(category) }, modifier = Modifier.size(32.dp)) {
           Icon(Icons.Filled.Edit, "edit", tint = Color.White)
         }
         Spacer(Modifier.width(16.dp))

@@ -27,8 +27,24 @@ class ActorsScreenModel(
     }
   }
 
+  fun add(name: String, url: String) {
+    screenModelScope.launch(bestConcurrencyDispatcher()) {
+      webService.add(name, url)
+      getActors()
+    }
+  }
+
+  fun edit(actor: Actor, name: String, url: String) {
+    screenModelScope.launch(bestConcurrencyDispatcher()) {
+      webService.edit(actor.id, name, url)
+      getActors()
+    }
+  }
+
   override fun onDispose() {
     webService.close()
     super.onDispose()
   }
+
+
 }

@@ -25,7 +25,7 @@ object DuplicatesSearchTask {
    * @return false if there are no more movies to be checked
    * @return true if a movie was checked and is ready to check next
    */
-  private fun checkNextMovie(threshold: Int = 10000): Boolean {
+  private fun checkNextMovie(threshold: Int = 1500): Boolean {
     val result = transaction {
       val movieWithDuration = MoviesToBeCheckedTable
         .join(MovieTable, JoinType.INNER, onColumn = MoviesToBeCheckedTable.id, otherColumn = MovieTable.id) { MoviesToBeCheckedTable.id eq MovieTable.id }
@@ -72,25 +72,27 @@ object DuplicatesSearchTask {
 
   private fun checkMovie(model: PossibleDuplicate): Boolean {
     val mainPath = transaction { MovieTable.selectAll().where { MovieTable.id eq model.id }.first()[MovieTable.path] }
-    runBlocking {
-      model.candidates.map { candidate ->
-        async(Dispatchers.IO) {
-          val path = transaction { MovieTable.selectAll().where { MovieTable.id eq candidate }.first()[MovieTable.path] }
-          val result = Python.compareVideos(mainPath, path)
-          println("for $candidate $result")
-          if (result != null) {
-            if (result.isValid) {
-              transaction {
-                DetectedDuplicatesTable.insert { new ->
-                  new[DetectedDuplicatesTable.movie] = model.id
-                  new[DetectedDuplicatesTable.otherMovie] = candidate
+    if (model.candidates.isNotEmpty()) {
+      runBlocking {
+        model.candidates.map { candidate ->
+          async(Dispatchers.IO) {
+            val path = transaction { MovieTable.selectAll().where { MovieTable.id eq candidate }.first()[MovieTable.path] }
+            val result = Python.compareVideos(mainPath, path)
+            println("for $candidate $result")
+            if (result != null) {
+              if (result.isValid) {
+                transaction {
+                  DetectedDuplicatesTable.insert { new ->
+                    new[DetectedDuplicatesTable.movie] = model.id
+                    new[DetectedDuplicatesTable.otherMovie] = candidate
+                  }
                 }
+                println("added ${model.id} -> $candidate to possible duplicates")
               }
-              println("added ${model.id} -> $candidate to possible duplicates")
             }
           }
-        }
-      }.awaitAll()
+        }.awaitAll()
+      }
     }
     return transaction { cleanUp(model.id) }
   }

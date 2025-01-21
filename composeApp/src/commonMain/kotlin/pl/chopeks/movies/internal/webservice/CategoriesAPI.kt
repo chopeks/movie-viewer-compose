@@ -37,6 +37,14 @@ class CategoriesAPI(
     delete("categories/${category.id}/${video.id}").body<Any>()
   }
 
+  suspend fun add(name: String, url: String) {
+    post("category", mapOf("name" to name, "url" to url)).body<Any>()
+  }
+
+  suspend fun edit(id: Int, name: String, url: String) {
+    post("category", Category(id, name, url)).body<Any>()
+  }
+
   override fun close() {
     httpClient.close()
   }

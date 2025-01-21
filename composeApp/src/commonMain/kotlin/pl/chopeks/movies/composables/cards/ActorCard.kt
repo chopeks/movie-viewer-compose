@@ -29,6 +29,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 fun ActorCard(
   actor: Actor,
   onClick: (Actor) -> Unit,
+  onEditClick: (Actor) -> Unit
 ) {
   Card(Modifier.fillMaxWidth().clickable { onClick(actor) }, backgroundColor = Color.Black, elevation = 0.dp) {
     Box(Modifier.fillMaxWidth().aspectRatio(0.7f)) {
@@ -51,7 +52,7 @@ fun ActorCard(
           .background(Color.Black.copy(alpha = 0.6f)),
         verticalAlignment = Alignment.CenterVertically
       ) {
-        IconButton({}, modifier = Modifier.size(32.dp)) {
+        IconButton({ onEditClick(actor) }, modifier = Modifier.size(32.dp)) {
           Icon(Icons.Filled.Edit, "edit", tint = Color.White)
         }
         Spacer(Modifier.width(16.dp))

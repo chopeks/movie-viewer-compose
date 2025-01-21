@@ -16,6 +16,7 @@ class ActorsAPI(
     contentType(ContentType.Application.Json)
     setBody(body)
   }
+
   private suspend fun delete(path: String) = httpClient.delete(Backend.URL + path) {}
 
 
@@ -37,7 +38,16 @@ class ActorsAPI(
     delete("actors/${actor.id}/${video.id}").body<Any>()
   }
 
+  suspend fun add(name: String, url: String) {
+    post("actor", mapOf("name" to name, "url" to url)).body<Any>()
+  }
+
+  suspend fun edit(id: Int, name: String, url: String) {
+    post("actor", Actor(id, name, url)).body<Any>()
+  }
+
   override fun close() {
     httpClient.close()
   }
+
 }

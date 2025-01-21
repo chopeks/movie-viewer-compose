@@ -30,6 +30,20 @@ class CategoriesScreenModel(
     }
   }
 
+  fun add(name: String, url: String) {
+    screenModelScope.launch(bestConcurrencyDispatcher()) {
+      webService.add(name, url)
+      getCategories()
+    }
+  }
+
+  fun edit(category: Category, name: String, url: String) {
+    screenModelScope.launch(bestConcurrencyDispatcher()) {
+      webService.edit(category.id, name, url)
+      getCategories()
+    }
+  }
+
   override fun onDispose() {
     webService.close()
     super.onDispose()
