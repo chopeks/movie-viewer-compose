@@ -105,12 +105,12 @@ class CategoriesScreen : Screen {
   }
 
   @Composable
-  fun EditCategoryDialog(actor: MutableState<Category?>, screenModel: CategoriesScreenModel) {
-    if (actor.value != null) {
+  fun EditCategoryDialog(category: MutableState<Category?>, screenModel: CategoriesScreenModel) {
+    if (category.value != null) {
       val context = LocalPlatformContext.current
-      var name by remember { mutableStateOf(actor.value!!.name) }
-      var url by remember { mutableStateOf(actor.value!!.image ?: "") }
-      AlertDialog(onDismissRequest = { actor.value = null }, title = { Text("Edit category") }, text = {
+      var name by remember { mutableStateOf(category.value!!.name) }
+      var url by remember { mutableStateOf(if((category.value!!.image ?: "").startsWith("http:")) category.value!!.image ?: "" else "")  }
+      AlertDialog(onDismissRequest = { category.value = null }, title = { Text("Edit category") }, text = {
         Column(Modifier.fillMaxWidth()) {
           TextField(name, { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
           TextField(url, { url = it }, label = { Text("Image url") }, modifier = Modifier.fillMaxWidth())
@@ -121,14 +121,14 @@ class CategoriesScreen : Screen {
       }, confirmButton = {
         Button(onClick = {
           if (name.isNotBlank()) {
-            screenModel.edit(actor.value!!, name, url)
-            actor.value = null
+            screenModel.edit(category.value!!, name, url)
+            category.value = null
           }
         }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
           Text("Confirm", color = Color.White)
         }
       }, dismissButton = {
-        Button(onClick = { actor.value = null }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+        Button(onClick = { category.value = null }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
           Text("Cancel", color = Color.LightGray)
         }
       })

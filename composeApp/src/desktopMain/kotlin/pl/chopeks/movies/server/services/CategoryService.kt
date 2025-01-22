@@ -21,7 +21,7 @@ fun Route.categoryService() {
     kotlin.runCatching { call.receiveNullable<CategoryPojo>() }.getOrNull()?.let {
       call.respond(HttpStatusCode.OK, transaction {
         if (it.image?.startsWith("http") == true) {
-          it.image = it.image?.urlImageToBase64()
+          it.image = it.image?.urlImageToBase64(425, 240)
         }
         if (Category.find { CategoryTable.id eq it.id }.firstOrNull() != null) {
           CategoryTable.update({ CategoryTable.id eq it.id }) { obj ->

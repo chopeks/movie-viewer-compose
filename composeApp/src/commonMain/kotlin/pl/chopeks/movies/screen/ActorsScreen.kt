@@ -123,7 +123,7 @@ class ActorsScreen : Screen {
     if (actor.value != null) {
       val context = LocalPlatformContext.current
       var name by remember { mutableStateOf(actor.value!!.name) }
-      var url by remember { mutableStateOf(actor.value!!.image ?: "") }
+      var url by remember { mutableStateOf(if((actor.value!!.image ?: "").startsWith("http:")) actor.value!!.image ?: "" else "")  }
       AlertDialog(
         onDismissRequest = { actor.value = null },
         title = { Text("Edit actor") },

@@ -39,7 +39,6 @@ fun ActorCard(
           ImageRequest.Builder(context)
             .data(it.let(Base64.Mime::decode))
             .size(Size.ORIGINAL)
-            .memoryCacheKey("a_${actor.id}")
             .build()
         },
         contentDescription = actor.name,

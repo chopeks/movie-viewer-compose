@@ -26,7 +26,7 @@ fun Route.actorService() {
   post("/actor") {
     kotlin.runCatching { call.receiveNullable<ActorPojo>() }.getOrNull()?.let {
       if (it.image?.startsWith("http") == true) {
-        it.image = it.image?.urlImageToBase64()
+        it.image = it.image?.urlImageToBase64(269, 384)
       }
       call.respond(HttpStatusCode.OK, transaction {
         if (Actor.find { ActorTable.id eq it.id }.firstOrNull() != null) {

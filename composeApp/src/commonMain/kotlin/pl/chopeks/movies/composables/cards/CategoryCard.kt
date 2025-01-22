@@ -39,7 +39,6 @@ fun CategoryCard(
           ImageRequest.Builder(context)
             .data(it.let(Base64.Mime::decode))
             .size(Size.ORIGINAL)
-            .memoryCacheKey("c_${category.id}")
             .build()
         },
         contentDescription = category.name,
