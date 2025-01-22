@@ -7,7 +7,7 @@ from PIL import Image
 from skimage.metrics import structural_similarity as ssim
 
 
-def extract_frames_to_memory(video_path, frame_size=(480, 480), samples=10):
+def extract_frames_to_memory(video_path, frame_size=(480, 480), samples=4):
     interval = float(ffmpeg.probe(video_path)['format']['duration']) / (samples + 2)
     timestamps = [i * interval for i in range(1, (samples + 1))]
     frames = []

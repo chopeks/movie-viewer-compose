@@ -31,7 +31,7 @@ object DuplicatesSearchTask {
         .join(MovieTable, JoinType.INNER, onColumn = MoviesToBeCheckedTable.id, otherColumn = MovieTable.id) { MoviesToBeCheckedTable.id eq MovieTable.id }
         .select(MoviesToBeCheckedTable.id, MovieTable.duration, MovieTable.path)
         .where { MovieTable.duration.isNotNull() }
-        .orderBy(MovieTable.duration, SortOrder.DESC)
+        .orderBy(MoviesToBeCheckedTable.id, SortOrder.DESC)
         .limit(1)
         .singleOrNull()
       if (movieWithDuration == null)
@@ -70,28 +70,31 @@ object DuplicatesSearchTask {
     return true
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   private fun checkMovie(model: PossibleDuplicate): Boolean {
     val mainPath = transaction { MovieTable.selectAll().where { MovieTable.id eq model.id }.first()[MovieTable.path] }
     if (model.candidates.isNotEmpty()) {
       runBlocking {
-        model.candidates.map { candidate ->
-          async(Dispatchers.IO) {
-            val path = transaction { MovieTable.selectAll().where { MovieTable.id eq candidate }.first()[MovieTable.path] }
-            val result = Python.compareVideos(mainPath, path)
-            println("for $candidate $result")
-            if (result != null) {
-              if (result.isValid) {
-                transaction {
-                  DetectedDuplicatesTable.insert { new ->
-                    new[DetectedDuplicatesTable.movie] = model.id
-                    new[DetectedDuplicatesTable.otherMovie] = candidate
+        newFixedThreadPoolContext(4, "python").use { pool ->
+          model.candidates.map { candidate ->
+            async(pool) {
+              val path = transaction { MovieTable.selectAll().where { MovieTable.id eq candidate }.first()[MovieTable.path] }
+              val result = Python.compareVideos(mainPath, path)
+              println("for $candidate $result")
+              if (result != null) {
+                if (result.isValid) {
+                  transaction {
+                    DetectedDuplicatesTable.insert { new ->
+                      new[DetectedDuplicatesTable.movie] = model.id
+                      new[DetectedDuplicatesTable.otherMovie] = candidate
+                    }
                   }
+                  println("added ${model.id} -> $candidate to possible duplicates")
                 }
-                println("added ${model.id} -> $candidate to possible duplicates")
               }
             }
-          }
-        }.awaitAll()
+          }.awaitAll()
+        }
       }
     }
     return transaction { cleanUp(model.id) }
