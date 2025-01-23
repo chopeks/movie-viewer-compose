@@ -1,8 +1,25 @@
 package pl.chopeks.movies.server.utils
 
 import pl.chopeks.movies.server.model.VideoCompareResult
+import java.io.File
 
 object Python {
+  fun init () {
+    with(File("scripts")) {
+      if (!(exists() && isDirectory))
+        mkdir()
+      arrayOf(
+        File(this, "compareVideos.py"),
+        File(this, "requirements.txt"),
+      ).forEach {
+        if (!it.exists())
+          Python::class.java.classLoader.getResourceAsStream("scripts/${it.name}")?.use { stream ->
+            stream.copyTo(it.outputStream())
+          }
+      }
+    }
+  }
+
   fun call(script: String, vararg params: String): Pair<Int, String> {
     val output = StringBuilder()
 

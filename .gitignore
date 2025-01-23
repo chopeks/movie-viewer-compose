@@ -16,3 +16,9 @@ captures
 !*.xcodeproj/project.xcworkspace/
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
+*.sqlite
+
+composeApp/scripts/
+composeApp/settings.d.0
+composeApp/settings.i.0
+composeApp/settings.t

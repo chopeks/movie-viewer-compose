@@ -75,7 +75,7 @@ class VideosScreen(
         screenModel.changePage(Int.MIN_VALUE)
       }) { Text(listOf("Sorted by Date", "Sorted by Duration")[screenModel.filter], color = Color.Gray) }
     }, actions = {
-      Text("Page ${screenModel.currentPage} of ${screenModel.count}", color = Color.Green.copy(alpha = 0.6f))
+      Text("Page ${screenModel.currentPage + 1} of ${screenModel.count + 1}", color = Color.Green.copy(alpha = 0.6f))
     }) { scope ->
       Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         val items = screenModel.videos.chunked(5)

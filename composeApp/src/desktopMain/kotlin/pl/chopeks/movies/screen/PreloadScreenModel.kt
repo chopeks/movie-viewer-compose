@@ -16,6 +16,7 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import pl.chopeks.movies.findDatabase
 import pl.chopeks.movies.server.db.*
+import pl.chopeks.movies.server.utils.Python
 import pl.chopeks.movies.server.utils.RefreshUtils
 import pl.chopeks.movies.server.utils.getFiles
 import java.io.File
@@ -28,6 +29,7 @@ class PreloadScreenModel: ScreenModel {
 
   fun init() {
     screenModelScope.launch(Dispatchers.IO) {
+      Python.init()
       Database.connect("jdbc:sqlite:${findDatabase().absolutePath}", driver = "org.sqlite.JDBC")
       events.add("Database connected.")
       TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED
