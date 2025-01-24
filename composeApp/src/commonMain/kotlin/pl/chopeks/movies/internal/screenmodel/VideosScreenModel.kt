@@ -96,13 +96,6 @@ class VideosScreenModel(
     }
   }
 
-  override fun onDispose() {
-    super.onDispose()
-    webService.close()
-    actorWebService.close()
-    categoryWebService.close()
-  }
-
   fun toggle(video: Video, actor: Actor) {
     screenModelScope.launch(bestConcurrencyDispatcher()) {
       val index = videos.indexOf(video)
@@ -148,5 +141,12 @@ class VideosScreenModel(
       videos.clear()
       getVideos()
     }
+  }
+
+  override fun onDispose() {
+    super.onDispose()
+    webService.close()
+    actorWebService.close()
+    categoryWebService.close()
   }
 }

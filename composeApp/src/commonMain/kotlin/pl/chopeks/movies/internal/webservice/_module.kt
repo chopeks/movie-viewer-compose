@@ -9,4 +9,5 @@ val webServiceModule; get() = DI.Module(name = "webService") {
   bindProvider { CategoriesAPI(instance()) }
   bindProvider { VideosAPI(instance()) }
   bindProvider { DuplicatesAPI(instance()) }
+  bindProvider { SettingsAPI(instance()) }
 }

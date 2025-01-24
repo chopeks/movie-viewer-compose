@@ -19,6 +19,4 @@ captures
 *.sqlite
 
 composeApp/scripts/
-composeApp/settings.d.0
-composeApp/settings.i.0
-composeApp/settings.t
+composeApp/settings.json

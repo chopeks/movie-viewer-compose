@@ -1,6 +1,7 @@
 package pl.chopeks.movies
 
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.darkColors
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.input.key.KeyEvent
@@ -62,7 +63,7 @@ fun main() {
         setSingletonImageLoaderFactory { context ->
             getAsyncImageLoader(context)
         }
-        MaterialTheme {
+        MaterialTheme(colors = darkColors()) {
             Navigator(HomeScreen(di))
         }
     }

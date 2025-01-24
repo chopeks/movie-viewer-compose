@@ -9,4 +9,5 @@ val screenModelModule; get() = DI.Module(name = "screenModel") {
   bindProvider { CategoriesScreenModel(instance()) }
   bindProvider { VideosScreenModel(instance(), instance(), instance()) }
   bindProvider { DuplicatesScreenModel(instance(), instance()) }
+  bindProvider { SettingsScreenModel(instance()) }
 }

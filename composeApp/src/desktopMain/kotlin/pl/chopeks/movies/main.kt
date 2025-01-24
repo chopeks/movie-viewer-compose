@@ -1,6 +1,8 @@
 package pl.chopeks.movies
 
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.darkColors
+import androidx.compose.material.lightColors
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -104,7 +106,7 @@ fun main() = application {
       di.direct.instance<KeyEventManager>().propagateKeyEvent(it)
     }
   ) {
-    MaterialTheme {
+    MaterialTheme(colors = darkColors()) {
       Navigator(HomeScreen(di))
     }
   }

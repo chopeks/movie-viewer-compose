@@ -32,21 +32,3 @@ fun makeScreenshot(video: File, percent: Long = 110): ByteArray {
   }
   return bytes
 }
-
-
-fun makeScreenshots(targetDir: File, video: File): Array<File> {
-  val interval = getVideoDuration(video) / 11L
-  for (i in 1..9) {
-    arrayOf(
-      "ffmpeg",
-      "-ss",
-      "${TimeUnit.MILLISECONDS.toHours(i * interval)}:${TimeUnit.MILLISECONDS.toMinutes(i * interval) % 60}:${TimeUnit.MILLISECONDS.toSeconds(i * interval) % 60}",
-      "-i",
-      "\"${video.absolutePath}\"",
-      "-vframes",
-      "1",
-      "${i}.jpg"
-    ).runCommand(targetDir)
-  }
-  return targetDir.listFiles()
-}

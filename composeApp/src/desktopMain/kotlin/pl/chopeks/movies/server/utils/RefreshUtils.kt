@@ -13,8 +13,6 @@ import javax.imageio.ImageIO
 import kotlin.system.measureTimeMillis
 
 object RefreshUtils {
-  data class PossibleDuplicate(val id: Int, val candidates: List<Int>)
-
   @OptIn(DelicateCoroutinesApi::class)
   fun refresh(onEvent: (String) -> Unit) {
     transaction {

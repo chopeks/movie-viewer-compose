@@ -1,6 +1,5 @@
 package pl.chopeks.movies.server.services
 
-import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.selectAll
@@ -11,7 +10,6 @@ import pl.chopeks.movies.server.db.MovieTable.thumbnail
 import pl.chopeks.movies.server.model.Actor
 import pl.chopeks.movies.server.model.Category
 import pl.chopeks.movies.server.utils.makeScreenshot
-import pl.chopeks.movies.server.utils.makeScreenshots
 import pl.chopeks.movies.server.utils.normalizeImage
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -55,22 +53,5 @@ fun Route.imageService() {
       }
     }
     call.respond(arrayOf(image))
-  }
-  get("/images/movie/{id}") {
-    val images = transaction {
-      MovieTable.selectAll().where { MovieTable.id eq call.parameters["id"]!!.toInt() }.firstOrNull().also {
-        if (it != null) {
-          val tempDir = File(UUID.randomUUID().toString().substring(0..7)).apply { mkdirs() }
-          val images = mutableListOf<String>()
-          makeScreenshots(tempDir, File(it[MovieTable.path])).forEach {
-            images.add("data:image/jpg;base64," + String(Base64.getMimeEncoder().encode(it.readBytes())))
-            it.delete()
-          }
-          tempDir.delete()
-          return@transaction images
-        }
-      }
-    }
-    call.respond(images ?: HttpStatusCode.NotFound)
   }
 }
