@@ -2,6 +2,7 @@ package pl.chopeks.movies.server.utils
 
 import java.io.File
 import java.io.IOException
+import java.io.InputStream
 import java.util.concurrent.TimeUnit
 
 fun Array<String>.executeCommand(workingDir: File): String? {
@@ -27,4 +28,12 @@ fun Array<String>.runCommand(workingDir: File) {
     .redirectError(ProcessBuilder.Redirect.INHERIT)
     .start()
     .waitFor(1, TimeUnit.SECONDS)
+}
+
+fun Array<String>.runPipeCommand(callback: (InputStream) -> Unit) {
+  val process = ProcessBuilder(*this)
+    .redirectError(ProcessBuilder.Redirect.INHERIT)
+    .start()
+  process.inputStream.use(callback)
+  process.waitFor(1, TimeUnit.SECONDS)
 }

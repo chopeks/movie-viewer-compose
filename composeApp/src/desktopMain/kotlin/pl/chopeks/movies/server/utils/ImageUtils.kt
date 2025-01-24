@@ -5,8 +5,6 @@ import okhttp3.Request
 import org.imgscalr.Scalr
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
-import java.awt.image.ConvolveOp
-import java.awt.image.Kernel
 import java.io.ByteArrayOutputStream
 import java.io.File
 import javax.imageio.ImageIO
@@ -496,6 +494,9 @@ val videoExtensions = arrayOf(
   "zm3",
   "zmv"
 )
+
+fun getDirectories(dir: File) = dir
+  .listFiles { file -> file.isDirectory }?.toList() ?: emptyList()
 
 fun getFiles(dir: File) = dir.walkTopDown()
   .filter { it.isFile }

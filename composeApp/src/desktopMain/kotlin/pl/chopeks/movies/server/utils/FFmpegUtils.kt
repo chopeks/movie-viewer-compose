@@ -16,19 +16,21 @@ fun getVideoDuration(video: File) = try {
   0
 }
 
-fun makeScreenshot(targetDir: File, video: File, percent: Long = 110): File {
+fun makeScreenshot(video: File, percent: Long = 110): ByteArray {
   val interval: Long = getVideoDuration(video) * percent / 1000L
+  var bytes = byteArrayOf()
   arrayOf(
     "ffmpeg",
-    "-ss",
-    "${TimeUnit.MILLISECONDS.toHours(interval)}:${TimeUnit.MILLISECONDS.toMinutes(interval) % 60}:${TimeUnit.MILLISECONDS.toSeconds(interval) % 60}",
-    "-i",
-    "\"${video.absolutePath}\"",
-    "-vframes",
-    "1",
-    "0.jpg"
-  ).runCommand(targetDir)
-  return targetDir.listFiles().first()
+    "-ss", "${TimeUnit.MILLISECONDS.toHours(interval)}:${TimeUnit.MILLISECONDS.toMinutes(interval) % 60}:${TimeUnit.MILLISECONDS.toSeconds(interval) % 60}",
+    "-i", video.absolutePath,
+    "-vframes", "1",
+    "-f", "image2pipe",
+    "-vcodec", "mjpeg",
+    "pipe:1"
+  ).runPipeCommand {
+    bytes = it.readBytes()
+  }
+  return bytes
 }
 
 

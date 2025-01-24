@@ -1,18 +1,19 @@
 package pl.chopeks.movies.server.services
 
-import pl.chopeks.movies.server.db.MovieTable
-import pl.chopeks.movies.server.db.MovieTable.thumbnail
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import pl.chopeks.movies.server.model.Actor
-import pl.chopeks.movies.server.model.Category
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
+import pl.chopeks.movies.server.db.MovieTable
+import pl.chopeks.movies.server.db.MovieTable.thumbnail
+import pl.chopeks.movies.server.model.Actor
+import pl.chopeks.movies.server.model.Category
 import pl.chopeks.movies.server.utils.makeScreenshot
 import pl.chopeks.movies.server.utils.makeScreenshots
 import pl.chopeks.movies.server.utils.normalizeImage
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.*
 import javax.imageio.ImageIO
@@ -31,21 +32,23 @@ fun Route.imageService() {
           if (it[thumbnail] != null && call.request.queryParameters["refresh"] != "true") {
             return@transaction it[thumbnail]
           } else {
-            val tempDir = File(UUID.randomUUID().toString().substring(0..7)).apply { mkdirs() }
             val images = mutableListOf<String>()
-            makeScreenshot(tempDir, File(it[MovieTable.path]), (1..999).random().toLong()).also { img ->
-              ImageIO.read(img.readBytes().inputStream())
+            makeScreenshot(File(it[MovieTable.path]), (1..999).random().toLong()).also { img ->
+              val bytes = ImageIO.read(img.inputStream())
                 .normalizeImage()
-                .let { ImageIO.write(it, "jpg", img) }
+                .let {
+                  ByteArrayOutputStream().use { os ->
+                    ImageIO.write(it, "jpg", os)
+                    os.toByteArray()
+                  }
+                }
               transaction {
                 MovieTable.update({ MovieTable.id eq call.parameters["id"]!!.toInt() }, body = {
-                  it[thumbnail] = "data:image/jpg;base64," + String(Base64.getMimeEncoder().encode(img.readBytes()))
+                  it[thumbnail] = "data:image/jpg;base64," + String(Base64.getMimeEncoder().encode(bytes))
                 })
               }
-              images.add("data:image/jpg;base64," + String(Base64.getMimeEncoder().encode(img.readBytes())))
-              img.delete()
+              images.add("data:image/jpg;base64," + String(Base64.getMimeEncoder().encode(bytes)))
             }
-            tempDir.delete()
             return@transaction images[0]
           }
         }
