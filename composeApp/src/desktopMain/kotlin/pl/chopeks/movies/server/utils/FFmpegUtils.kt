@@ -4,12 +4,11 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 
 fun getVideoDuration(video: File) = try {
-  arrayOf("ffprobe", "-show_entries", "format=duration", "-sexagesimal", "\"${video.absolutePath}\"")
+  arrayOf("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", video.absolutePath)
     .executeCommand(File("./"))
-    ?.lines()?.filter { "duration" in it }?.get(0)?.split("=")?.get(1)
     ?.let {
-      val parts = it.replace(".", ":").split(":").map { it.toLong() }
-      TimeUnit.HOURS.toMillis(parts[0]) + TimeUnit.MINUTES.toMillis(parts[1]) + TimeUnit.SECONDS.toMillis(parts[2]) + TimeUnit.NANOSECONDS.toMillis(parts[3])
+      val duration = it.toDouble()
+      TimeUnit.SECONDS.toMillis(duration.toLong()) + ((duration - duration.toLong()) * 1000).toLong()
     } ?: 0
 } catch (e: Throwable) {
   e.printStackTrace()

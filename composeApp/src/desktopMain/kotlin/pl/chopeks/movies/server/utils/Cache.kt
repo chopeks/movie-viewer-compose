@@ -8,7 +8,7 @@ import java.util.*
 
 
 object Cache {
-  private val settingsFile = File("settings.json")
+  private val settingsFile = findCache()
   private var settingsPojo: SettingsPojo? = loadSettings()
 
   private val defaultMoviePlayer = when (OsCheck.operatingSystemType) {
@@ -76,4 +76,11 @@ object OsCheck {
   enum class OSType {
     Windows, MacOS, Linux, Other
   }
+}
+
+private fun findCache(): File {
+  val dir = File(System.getProperty("user.dir"))
+  if (File(dir, "settings.json").exists())
+    return File(dir, "settings.json")
+  return File(File(dir, ".."), "settings.json")
 }

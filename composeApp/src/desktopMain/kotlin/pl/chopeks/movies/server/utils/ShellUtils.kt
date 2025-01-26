@@ -13,7 +13,7 @@ fun Array<String>.executeCommand(workingDir: File): String? {
       .redirectError(ProcessBuilder.Redirect.PIPE)
       .start()
 
-    proc.waitFor(2000, TimeUnit.MILLISECONDS)
+    proc.waitFor(5, TimeUnit.SECONDS)
     proc.inputStream.bufferedReader().readText()
   } catch (e: IOException) {
     e.printStackTrace()
