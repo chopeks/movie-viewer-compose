@@ -45,10 +45,11 @@ object RefreshUtils {
               transaction {
                 files.forEach {
                   onEvent("Added ${it.absolutePath}.")
-                  MovieTable.insert { new ->
+                  val movie = MovieTable.insert { new ->
                     new[MovieTable.name] = it.nameWithoutExtension
                     new[MovieTable.path] = it.absolutePath
                   }
+                  MoviesToBeCheckedTable.insert { it[MoviesToBeCheckedTable.id] = movie[MovieTable.id] }
                 }
               }
             }
@@ -106,7 +107,7 @@ object RefreshUtils {
   fun markAllMoviesToBeChecked() {
     transaction {
       MoviesToBeCheckedTable.deleteAll()
-      MovieTable.select(MovieTable.id).map { it[MovieTable.id] }.forEach { movieId ->
+      MovieTable.select(MovieTable.id).orderBy(MovieTable.id, SortOrder.DESC).take(500).map { it[MovieTable.id] }.forEach { movieId ->
         MoviesToBeCheckedTable.insert { it[MoviesToBeCheckedTable.id] = movieId }
       }
     }
