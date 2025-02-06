@@ -13,7 +13,7 @@ fun getVideoDuration(video: File) = try {
 } catch (e: Throwable) {
   e.printStackTrace()
   0
-}
+}.let { it - (it % 1000) }
 
 fun makeScreenshot(video: File, percent: Long = 110): ByteArray {
   val interval: Long = getVideoDuration(video) * percent / 1000L

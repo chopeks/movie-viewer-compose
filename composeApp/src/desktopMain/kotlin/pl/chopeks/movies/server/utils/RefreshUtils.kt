@@ -107,7 +107,7 @@ object RefreshUtils {
   fun markAllMoviesToBeChecked() {
     transaction {
       MoviesToBeCheckedTable.deleteAll()
-      MovieTable.select(MovieTable.id).orderBy(MovieTable.id, SortOrder.DESC).take(500).map { it[MovieTable.id] }.forEach { movieId ->
+      MovieTable.select(MovieTable.id).orderBy(MovieTable.id, SortOrder.DESC).take(5).map { it[MovieTable.id] }.forEach { movieId ->
         MoviesToBeCheckedTable.insert { it[MoviesToBeCheckedTable.id] = movieId }
       }
     }
