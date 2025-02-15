@@ -75,12 +75,12 @@ object RefreshUtils {
                 MovieTable.update({ MovieTable.id eq movie.first }, body = {
                   it[MovieTable.thumbnail] = "data:image/jpg;base64," + String(Base64.getMimeEncoder().encode(bytes))
                 })
-                MoviesToBeCheckedTable.insert { it[MoviesToBeCheckedTable.id] = movie.first }
               }
             }
           }.let { time -> println("${time}ms") }
           onEvent("Added thumbnail of ${movie.second}.")
         } catch (e: Throwable) {
+          e.printStackTrace()
         }
       }
 
