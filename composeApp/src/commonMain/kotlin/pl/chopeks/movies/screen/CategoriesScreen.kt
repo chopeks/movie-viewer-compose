@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,13 +40,31 @@ class CategoriesScreen : Screen {
     val navigator = LocalNavigator.current
     keyEventManager.setListener { onKeyEvent(it, navigator) }
 
-    ScreenSkeleton(title = "Categories", textActions = {
-      TextButton({
-        addDialog.value = true
-      }) { Text("Add category".uppercase(), color = Color.Green.copy(alpha = 0.5f)) }
-    }) { scope ->
+    ScreenSkeleton(
+      title = "Categories",
+      textActions = {
+        TextButton({
+          addDialog.value = true
+        }) { Text("Add category".uppercase(), color = Color.Green.copy(alpha = 0.5f)) }
+      },
+      actions = {
+        TextField(
+          screenModel.searchFilter, { screenModel.searchFilter = it },
+          trailingIcon = {
+            if (screenModel.searchFilter.isEmpty())
+              Icon(Icons.Default.Search, contentDescription = "Search")
+            else
+              IconButton(onClick = { screenModel.searchFilter = "" }) {
+                Icon(Icons.Default.Delete, contentDescription = "Delete")
+              }
+          },
+          label = { Text("Filter") },
+          colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Black)
+        )
+      }
+    ) { scope ->
       Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        val items = screenModel.categories.chunked(6)
+        val items = screenModel.filteredCategories.chunked(6)
         items.forEach { chunk ->
           Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
             chunk.forEach { category ->
@@ -70,6 +91,9 @@ class CategoriesScreen : Screen {
 
     LaunchedEffect(Unit) {
       screenModel.getCategories()
+    }
+    LaunchedEffect(screenModel.searchFilter) {
+      screenModel.filter()
     }
   }
 
@@ -109,7 +133,7 @@ class CategoriesScreen : Screen {
     if (category.value != null) {
       val context = LocalPlatformContext.current
       var name by remember { mutableStateOf(category.value!!.name) }
-      var url by remember { mutableStateOf(if((category.value!!.image ?: "").startsWith("http:")) category.value!!.image ?: "" else "")  }
+      var url by remember { mutableStateOf(if ((category.value!!.image ?: "").startsWith("http:")) category.value!!.image ?: "" else "") }
       AlertDialog(onDismissRequest = { category.value = null }, title = { Text("Edit category") }, text = {
         Column(Modifier.fillMaxWidth()) {
           TextField(name, { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())

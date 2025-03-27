@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,16 +44,32 @@ class ActorsScreen : Screen {
       title = "Actors",
       textActions = {
         TextButton({ addDialog.value = true }) { Text("Add Actors".uppercase(), color = Color.Green.copy(alpha = 0.5f)) }
+      },
+      actions = {
+        TextField(
+          screenModel.searchFilter, { screenModel.searchFilter = it },
+          trailingIcon = {
+            if (screenModel.searchFilter.isEmpty())
+              Icon(Icons.Default.Search, contentDescription = "Search")
+            else
+              IconButton(onClick = { screenModel.searchFilter = "" }) {
+                Icon(Icons.Default.Delete, contentDescription = "Delete")
+              }
+          },
+          label = { Text("Filter") },
+          colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Black)
+        )
       }
     ) { scope ->
       Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        val items = screenModel.actors.chunked(8)
+        val items = screenModel.filteredActors.chunked(8)
         items.forEach { chunk ->
           Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
             Spacer(Modifier.fillMaxWidth(0.08f))
             chunk.forEach { actor ->
               Box(modifier = Modifier.weight(1f)) {
-                ActorCard(actor,
+                ActorCard(
+                  actor,
                   onClick = {
                     scope.launch {
                       navigator?.replace(VideosScreen(actor = it))
@@ -75,6 +94,9 @@ class ActorsScreen : Screen {
 
     LaunchedEffect(Unit) {
       screenModel.getActors()
+    }
+    LaunchedEffect(screenModel.searchFilter) {
+      screenModel.filter()
     }
   }
 
@@ -123,7 +145,7 @@ class ActorsScreen : Screen {
     if (actor.value != null) {
       val context = LocalPlatformContext.current
       var name by remember { mutableStateOf(actor.value!!.name) }
-      var url by remember { mutableStateOf(if((actor.value!!.image ?: "").startsWith("http:")) actor.value!!.image ?: "" else "")  }
+      var url by remember { mutableStateOf(if ((actor.value!!.image ?: "").startsWith("http:")) actor.value!!.image ?: "" else "") }
       AlertDialog(
         onDismissRequest = { actor.value = null },
         title = { Text("Edit actor") },
