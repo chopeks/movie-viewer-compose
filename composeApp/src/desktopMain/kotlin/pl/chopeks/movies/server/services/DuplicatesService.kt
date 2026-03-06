@@ -82,11 +82,13 @@ fun Route.duplicatesService() {
     val id = call.parameters["id"]?.toIntOrNull()!!
     val otherId = call.parameters["otherId"]?.toIntOrNull()!!
     (id to otherId).also { pair ->
-      DetectedDuplicatesTable.deleteWhere {
-        (DetectedDuplicatesTable.movie eq pair.first) and (DetectedDuplicatesTable.otherMovie eq pair.second)
-      }
-      DetectedDuplicatesTable.deleteWhere {
-        (DetectedDuplicatesTable.otherMovie eq pair.first) and (DetectedDuplicatesTable.movie eq pair.second)
+      transaction {
+        DetectedDuplicatesTable.deleteWhere {
+          (DetectedDuplicatesTable.movie eq pair.first) and (DetectedDuplicatesTable.otherMovie eq pair.second)
+        }
+        DetectedDuplicatesTable.deleteWhere {
+          (DetectedDuplicatesTable.otherMovie eq pair.first) and (DetectedDuplicatesTable.movie eq pair.second)
+        }
       }
       call.respond("{}")
     }
