@@ -57,6 +57,11 @@ class PreloadScreenModel: ScreenModel {
               SchemaVerionsTable.inc()
             }
 
+            4 -> { // add file count for each path
+              SchemaUtils.createMissingTablesAndColumns(AudioToBeCheckedTable)
+              SchemaVerionsTable.inc()
+            }
+
             else -> break@loop
           }
         }

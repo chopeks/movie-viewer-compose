@@ -3,6 +3,7 @@ package pl.chopeks.movies.server.utils
 import kotlinx.coroutines.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import pl.chopeks.movies.server.db.AudioToBeCheckedTable
 import pl.chopeks.movies.server.db.MovieTable
 import pl.chopeks.movies.server.db.MoviesToBeCheckedTable
 import pl.chopeks.movies.server.db.PathsTable
@@ -50,6 +51,7 @@ object RefreshUtils {
                     new[MovieTable.path] = it.absolutePath
                   }
                   MoviesToBeCheckedTable.insert { it[MoviesToBeCheckedTable.id] = movie[MovieTable.id] }
+                  AudioToBeCheckedTable.insert { it[AudioToBeCheckedTable.id] = movie[MovieTable.id] }
                 }
               }
             }
@@ -109,6 +111,10 @@ object RefreshUtils {
       MoviesToBeCheckedTable.deleteAll()
       MovieTable.select(MovieTable.id).orderBy(MovieTable.id, SortOrder.DESC).take(5).map { it[MovieTable.id] }.forEach { movieId ->
         MoviesToBeCheckedTable.insert { it[MoviesToBeCheckedTable.id] = movieId }
+      }
+      AudioToBeCheckedTable.deleteAll()
+      MovieTable.select(MovieTable.id).orderBy(MovieTable.id, SortOrder.DESC).take(5).map { it[MovieTable.id] }.forEach { movieId ->
+        AudioToBeCheckedTable.insert { it[AudioToBeCheckedTable.id] = movieId }
       }
     }
   }

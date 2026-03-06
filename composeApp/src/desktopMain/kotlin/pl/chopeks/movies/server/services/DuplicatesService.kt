@@ -12,6 +12,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.lessEq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.transactions.transaction
+import pl.chopeks.movies.server.db.AudioToBeCheckedTable
 import pl.chopeks.movies.server.db.MoviesToBeCheckedTable
 import java.io.File
 
@@ -73,7 +74,7 @@ fun Route.duplicatesService() {
 
   get("/duplicates/left") {
     call.respond(transaction {
-      mapOf("count" to MoviesToBeCheckedTable.selectAll().count())
+      mapOf("count" to MoviesToBeCheckedTable.selectAll().count() + AudioToBeCheckedTable.selectAll().count())
     })
   }
 

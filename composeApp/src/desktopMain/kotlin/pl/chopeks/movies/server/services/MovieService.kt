@@ -107,6 +107,7 @@ fun Route.movieService() {
         DetectedDuplicatesTable.deleteWhere { DetectedDuplicatesTable.movie eq id }
         DetectedDuplicatesTable.deleteWhere { DetectedDuplicatesTable.otherMovie eq id }
         MoviesToBeCheckedTable.deleteWhere { MoviesToBeCheckedTable.id eq id }
+        AudioToBeCheckedTable.deleteWhere { AudioToBeCheckedTable.id eq id }
         ret
       }
       File(path).delete()

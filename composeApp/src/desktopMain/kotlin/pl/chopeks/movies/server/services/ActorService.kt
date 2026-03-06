@@ -11,7 +11,9 @@ import pl.chopeks.movies.server.model.ActorPojo
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
+import pl.chopeks.movies.server.db.AudioToBeCheckedTable
 import pl.chopeks.movies.server.utils.urlImageToBase64
+import pl.chopeks.movies.tasks.DuplicatesSearchTask
 
 fun Route.actorService() {
   // get all actors
@@ -67,7 +69,11 @@ fun Route.actorService() {
           it[MovieActors.movie] = call.parameters["movie"]!!.toInt()
           it[MovieActors.actor] = call.parameters["actor"]!!.toInt()
         }
+        AudioToBeCheckedTable.upsert {
+          it[AudioToBeCheckedTable.id] = call.parameters["movie"]!!.toInt()
+        }
       }
+      DuplicatesSearchTask.run()
       call.respond("{}")
     }
   }

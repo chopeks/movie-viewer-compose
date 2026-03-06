@@ -4,3 +4,6 @@ argparse
 ffmpeg-python
 Pillow
 scikit-image
+chromaprint
+pyacoustid
+pymediainfo

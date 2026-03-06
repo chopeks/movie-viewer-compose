@@ -16,6 +16,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import pl.chopeks.movies.composables.buttons.DrawerButton
 import pl.chopeks.movies.screen.*
 
 @Composable
@@ -23,70 +24,41 @@ fun DrawerMenu(scope: CoroutineScope, drawerState: DrawerState) {
   val navigator = LocalNavigator.currentOrThrow
 
   Column(modifier = Modifier.fillMaxSize().background(Color.DarkGray)) {
-    Text(
-      text = "Actors",
-      modifier = Modifier
-        .fillMaxWidth()
-        .clickable {
-          scope.launch {
-            drawerState.close()
-            navigator.replace(ActorsScreen())
-          }
-        }
-        .padding(16.dp),
-      color = Color.White
-    )
-    Text(
-      text = "Categories",
-      modifier = Modifier
-        .fillMaxWidth()
-        .clickable {
-          scope.launch {
-            drawerState.close()
-            navigator.replace(CategoriesScreen())
-          }
-        }
-        .padding(16.dp),
-      color = Color.White
-    )
-    Text(
-      text = "Videos",
-      modifier = Modifier
-        .fillMaxWidth()
-        .clickable {
-          scope.launch {
-            drawerState.close()
-            navigator.replace(VideosScreen())
-          }
-        }
-        .padding(16.dp),
-      color = Color.White
-    )
-    Text(
-      text = "Duplicates",
-      modifier = Modifier
-        .fillMaxWidth()
-        .clickable {
-          scope.launch {
-            drawerState.close()
-            navigator.replace(DuplicatesScreen())
-          }
-        }
-        .padding(16.dp),
-      color = Color.White
-    )
-    Text(
-      text = "Settings",
-      modifier = Modifier
-        .fillMaxWidth()
-        .clickable {
-          scope.launch {
-            drawerState.close()
-            navigator.replace(SettingsScreen())
-          }
-        }
-        .padding(16.dp),
-      color = Color.White
-    )
+    DrawerButton("Actors", "[L.Alt+1]") {
+      scope.launch {
+        drawerState.close()
+        navigator.replace(ActorsScreen())
+      }
+    }
+    DrawerButton("Categories", "[L.Alt+2]") {
+      scope.launch {
+        drawerState.close()
+        navigator.replace(CategoriesScreen())
+      }
+    }
+    DrawerButton("Videos", "[L.Alt+3]") {
+      scope.launch {
+        drawerState.close()
+        navigator.replace(VideosScreen())
+      }
+    }
+    DrawerButton("Duplicates", "[L.Alt+4]") {
+      scope.launch {
+        drawerState.close()
+        navigator.replace(DuplicatesScreen())
+      }
+    }
+    DrawerButton("Settings") {
+      scope.launch {
+        drawerState.close()
+        navigator.replace(SettingsScreen())
+      }
+    }
+    DrawerButton("Logs") {
+      scope.launch {
+        drawerState.close()
+        navigator.replace(LogScreen())
+      }
+    }
   }
 }

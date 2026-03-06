@@ -27,6 +27,7 @@ import pl.chopeks.movies.internal.screenmodel.VideosScreenModel
 import pl.chopeks.movies.model.Actor
 import pl.chopeks.movies.model.Category
 import pl.chopeks.movies.utils.KeyEventManager
+import pl.chopeks.movies.utils.KeyEventNavigation
 
 class VideosScreen(
   private val actor: Actor? = null,
@@ -300,21 +301,10 @@ class VideosScreen(
   private fun onKeyEvent(event: KeyEvent, navigator: Navigator?, screenModel: VideosScreenModel): Boolean {
     if (event.type != KeyEventType.KeyDown)
       return false
-    if (event.isAltPressed) {
-      when (event.key) {
-        Key(49) -> {
-          navigator?.replace(ActorsScreen()); return true
-        }
 
-        Key(50) -> {
-          navigator?.replace(CategoriesScreen()); return true
-        }
+    if (KeyEventNavigation.onKeyEvent(event, navigator))
+      return true
 
-        Key(51) -> {
-          navigator?.replace(VideosScreen()); return true
-        }
-      }
-    }
     if (event.isShiftPressed) {
       when (event.key) {
         Key.DirectionLeft, Key.Z -> {

@@ -9,14 +9,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.kodein.rememberScreenModel
+import cafe.adriel.voyager.navigator.LocalNavigator
+import org.kodein.di.compose.localDI
+import org.kodein.di.direct
+import org.kodein.di.instance
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.cards.DuplicateCard
 import pl.chopeks.movies.internal.screenmodel.DuplicatesScreenModel
+import pl.chopeks.movies.utils.KeyEventManager
+import pl.chopeks.movies.utils.KeyEventNavigation
 
 class DuplicatesScreen : Screen {
   @Composable
   override fun Content() {
     val screenModel = rememberScreenModel<DuplicatesScreenModel>()
+    val keyEventManager = localDI().direct.instance<KeyEventManager>()
+    val navigator = LocalNavigator.current
+    keyEventManager.setListener { KeyEventNavigation.onKeyEvent(it, navigator) }
+
     ScreenSkeleton(
       title = "Duplicates",
       actions = {
