@@ -1,5 +1,6 @@
 package pl.chopeks.movies.server.utils
 
+import pl.chopeks.movies.utils.AppLogger
 import java.io.File
 
 object FpcalcUtils {
@@ -42,23 +43,54 @@ object FpcalcUtils {
 
 		ffmpeg.inputStream.pipe(fpcalc.outputStream)
 
-		val output = fpcalc.inputStream.bufferedReader().readText()
+		val output = fpcalc.inputStream.bufferedReader().readText().trim()
 
 		ffmpeg.waitFor()
 		fpcalc.waitFor()
 
-		if (output.isBlank())
-			return null
+		if (output.isBlank()) {
+			val duration = getAudioDuration(video)
+				?: return null
+			AppLogger.log("empty output - failed audio duration $duration, from file: ${video.absolutePath}")
+			return UIntArray(0)
+		}
 
 		val fingerprintLine = output
 			.lineSequence()
 			.firstOrNull { it.startsWith("FINGERPRINT=") }
-			?: return null
+
+		if (fingerprintLine == null) {
+			val duration = getAudioDuration(video)
+				?: return null
+			AppLogger.log("failed audio duration $duration, from file: ${video.absolutePath}")
+			return UIntArray(0)
+		}
 
 		return fingerprintLine
 			.removePrefix("FINGERPRINT=")
 			.split(',')
 			.map { it.toUInt() }
 			.toUIntArray()
+	}
+
+	fun getAudioDuration(video: File): Double? {
+		val process = ProcessBuilder(listOf(
+			"ffprobe",
+			"-v", "error",
+			"-select_streams", "a",
+			"-show_entries", "stream=duration",
+			"-of", "default=noprint_wrappers=1:nokey=1",
+			video.absolutePath
+		))
+			.redirectError(ProcessBuilder.Redirect.DISCARD)
+			.start()
+
+		val output = process.inputStream.bufferedReader().readText().trim()
+		process.waitFor()
+
+		if (output.isBlank() || output == "N/A")
+			return 0.0
+
+		return output.toDoubleOrNull()
 	}
 }
