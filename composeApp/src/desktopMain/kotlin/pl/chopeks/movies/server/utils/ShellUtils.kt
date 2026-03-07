@@ -3,7 +3,9 @@ package pl.chopeks.movies.server.utils
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
+import java.io.OutputStream
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 fun Array<String>.executeCommand(workingDir: File): String? {
   return try {
@@ -36,4 +38,14 @@ fun Array<String>.runPipeCommand(callback: (InputStream) -> Unit) {
     .start()
   process.inputStream.use(callback)
   process.waitFor(1, TimeUnit.SECONDS)
+}
+
+fun InputStream.pipe(output: OutputStream) {
+  thread {
+    this.use { inp ->
+      output.use { out ->
+        inp.copyTo(out)
+      }
+    }
+  }
 }

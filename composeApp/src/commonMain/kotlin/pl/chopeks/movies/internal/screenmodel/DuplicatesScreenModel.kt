@@ -33,6 +33,7 @@ class DuplicatesScreenModel(
 
   fun getDuplicates() {
     screenModelScope.launch(bestConcurrencyDispatcher()) {
+      duplicates.clear()
       val entries = webService.get().toMutableList()
       for (duplicate in entries) {
         val index = entries.indexOf(duplicate)

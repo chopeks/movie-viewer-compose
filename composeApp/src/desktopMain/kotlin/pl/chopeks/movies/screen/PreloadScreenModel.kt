@@ -65,8 +65,13 @@ class PreloadScreenModel: ScreenModel {
             else -> break@loop
           }
         }
-        events.add("Schema updated.")
       }
+
+      transaction {
+        SchemaUtils.addMissingColumnsStatements(MovieTable).forEach(::exec)
+      }
+
+      events.add("Schema updated.")
       // delete files that were removed
       transaction {
         MovieTable.selectAll().forEach {
