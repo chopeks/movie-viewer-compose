@@ -33,18 +33,19 @@ class DuplicatesScreenModel(
 
   fun getDuplicates() {
     screenModelScope.launch(bestConcurrencyDispatcher()) {
-      duplicates.clear()
-      duplicates.addAll(webService.get())
-      for (duplicate in duplicates) {
-        val index = duplicates.indexOf(duplicate)
+      val entries = webService.get().toMutableList()
+      for (duplicate in entries) {
+        val index = entries.indexOf(duplicate)
         val videos = duplicate.list
-        duplicates[index] = duplicate.copy(
+        entries[index] = duplicate.copy(
           list = listOf(
             videos.first().copy(image = videoWebService.getImage(videos.first())),
             videos.last().copy(image = videoWebService.getImage(videos.last())),
           )
         )
       }
+      duplicates.clear()
+      duplicates.addAll(entries)
     }
   }
 

@@ -4,7 +4,7 @@ import androidx.compose.runtime.mutableStateListOf
 
 object AppLogger {
   val logLines = mutableStateListOf<String>()
-  private const val MAX_LINES = 2500
+  private const val MAX_LINES = 500
 
   fun log(message: String) {
     logLines.add(message)
