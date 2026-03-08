@@ -24,8 +24,8 @@ import org.kodein.di.instance
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.cards.VideoCard
 import pl.chopeks.movies.internal.screenmodel.VideosScreenModel
-import pl.chopeks.movies.model.Actor
-import pl.chopeks.movies.model.Category
+import pl.chopeks.core.model.Actor
+import pl.chopeks.core.model.Category
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
 

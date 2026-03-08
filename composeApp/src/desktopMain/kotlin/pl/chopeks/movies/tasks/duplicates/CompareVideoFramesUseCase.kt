@@ -4,9 +4,9 @@ import kotlinx.coroutines.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
-import pl.chopeks.movies.server.db.DetectedDuplicatesTable
-import pl.chopeks.movies.server.db.MovieTable
-import pl.chopeks.movies.server.db.MoviesToBeCheckedTable
+import pl.chopeks.core.database.DetectedDuplicatesTable
+import pl.chopeks.core.database.MovieTable
+import pl.chopeks.core.database.MoviesToBeCheckedTable
 import pl.chopeks.movies.server.utils.Python
 import pl.chopeks.movies.utils.AppLogger
 import java.io.File
@@ -18,7 +18,7 @@ object CompareVideoFramesUseCase {
 	 * @return false if there are no more movies to be checked
 	 * @return true if a movie was checked and is ready to check next
 	 */
-	fun run(scope: CoroutineScope, pool: ExecutorCoroutineDispatcher, threshold: Int = 0): Boolean {
+	fun run(scope: CoroutineScope, threshold: Int = 0): Boolean {
 		val video = transaction {
 			MoviesToBeCheckedTable
 				.join(MovieTable, JoinType.INNER, onColumn = MoviesToBeCheckedTable.id, otherColumn = MovieTable.id) { MoviesToBeCheckedTable.id eq MovieTable.id }
@@ -52,16 +52,16 @@ object CompareVideoFramesUseCase {
 
 		AppLogger.log("found ${candidates.size} possible duplicates for ${video.path.absolutePath}, checking now")
 
-		return checkMovie(scope, pool, video.copy(candidates = candidates))
+		return checkMovie(scope, video.copy(candidates = candidates))
 	}
 
 	@OptIn(DelicateCoroutinesApi::class)
-	private fun checkMovie(scope: CoroutineScope, pool: ExecutorCoroutineDispatcher, model: PossibleDuplicate): Boolean {
+	private fun checkMovie(scope: CoroutineScope, model: PossibleDuplicate): Boolean {
 		val mainPath = transaction { MovieTable.selectAll().where { MovieTable.id eq model.id }.first()[MovieTable.path] }
 		if (model.candidates.isNotEmpty()) {
 			runBlocking(scope.coroutineContext) {
 				model.candidates.map { candidate ->
-					async(pool) {
+					async {
 						val path = transaction {
 							MovieTable.selectAll().where { MovieTable.id eq candidate }
 								.firstOrNull()?.getOrNull(MovieTable.path)

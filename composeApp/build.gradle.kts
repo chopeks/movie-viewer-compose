@@ -40,6 +40,9 @@ kotlin {
         val wasmJsMain by getting
 
         commonMain.dependencies {
+            implementation(projects.core.core)
+            implementation(projects.core.data)
+
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material)
@@ -65,6 +68,8 @@ kotlin {
             implementation(libs.coil.mp)
         }
         desktopMain.dependencies {
+            implementation(projects.core.databaseJvm)
+
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.ktor.client.okhttp)

@@ -4,9 +4,8 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import pl.chopeks.movies.model.Actor
-import pl.chopeks.movies.model.Category
-import pl.chopeks.movies.model.Video
+import pl.chopeks.core.model.Category
+import pl.chopeks.core.model.Video
 
 class CategoriesAPI(
   private val httpClient: HttpClient,

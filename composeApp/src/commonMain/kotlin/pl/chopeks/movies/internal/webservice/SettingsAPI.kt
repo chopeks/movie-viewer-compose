@@ -4,7 +4,8 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import pl.chopeks.movies.model.*
+import pl.chopeks.core.model.Path
+import pl.chopeks.core.model.Settings
 
 class SettingsAPI(
   private val httpClient: HttpClient,

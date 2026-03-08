@@ -9,8 +9,8 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.launch
 import pl.chopeks.movies.bestConcurrencyDispatcher
 import pl.chopeks.movies.internal.webservice.SettingsAPI
-import pl.chopeks.movies.model.Path
-import pl.chopeks.movies.model.Settings
+import pl.chopeks.core.model.Path
+import pl.chopeks.core.model.Settings
 
 class SettingsScreenModel(
   private val webService: SettingsAPI,

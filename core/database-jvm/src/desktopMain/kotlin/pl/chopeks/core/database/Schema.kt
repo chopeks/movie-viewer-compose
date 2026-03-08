@@ -1,4 +1,4 @@
-package pl.chopeks.movies.server.db
+package pl.chopeks.core.database
 
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Table

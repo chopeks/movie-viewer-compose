@@ -23,6 +23,8 @@ import kotlinx.browser.window
 import org.kodein.di.*
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.KeyboardEvent
+import pl.chopeks.core.IImageConverter
+import pl.chopeks.core.data.dataModule
 import pl.chopeks.movies.screen.HomeScreen
 import pl.chopeks.movies.utils.KeyEventManager
 
@@ -38,6 +40,8 @@ fun getAsyncImageLoader(context: PlatformContext) =
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     val di = DI.lazy {
+        import(dataModule)
+        bindProvider<IImageConverter> { ImageConverter() }
         bindSingleton { KeyEventManager() }
         bindProvider {
             HttpClient(Js) {

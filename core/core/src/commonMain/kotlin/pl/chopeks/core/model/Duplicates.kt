@@ -1,6 +1,7 @@
-package pl.chopeks.movies.model
+package pl.chopeks.core.model
 
 import kotlinx.serialization.Serializable
+import pl.chopeks.core.model.Video
 
 @Serializable
 data class Duplicates(

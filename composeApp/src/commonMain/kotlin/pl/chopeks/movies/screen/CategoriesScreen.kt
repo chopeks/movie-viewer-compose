@@ -25,7 +25,7 @@ import org.kodein.di.instance
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.cards.CategoryCard
 import pl.chopeks.movies.internal.screenmodel.CategoriesScreenModel
-import pl.chopeks.movies.model.Category
+import pl.chopeks.core.model.Category
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
 

@@ -21,8 +21,8 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.size.Size
-import pl.chopeks.movies.model.Video
-import pl.chopeks.movies.model.VideoChips
+import pl.chopeks.core.model.Video
+import pl.chopeks.core.model.VideoChips
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 

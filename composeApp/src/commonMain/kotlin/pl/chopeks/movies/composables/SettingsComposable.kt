@@ -10,7 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
-import pl.chopeks.movies.model.Path
+import pl.chopeks.core.model.Path
 
 @Composable
 fun SettingsHeaderText(text: String) {

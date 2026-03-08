@@ -1,4 +1,4 @@
-package pl.chopeks.movies.model
+package pl.chopeks.core.model
 
 import kotlinx.serialization.Serializable
 

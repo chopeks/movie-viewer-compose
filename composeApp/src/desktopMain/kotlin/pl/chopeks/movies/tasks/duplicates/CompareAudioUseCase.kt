@@ -1,22 +1,12 @@
 package pl.chopeks.movies.tasks.duplicates
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.ExecutorCoroutineDispatcher
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.SortOrder
+import kotlinx.coroutines.*
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.upsert
-import pl.chopeks.movies.server.db.AudioToBeCheckedTable
-import pl.chopeks.movies.server.db.DetectedDuplicatesTable
-import pl.chopeks.movies.server.db.MovieTable
+import pl.chopeks.core.database.AudioToBeCheckedTable
+import pl.chopeks.core.database.DetectedDuplicatesTable
+import pl.chopeks.core.database.MovieTable
 import pl.chopeks.movies.server.utils.Python
 import pl.chopeks.movies.tasks.DuplicatesSearchTask
 import pl.chopeks.movies.utils.AppLogger
@@ -44,7 +34,6 @@ object CompareAudioUseCase {
 			return false
 		return true
 	}
-
 
 
 	@OptIn(DelicateCoroutinesApi::class)

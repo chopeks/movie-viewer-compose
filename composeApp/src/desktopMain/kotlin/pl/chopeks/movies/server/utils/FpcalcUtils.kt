@@ -43,10 +43,10 @@ object FpcalcUtils {
 
 		ffmpeg.inputStream.pipe(fpcalc.outputStream)
 
-		val output = fpcalc.inputStream.bufferedReader().readText().trim()
+		val output = fpcalc.inputStream.bufferedReader().use { it.readText() }.trim()
 
-		ffmpeg.waitFor()
-		fpcalc.waitFor()
+		ffmpeg.destroy()
+		fpcalc.destroy()
 
 		if (output.isBlank()) {
 			val duration = getAudioDuration(video)
@@ -66,11 +66,10 @@ object FpcalcUtils {
 			return UIntArray(0)
 		}
 
-		return fingerprintLine
-			.removePrefix("FINGERPRINT=")
-			.split(',')
-			.map { it.toUInt() }
-			.toUIntArray()
+		val fingerprint = fingerprintLine.removePrefix("FINGERPRINT=").split(",")
+		return UIntArray(fingerprint.size) {
+			fingerprint[it].toUInt()
+		}
 	}
 
 	fun getAudioDuration(video: File): Double? {

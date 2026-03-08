@@ -18,18 +18,16 @@ object DuplicatesSearchTask {
 			return
 		isRunning = true
 
-		BGTasks.scope.launch(Dispatchers.IO) {
-			newFixedThreadPoolContext(8, "dup-task").use { pool ->
+		BGTasks.scope.launch(Dispatchers.Default) {
 //				while (true)
-//					if (!CollectFingerprintsUseCase.run(this, pool))
+//					if (!CollectFingerprintsUseCase.run())
 //						break
 				while (true)
-					if (!CompareVideoFramesUseCase.run(this, pool))
+					if (!CompareVideoFramesUseCase.run(this))
 						break
 //				while (true)
 //					if (!CompareAudioTrackBruteForceUseCase.run(this, pool))
 //						break
-			}
 			isRunning = false
 		}
 	}

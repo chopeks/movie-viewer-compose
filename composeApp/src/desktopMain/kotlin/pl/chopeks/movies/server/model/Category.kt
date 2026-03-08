@@ -1,9 +1,9 @@
 package pl.chopeks.movies.server.model
 
-import pl.chopeks.movies.server.db.CategoryTable
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
+import pl.chopeks.core.database.CategoryTable
 
 class Category(id: EntityID<Int>) : IntEntity(id) {
   companion object : IntEntityClass<Category>(CategoryTable)

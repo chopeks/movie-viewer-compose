@@ -4,9 +4,9 @@ import kotlinx.coroutines.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
-import pl.chopeks.movies.server.db.AudioToBeCheckedTable
-import pl.chopeks.movies.server.db.DetectedDuplicatesTable
-import pl.chopeks.movies.server.db.MovieTable
+import pl.chopeks.core.database.AudioToBeCheckedTable
+import pl.chopeks.core.database.DetectedDuplicatesTable
+import pl.chopeks.core.database.MovieTable
 import pl.chopeks.movies.server.utils.Python
 import pl.chopeks.movies.utils.AppLogger
 import java.io.File

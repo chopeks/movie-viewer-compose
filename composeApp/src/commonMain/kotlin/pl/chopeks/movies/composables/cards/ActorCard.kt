@@ -19,7 +19,7 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.size.Size
-import pl.chopeks.movies.model.Actor
+import pl.chopeks.core.model.Actor
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -35,9 +35,9 @@ fun ActorCard(
     Box(Modifier.fillMaxWidth().aspectRatio(0.7f)) {
       val context = LocalPlatformContext.current
       AsyncImage(
-        model = actor.image?.let {
+        model = actor.let {
           ImageRequest.Builder(context)
-            .data(it.let(Base64.Mime::decode))
+            .data(it.imageBytes)
             .size(Size.ORIGINAL)
             .build()
         },

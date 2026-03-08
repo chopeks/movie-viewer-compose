@@ -1,0 +1,86 @@
+package pl.chopeks.core.database
+
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
+import pl.chopeks.core.database.PathsTable.path
+import pl.chopeks.core.database.SchemaVerionsTable.version
+import pl.chopeks.core.utils.getFiles
+import java.io.File
+import java.sql.Connection
+
+object DatabaseHelper {
+	fun clean(db: Database) {
+		transaction(db) {
+			MovieTable.selectAll().forEach {
+				val movieId = it[MovieTable.id]
+				if (!File(it[MovieTable.path]).exists()) {
+					MovieTable.deleteWhere { MovieTable.id eq movieId }
+				}
+			}
+			PathsTable.selectAll().forEach { table ->
+				PathsTable.update({ path eq table[path] }) {
+					it[count] = getFiles(File(table[path])).size
+				}
+			}
+		}
+	}
+
+	internal fun connect(): Database {
+		val db = Database.connect("jdbc:sqlite:${findDatabase().absolutePath}", driver = "org.sqlite.JDBC")
+		TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED
+
+		transaction(db) {
+			SchemaUtils.create(SchemaVerionsTable)
+			if (SchemaVerionsTable.selectAll().count() == 0L) {
+				SchemaVerionsTable.insert {
+					it[version] = 1
+				}
+			}
+			loop@ while (true) {
+				when (SchemaVerionsTable.selectAll().first()[version]) {
+					1 -> {
+						SchemaUtils.create(CategoryTable, ActorTable, MovieTable, MovieCategories, MovieActors, PathsTable)
+						SchemaVerionsTable.inc()
+					}
+
+					2 -> { // add file count for each path
+						SchemaUtils.createMissingTablesAndColumns(PathsTable)
+						SchemaVerionsTable.inc()
+					}
+
+					3 -> { // add file count for each path
+						SchemaUtils.createMissingTablesAndColumns(MoviesToBeCheckedTable, DetectedDuplicatesTable)
+						SchemaVerionsTable.inc()
+					}
+
+					4 -> { // add file count for each path
+						SchemaUtils.createMissingTablesAndColumns(AudioToBeCheckedTable)
+						SchemaVerionsTable.inc()
+					}
+
+					else -> break@loop
+				}
+			}
+		}
+
+		transaction(db) {
+			SchemaUtils.addMissingColumnsStatements(MovieTable).forEach(::exec)
+		}
+
+		return db
+	}
+
+	internal fun findDatabase(): File {
+		val dir = File(System.getProperty("user.dir"))
+		if (File(dir, "movies.sqlite").exists())
+			return File(dir, "movies.sqlite")
+		return File(File(dir, ".."), "movies.sqlite")
+	}
+}

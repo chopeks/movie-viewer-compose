@@ -1,88 +1,91 @@
 package pl.chopeks.movies.server.services
 
-import pl.chopeks.movies.server.db.ActorTable
-import pl.chopeks.movies.server.db.MovieActors
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import pl.chopeks.movies.server.model.Actor
-import pl.chopeks.movies.server.model.ActorPojo
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
-import pl.chopeks.movies.server.db.AudioToBeCheckedTable
+import pl.chopeks.core.database.ActorTable
+import pl.chopeks.core.database.AudioToBeCheckedTable
+import pl.chopeks.core.database.MovieActors
+import pl.chopeks.movies.server.model.Actor
+import pl.chopeks.movies.server.model.ActorPojo
 import pl.chopeks.movies.server.utils.urlImageToBase64
 import pl.chopeks.movies.tasks.DuplicatesSearchTask
 
 fun Route.actorService() {
-  // get all actors
-  get("/actors") {
-    call.respond(transaction { Actor.all().sortedBy { it.name }.map { it.pojo } })
-  }
-  //region crud
-  get("/actor/{id}") {
-    call.respond(transaction { ActorTable.selectAll().where { ActorTable.id eq call.parameters["id"]!!.toInt() } }.firstOrNull()
-      ?: HttpStatusCode.NotFound)
-  }
-  post("/actor") {
-    kotlin.runCatching { call.receiveNullable<ActorPojo>() }.getOrNull()?.let {
-      if (it.image?.startsWith("http") == true) {
-        it.image = it.image?.urlImageToBase64(269, 384)
-      }
-      call.respond(HttpStatusCode.OK, transaction {
-        if (Actor.find { ActorTable.id eq it.id }.firstOrNull() != null) {
-          ActorTable.update({ ActorTable.id eq it.id }) { obj ->
-            obj[name] = it.name
-            obj[image] = it.image
-          }
-        } else {
-          ActorTable.insert { new ->
-            new[name] = it.name
-            new[image] = it.image
-          }
-        }
-        "{}"
-      })
-    }
-  }
-  delete("/actor/{id}") {
-    transaction {
-      ActorTable.deleteWhere { ActorTable.id eq call.parameters["id"]!!.toInt() }
-      MovieActors.deleteWhere { MovieActors.actor eq call.parameters["id"]!!.toInt() }
-    }
-    call.respond(HttpStatusCode.OK, "{}")
-  }
-  //endregion
+	// get all actors
+	get("/actors") {
+		call.respond(transaction { Actor.all().sortedBy { it.name }.map { it.pojo } })
+	}
+	//region crud
+	get("/actor/{id}") {
+		call.respond(
+			transaction { ActorTable.selectAll().where { ActorTable.id eq call.parameters["id"]!!.toInt() } }.firstOrNull()
+				?: HttpStatusCode.NotFound
+		)
+	}
+	post("/actor") {
+		runCatching { call.receiveNullable<ActorPojo>() }.getOrNull()?.let {
+			if (it.image?.startsWith("http") == true) {
+				it.image = it.image?.urlImageToBase64(269, 384)
+			}
+			call.respond(HttpStatusCode.OK, transaction {
+				if (Actor.find { ActorTable.id eq it.id }.firstOrNull() != null) {
+					ActorTable.update({ ActorTable.id eq it.id }) { obj ->
+						obj[name] = it.name
+						obj[image] = it.image
+					}
+				} else {
+					ActorTable.insert { new ->
+						new[name] = it.name
+						new[image] = it.image
+					}
+				}
+				"{}"
+			})
+		}
+	}
 
-  //region binding
-  post("/actors/{actor}/{movie}") {
-    val row = transaction {
-      MovieActors.selectAll().where { (MovieActors.movie eq call.parameters["movie"]!!.toInt()) and (MovieActors.actor eq call.parameters["actor"]!!.toInt()) }
-        .firstOrNull()
-    }
-    if (row != null) {
-      call.respond(HttpStatusCode.Conflict)
-    } else {
-      transaction {
-        MovieActors.insert {
-          it[MovieActors.movie] = call.parameters["movie"]!!.toInt()
-          it[MovieActors.actor] = call.parameters["actor"]!!.toInt()
-        }
-        AudioToBeCheckedTable.upsert {
-          it[AudioToBeCheckedTable.id] = call.parameters["movie"]!!.toInt()
-        }
-      }
-      DuplicatesSearchTask.run()
-      call.respond("{}")
-    }
-  }
-  delete("/actors/{actor}/{movie}") {
-    transaction {
-      MovieActors.deleteWhere { (MovieActors.movie eq call.parameters["movie"]!!.toInt()) and (MovieActors.actor eq call.parameters["actor"]!!.toInt()) }
-    }
-    call.respond("{}")
-  }
-  //endregion
+	delete("/actor/{id}") {
+		transaction {
+			ActorTable.deleteWhere { ActorTable.id eq call.parameters["id"]!!.toInt() }
+			MovieActors.deleteWhere { MovieActors.actor eq call.parameters["id"]!!.toInt() }
+		}
+		call.respond(HttpStatusCode.OK, "{}")
+	}
+	//endregion
+
+	//region binding
+	post("/actors/{actor}/{movie}") {
+		val row = transaction {
+			MovieActors.selectAll().where { (MovieActors.movie eq call.parameters["movie"]!!.toInt()) and (MovieActors.actor eq call.parameters["actor"]!!.toInt()) }
+				.firstOrNull()
+		}
+		if (row != null) {
+			call.respond(HttpStatusCode.Conflict)
+		} else {
+			transaction {
+				MovieActors.insert {
+					it[MovieActors.movie] = call.parameters["movie"]!!.toInt()
+					it[MovieActors.actor] = call.parameters["actor"]!!.toInt()
+				}
+				AudioToBeCheckedTable.upsert {
+					it[AudioToBeCheckedTable.id] = call.parameters["movie"]!!.toInt()
+				}
+			}
+			DuplicatesSearchTask.run()
+			call.respond("{}")
+		}
+	}
+	delete("/actors/{actor}/{movie}") {
+		transaction {
+			MovieActors.deleteWhere { (MovieActors.movie eq call.parameters["movie"]!!.toInt()) and (MovieActors.actor eq call.parameters["actor"]!!.toInt()) }
+		}
+		call.respond("{}")
+	}
+	//endregion
 }
 

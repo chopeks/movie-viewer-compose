@@ -6,13 +6,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import pl.chopeks.movies.bestConcurrencyDispatcher
-import pl.chopeks.movies.internal.webservice.ActorsAPI
 import pl.chopeks.movies.internal.webservice.CategoriesAPI
-import pl.chopeks.movies.model.Actor
-import pl.chopeks.movies.model.Category
+import pl.chopeks.core.model.Category
 
 class CategoriesScreenModel(
   private val webService: CategoriesAPI

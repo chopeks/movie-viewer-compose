@@ -12,4 +12,4 @@ class JVMPlatform : Platform {
 
 actual fun getPlatform(): Platform = JVMPlatform()
 actual fun getStartingScreen(): Screen = PreloadScreen()
-actual fun bestConcurrencyDispatcher(): CoroutineDispatcher = Dispatchers.IO
+actual fun bestConcurrencyDispatcher(): CoroutineDispatcher = Dispatchers.Default

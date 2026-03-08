@@ -2,7 +2,6 @@ package pl.chopeks.movies
 
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
-import androidx.compose.material.lightColors
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -30,7 +29,11 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.*
 import okhttp3.OkHttpClient
+import org.jetbrains.exposed.sql.Database
 import org.kodein.di.*
+import pl.chopeks.core.IImageConverter
+import pl.chopeks.core.data.dataModule
+import pl.chopeks.core.database.databaseModule
 import pl.chopeks.movies.screen.PreloadScreenModel
 import pl.chopeks.movies.screen.HomeScreen
 import pl.chopeks.movies.utils.KeyEventManager
@@ -65,8 +68,10 @@ fun main() = application {
     )
   }
   val di = DI.lazy {
+    import(dataModule)
+    bindProvider<IImageConverter> { ImageConverter() }
     bindSingleton { KeyEventManager() }
-    bindProvider { PreloadScreenModel() }
+    bindProvider { PreloadScreenModel(lazy { instance<Database>() }) }
     bindProvider {
       HttpClient(OkHttp) {
         engine {

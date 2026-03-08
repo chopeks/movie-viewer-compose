@@ -6,24 +6,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import io.github.aakira.napier.Napier
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import pl.chopeks.core.data.repository.IActorRepository
 import pl.chopeks.movies.bestConcurrencyDispatcher
-import pl.chopeks.movies.internal.webservice.ActorsAPI
 import pl.chopeks.movies.internal.webservice.CategoriesAPI
 import pl.chopeks.movies.internal.webservice.VideosAPI
-import pl.chopeks.movies.model.Actor
-import pl.chopeks.movies.model.Category
-import pl.chopeks.movies.model.Video
-import pl.chopeks.movies.model.VideoChips
+import pl.chopeks.core.model.Actor
+import pl.chopeks.core.model.Category
+import pl.chopeks.core.model.Video
+import pl.chopeks.core.model.VideoChips
 import kotlin.math.max
 import kotlin.math.min
 
 class VideosScreenModel(
   private val webService: VideosAPI,
-  private val actorWebService: ActorsAPI,
+  private val actorWebService: IActorRepository,
   private val categoryWebService: CategoriesAPI,
 ) : ScreenModel {
   private var isInitialized = false

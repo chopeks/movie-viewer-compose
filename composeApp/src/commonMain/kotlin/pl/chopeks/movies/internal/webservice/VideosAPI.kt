@@ -3,7 +3,11 @@ package pl.chopeks.movies.internal.webservice
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
-import pl.chopeks.movies.model.*
+import pl.chopeks.core.model.Actor
+import pl.chopeks.core.model.Category
+import pl.chopeks.core.model.Video
+import pl.chopeks.core.model.VideoContainer
+import pl.chopeks.core.model.VideoInfo
 
 class VideosAPI(
   private val httpClient: HttpClient,

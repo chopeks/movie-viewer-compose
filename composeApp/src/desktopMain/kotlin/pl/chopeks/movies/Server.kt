@@ -53,10 +53,3 @@ fun Application.module() {
     settingsService()
   }
 }
-
-fun findDatabase(): File {
-  val dir = File(System.getProperty("user.dir"))
-  if (File(dir, "movies.sqlite").exists())
-    return File(dir, "movies.sqlite")
-  return File(File(dir, ".."), "movies.sqlite")
-}

@@ -6,91 +6,35 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import pl.chopeks.movies.server.db.PathsTable.path
-import pl.chopeks.movies.server.db.SchemaVerionsTable.version
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.exposed.sql.transactions.transaction
-import pl.chopeks.movies.findDatabase
-import pl.chopeks.movies.server.db.*
+import kotlinx.coroutines.withContext
+import org.jetbrains.exposed.sql.Database
+import pl.chopeks.core.database.DatabaseHelper
 import pl.chopeks.movies.server.utils.Python
 import pl.chopeks.movies.server.utils.RefreshUtils
-import pl.chopeks.movies.server.utils.getFiles
-import java.io.File
-import java.sql.Connection
 
-class PreloadScreenModel: ScreenModel {
+class PreloadScreenModel(
+	val database: Lazy<Database>,
+) : ScreenModel {
 
-  var isDone by mutableStateOf(false)
-  val events = mutableStateListOf<String>()
+	var isDone by mutableStateOf(false)
+	val events = mutableStateListOf<String>()
 
-  fun init() {
-    screenModelScope.launch(Dispatchers.IO) {
-      Python.init()
-      Database.connect("jdbc:sqlite:${findDatabase().absolutePath}", driver = "org.sqlite.JDBC")
-      events.add("Database connected.")
-      TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED
-      transaction {
-        SchemaUtils.create(SchemaVerionsTable)
-        if (SchemaVerionsTable.selectAll().count() == 0L) {
-          SchemaVerionsTable.insert {
-            it[version] = 1
-          }
-        }
-        loop@ while (true) {
-          when (SchemaVerionsTable.selectAll().first()[version]) {
-            1 -> {
-              SchemaUtils.create(CategoryTable, ActorTable, MovieTable, MovieCategories, MovieActors, PathsTable)
-              SchemaVerionsTable.inc()
-            }
+	fun init() {
+		screenModelScope.launch {
+			withContext(Dispatchers.IO) {
+				val db = database.value
+				events.add("Database connected, schema updated.")
+				Python.init()
 
-            2 -> { // add file count for each path
-              SchemaUtils.createMissingTablesAndColumns(PathsTable)
-              SchemaVerionsTable.inc()
-            }
+				DatabaseHelper.clean(db)
+				events.add("Removed files purged.")
+			}
 
-            3 -> { // add file count for each path
-              SchemaUtils.createMissingTablesAndColumns(MoviesToBeCheckedTable, DetectedDuplicatesTable)
-              SchemaVerionsTable.inc()
-            }
-
-            4 -> { // add file count for each path
-              SchemaUtils.createMissingTablesAndColumns(AudioToBeCheckedTable)
-              SchemaVerionsTable.inc()
-            }
-
-            else -> break@loop
-          }
-        }
-      }
-
-      transaction {
-        SchemaUtils.addMissingColumnsStatements(MovieTable).forEach(::exec)
-      }
-
-      events.add("Schema updated.")
-      // delete files that were removed
-      transaction {
-        MovieTable.selectAll().forEach {
-          val movieId = it[MovieTable.id]
-          if (!File(it[MovieTable.path]).exists()) {
-            MovieTable.deleteWhere { MovieTable.id eq movieId }
-          }
-        }
-        PathsTable.selectAll().forEach { table ->
-          PathsTable.update({ path eq table[path] }) {
-            it[count] = getFiles(File(table[path])).size
-          }
-        }
-        events.add("Removed files purged.")
-      }
-
-      RefreshUtils.refresh(events::add)
-      events.add("New files added.")
-      isDone = true
-    }
-  }
+			RefreshUtils.refresh(events::add)
+			events.add("New files added.")
+			isDone = true
+		}
+	}
 }
