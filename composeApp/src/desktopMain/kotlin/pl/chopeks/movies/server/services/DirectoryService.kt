@@ -13,7 +13,7 @@ import pl.chopeks.core.database.MovieTable
 import pl.chopeks.core.database.PathsTable
 import pl.chopeks.core.database.PathsTable.count
 import pl.chopeks.core.database.PathsTable.path
-import pl.chopeks.movies.server.model.PathPojo
+import pl.chopeks.core.model.Path
 import pl.chopeks.movies.server.utils.RefreshUtils
 import pl.chopeks.core.utils.getFiles
 import java.io.File
@@ -22,11 +22,11 @@ import kotlin.concurrent.thread
 fun Route.directoryService() {
 	get("/directories") {
 		call.respond(transaction {
-			PathsTable.selectAll().map { PathPojo(it[path], it[count]) }
+			PathsTable.selectAll().map { Path(it[path], it[count]) }
 		})
 	}
 	post("/directory") {
-		kotlin.runCatching { call.receiveNullable<PathPojo>() }.getOrNull()?.let { json ->
+		kotlin.runCatching { call.receiveNullable<Path>() }.getOrNull()?.let { json ->
 			transaction {
 				try {
 					PathsTable.insert {
@@ -41,7 +41,7 @@ fun Route.directoryService() {
 		thread { RefreshUtils.refresh {} }
 	}
 	post("/directory/remove") {
-		kotlin.runCatching { call.receiveNullable<PathPojo>() }.getOrNull()?.let { json ->
+		kotlin.runCatching { call.receiveNullable<Path>() }.getOrNull()?.let { json ->
 			transaction {
 				PathsTable.deleteWhere { PathsTable.path eq json.path }
 				MovieTable.deleteWhere { MovieTable.path like "${json.path}%" }

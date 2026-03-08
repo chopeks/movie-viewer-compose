@@ -1,15 +1,15 @@
-package pl.chopeks.movies.server.utils
+package pl.chopeks.core.database.cache
 
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import pl.chopeks.movies.server.model.SettingsPojo
+import pl.chopeks.core.model.Settings
 import java.io.File
 import java.util.*
 
 
 object Cache {
   private val settingsFile = findCache()
-  private var settingsPojo: SettingsPojo? = loadSettings()
+  private var settingsPojo: Settings? = loadSettings()
 
   private val defaultMoviePlayer = when (OsCheck.operatingSystemType) {
     OsCheck.OSType.Windows -> "explorer"
@@ -25,7 +25,7 @@ object Cache {
     else -> "sh"
   }
 
-  private fun loadSettings(): SettingsPojo? {
+  private fun loadSettings(): Settings? {
     return if (settingsFile.exists()) {
       val jsonString = settingsFile.readText()
       Json.decodeFromString(jsonString)
@@ -34,7 +34,7 @@ object Cache {
     }
   }
 
-  private fun saveSettings(settings: SettingsPojo) {
+  private fun saveSettings(settings: Settings) {
     val jsonString = Json.encodeToString(settings)
     settingsFile.writeText(jsonString)
   }
@@ -42,19 +42,19 @@ object Cache {
   var moviePlayer: String
     get() = settingsPojo?.moviePlayer ?: defaultMoviePlayer
     set(value) {
-      settingsPojo = settingsPojo?.copy(moviePlayer = value) ?: SettingsPojo(defaultBrowser, value)
+      settingsPojo = settingsPojo?.copy(moviePlayer = value) ?: Settings(defaultBrowser, value)
       saveSettings(settingsPojo!!)
     }
 
   var browser: String
     get() = settingsPojo?.browser ?: defaultBrowser
     set(value) {
-      settingsPojo = settingsPojo?.copy(browser = value) ?: SettingsPojo(value, defaultMoviePlayer)
+      settingsPojo = settingsPojo?.copy(browser = value) ?: Settings(value, defaultMoviePlayer)
       saveSettings(settingsPojo!!)
     }
 
-  var settings: SettingsPojo
-    get() = settingsPojo ?: SettingsPojo(defaultBrowser, defaultMoviePlayer)
+  var settings: Settings
+    get() = settingsPojo ?: Settings(defaultBrowser, defaultMoviePlayer)
     set(value) {
       settingsPojo = value
       saveSettings(value)
