@@ -17,7 +17,7 @@ class SettingsRepository(
 		settingsDataSource.set(settings)
 	}
 
-	override suspend fun getPathes(): List<Path> {
+	override suspend fun getPaths(): List<Path> {
 		return directoriesDataSource.getPathes()
 	}
 

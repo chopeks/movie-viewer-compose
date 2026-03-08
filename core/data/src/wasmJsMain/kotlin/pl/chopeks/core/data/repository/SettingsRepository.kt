@@ -27,7 +27,7 @@ class SettingsRepository(
 		post("settings", settings).body<Any>()
 	}
 
-	override suspend fun getPathes(): List<Path> {
+	override suspend fun getPaths(): List<Path> {
 		return get("directories").body<List<Path>>()
 	}
 

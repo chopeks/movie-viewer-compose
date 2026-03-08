@@ -22,7 +22,7 @@ class SettingsScreenModel(
     screenModelScope.launch(bestConcurrencyDispatcher()) {
       settings = repository.getSettings()
       pathes.clear()
-      pathes.addAll(repository.getPathes())
+      pathes.addAll(repository.getPaths())
     }
   }
 
