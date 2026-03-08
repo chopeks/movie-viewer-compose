@@ -1,6 +1,9 @@
 package pl.chopeks.movies.screen
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
@@ -22,10 +25,12 @@ import kotlinx.coroutines.launch
 import org.kodein.di.compose.localDI
 import org.kodein.di.direct
 import org.kodein.di.instance
+import pl.chopeks.core.model.Actor
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.cards.CategoryCard
 import pl.chopeks.movies.internal.screenmodel.CategoriesScreenModel
 import pl.chopeks.core.model.Category
+import pl.chopeks.movies.composables.cards.ActorCard
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
 
@@ -62,25 +67,25 @@ class CategoriesScreen : Screen {
 				)
 			}
 		) { scope ->
-			Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-				val items = screenModel.filteredCategories.chunked(6)
-				items.forEach { chunk ->
-					Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-						chunk.forEach { category ->
-							Box(modifier = Modifier.weight(1f)) {
-								CategoryCard(category, onClick = {
-									scope.launch {
-										navigator?.replace(VideosScreen(category = it))
-									}
-								}, onEditClick = {
-									editDialog.value = it
-								})
+			val categories by screenModel.filteredCategories.collectAsState()
+			LazyVerticalGrid(
+				columns = GridCells.Fixed(6),
+				modifier = Modifier.fillMaxSize(),
+				horizontalArrangement = Arrangement.spacedBy(2.dp),
+				verticalArrangement = Arrangement.spacedBy(2.dp)
+			) {
+				items(items = categories, key = Category::id) { category ->
+					CategoryCard(
+						category = category,
+						onClick = {
+							scope.launch {
+								navigator?.replace(VideosScreen(category = it))
 							}
+						},
+						onEditClick = {
+							editDialog.value = it
 						}
-						repeat(6 - chunk.size) {
-							Spacer(Modifier.weight(1f))
-						}
-					}
+					)
 				}
 			}
 		}
@@ -90,9 +95,6 @@ class CategoriesScreen : Screen {
 
 		LaunchedEffect(Unit) {
 			screenModel.getCategories()
-		}
-		LaunchedEffect(screenModel.searchFilter) {
-			screenModel.filter()
 		}
 	}
 

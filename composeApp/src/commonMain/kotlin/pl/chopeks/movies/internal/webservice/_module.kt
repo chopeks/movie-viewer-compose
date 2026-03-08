@@ -5,7 +5,6 @@ import org.kodein.di.bindProvider
 import org.kodein.di.instance
 
 val webServiceModule; get() = DI.Module(name = "webService") {
-  bindProvider { CategoriesAPI(instance()) }
   bindProvider { VideosAPI(instance()) }
   bindProvider { DuplicatesAPI(instance()) }
 }

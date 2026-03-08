@@ -9,8 +9,8 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pl.chopeks.core.data.repository.IActorRepository
+import pl.chopeks.core.data.repository.ICategoryRepository
 import pl.chopeks.movies.bestConcurrencyDispatcher
-import pl.chopeks.movies.internal.webservice.CategoriesAPI
 import pl.chopeks.movies.internal.webservice.VideosAPI
 import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Category
@@ -21,8 +21,8 @@ import kotlin.math.min
 
 class VideosScreenModel(
   private val webService: VideosAPI,
-  private val actorWebService: IActorRepository,
-  private val categoryWebService: CategoriesAPI,
+  private val actorRepository: IActorRepository,
+  private val categoryRepository: ICategoryRepository,
 ) : ScreenModel {
   private var isInitialized = false
   var isBusy = false
@@ -41,8 +41,8 @@ class VideosScreenModel(
 
   fun init() {
     screenModelScope.launch(bestConcurrencyDispatcher()) {
-      actors.addAll(actorWebService.getActors())
-      categories.addAll(categoryWebService.getCategories())
+      actors.addAll(actorRepository.getActors())
+      categories.addAll(categoryRepository.getCategories())
       isInitialized = true
       getVideos()
     }
@@ -98,9 +98,9 @@ class VideosScreenModel(
     screenModelScope.launch(bestConcurrencyDispatcher()) {
       val index = videos.indexOf(video)
       if (video.chips?.actors?.any { it.id == actor.id } == true) {
-        actorWebService.unbind(actor, video)
+        actorRepository.unbind(actor, video)
       } else {
-        actorWebService.bind(actor, video)
+        actorRepository.bind(actor, video)
       }
       val info = webService.getInfo(video)
       videos[index] = video.copy(chips = VideoChips(
@@ -114,9 +114,9 @@ class VideosScreenModel(
     screenModelScope.launch(bestConcurrencyDispatcher()) {
       val index = videos.indexOf(video)
       if (video.chips?.categories?.any { it.id == category.id } == true) {
-        categoryWebService.unbind(category, video)
+        categoryRepository.unbind(category, video)
       } else {
-        categoryWebService.bind(category, video)
+        categoryRepository.bind(category, video)
       }
       val info = webService.getInfo(video)
       videos[index] = video.copy(chips = VideoChips(
@@ -144,7 +144,7 @@ class VideosScreenModel(
   override fun onDispose() {
     super.onDispose()
     webService.close()
-    actorWebService.close()
-    categoryWebService.close()
+    actorRepository.close()
+    categoryRepository.close()
   }
 }

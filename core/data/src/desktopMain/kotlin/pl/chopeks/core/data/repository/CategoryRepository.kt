@@ -1,0 +1,37 @@
+package pl.chopeks.core.data.repository
+
+import pl.chopeks.core.database.datasource.CategoriesDataSource
+import pl.chopeks.core.model.Category
+import pl.chopeks.core.model.Video
+
+class CategoryRepository(
+	private val dataSource: CategoriesDataSource,
+) : ICategoryRepository {
+	override suspend fun getCategories(): List<Category> {
+		return dataSource.getCategories()
+	}
+
+	override suspend fun getImage(category: Category): String? {
+		return dataSource.getImage(category)
+	}
+
+	override suspend fun bind(category: Category, video: Video) {
+		dataSource.bind(category, video)
+	}
+
+	override suspend fun unbind(category: Category, video: Video) {
+		dataSource.unbind(category, video)
+	}
+
+	override suspend fun add(name: String, url: String) {
+		dataSource.add(name, url)
+	}
+
+	override suspend fun edit(id: Int, name: String, url: String) {
+		dataSource.edit(id, name, url)
+	}
+
+	override fun close() {
+		/* no-op */
+	}
+}

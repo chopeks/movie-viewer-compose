@@ -8,6 +8,8 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import pl.chopeks.core.database.ActorTable
 import pl.chopeks.core.database.AudioToBeCheckedTable
 import pl.chopeks.core.database.MovieActors
+import pl.chopeks.core.database.model.ActorEntity
+import pl.chopeks.core.database.model.CategoryEntity
 import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Video
 
@@ -16,25 +18,15 @@ class ActorLocalDataSource(
 ) {
 	suspend fun getActors(): List<Actor> {
 		return withContext(Dispatchers.IO) {
-			transaction(db) {
-				ActorTable.select(ActorTable.id, ActorTable.name).sortedBy { it[ActorTable.name] }.map {
-					Actor(
-						id = it[ActorTable.id].value,
-						name = it[ActorTable.name]
-					)
-				}
-			}
+			transaction(db) { ActorEntity.all().sortedBy { it.name.lowercase() }.map { it.pojo } }
 		}
 	}
 
 	suspend fun getImage(actor: Actor): String? {
 		return withContext(Dispatchers.IO) {
 			transaction(db) {
-				ActorTable.select(ActorTable.id, ActorTable.image)
-					.where { ActorTable.id eq actor.id }
-					.firstOrNull()
-					?.get(ActorTable.image)
-			}?.substringAfter(",")
+				ActorEntity.findById(actor.id)?.image?.substringAfter(",")
+			}
 		}
 	}
 
@@ -71,7 +63,7 @@ class ActorLocalDataSource(
 		transaction(db) {
 			ActorTable.upsert(ActorTable.id, ActorTable.name, ActorTable.image) { obj ->
 				obj[ActorTable.name] = name
-				obj[image] = url // TODO url to base64?
+				obj[ActorTable.image] = url
 			}
 		}
 	}
@@ -81,12 +73,12 @@ class ActorLocalDataSource(
 			if (ActorTable.selectAll().where { ActorTable.id eq id }.firstOrNull() != null) {
 				ActorTable.update({ ActorTable.id eq id }) { obj ->
 					obj[ActorTable.name] = name
-					obj[ActorTable.image] = url // TODO url to base64?
+					obj[ActorTable.image] = url
 				}
 			} else {
 				ActorTable.insert { new ->
 					new[ActorTable.name] = name
-					new[ActorTable.image] = url // TODO url to base64?
+					new[ActorTable.image] = url
 				}
 			}
 		}
