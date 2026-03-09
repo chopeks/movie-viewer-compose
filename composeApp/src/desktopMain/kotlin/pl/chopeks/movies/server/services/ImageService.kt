@@ -5,10 +5,14 @@ import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
+import org.kodein.di.DI
+import org.kodein.di.instance
+import pl.chopeks.core.data.repository.IActorRepository
+import pl.chopeks.core.data.repository.ICategoryRepository
 import pl.chopeks.core.database.MovieTable
 import pl.chopeks.core.database.MovieTable.thumbnail
-import pl.chopeks.movies.server.model.Actor
-import pl.chopeks.movies.server.model.Category
+import pl.chopeks.core.model.Actor
+import pl.chopeks.core.model.Category
 import pl.chopeks.movies.server.utils.makeScreenshot
 import pl.chopeks.movies.server.utils.normalizeImage
 import java.io.ByteArrayOutputStream
@@ -16,13 +20,18 @@ import java.io.File
 import java.util.*
 import javax.imageio.ImageIO
 
-fun Route.imageService() {
+fun Route.imageService(di: DI) {
+	val actorRepository by di.instance<IActorRepository>()
+	val categoryRepository by di.instance<ICategoryRepository>()
+
 	get("/image/category/{id}") {
-		call.respond(transaction { arrayOf(Category.findById(call.parameters["id"]!!.toInt())?.image) })
+		call.respond(arrayOf(categoryRepository.getImage(Category(call.parameters["id"]!!.toInt()))))
 	}
+	
 	get("/image/actor/{id}") {
-		call.respond(transaction { arrayOf(Actor.findById(call.parameters["id"]!!.toInt())?.image) })
+		call.respond(arrayOf(actorRepository.getImage(Actor(call.parameters["id"]!!.toInt()))))
 	}
+
 	get("/image/movie/{id}") {
 		val image = transaction {
 			MovieTable.selectAll().where { MovieTable.id eq call.parameters["id"]!!.toInt() }.firstOrNull().also {

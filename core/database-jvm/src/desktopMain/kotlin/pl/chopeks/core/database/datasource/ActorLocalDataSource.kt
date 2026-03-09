@@ -9,7 +9,6 @@ import pl.chopeks.core.database.ActorTable
 import pl.chopeks.core.database.AudioToBeCheckedTable
 import pl.chopeks.core.database.MovieActors
 import pl.chopeks.core.database.model.ActorEntity
-import pl.chopeks.core.database.model.CategoryEntity
 import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Video
 
@@ -59,28 +58,34 @@ class ActorLocalDataSource(
 		}
 	}
 
-	suspend fun add(name: String, url: String) {
-		transaction(db) {
-			ActorTable.upsert(ActorTable.id, ActorTable.name, ActorTable.image) { obj ->
-				obj[ActorTable.name] = name
-				obj[ActorTable.image] = url
+	suspend fun edit(id: Int, name: String, url: String?) {
+		withContext(Dispatchers.IO) {
+			transaction(db) {
+				if (ActorTable.selectAll().where { ActorTable.id eq id }.firstOrNull() != null) {
+					ActorTable.update({ ActorTable.id eq id }) { obj ->
+						obj[ActorTable.name] = name
+						obj[ActorTable.image] = url?.ifBlank { null }
+					}
+				} else {
+					ActorTable.insert { new ->
+						new[ActorTable.name] = name
+						new[ActorTable.image] = url?.ifBlank { null }
+					}
+				}
 			}
 		}
 	}
 
-	suspend fun edit(id: Int, name: String, url: String) {
+	fun delete(actor: Actor) {
 		transaction(db) {
-			if (ActorTable.selectAll().where { ActorTable.id eq id }.firstOrNull() != null) {
-				ActorTable.update({ ActorTable.id eq id }) { obj ->
-					obj[ActorTable.name] = name
-					obj[ActorTable.image] = url
-				}
-			} else {
-				ActorTable.insert { new ->
-					new[ActorTable.name] = name
-					new[ActorTable.image] = url
-				}
-			}
+			ActorTable.deleteWhere { ActorTable.id eq actor.id }
+			MovieActors.deleteWhere { MovieActors.actor eq actor.id }
 		}
+	}
+
+	fun getActor(id: Int): Actor? {
+		return transaction(db) {
+			ActorTable.selectAll().where { ActorTable.id eq id }.map { Actor(it[ActorTable.id].value, it[ActorTable.name]) }
+		}.firstOrNull()
 	}
 }

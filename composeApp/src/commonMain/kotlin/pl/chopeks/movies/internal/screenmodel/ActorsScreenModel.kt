@@ -60,6 +60,13 @@ class ActorsScreenModel(
 		}
 	}
 
+	fun remove(actor: Actor) {
+		screenModelScope.launch(bestConcurrencyDispatcher()) {
+			repository.delete(actor)
+			getActors()
+		}
+	}
+
 	@OptIn(ExperimentalEncodingApi::class)
 	private fun updateActorImage(id: Int, image: String?) {
 		val decoded = image?.let { Base64.Mime.decode(it) }

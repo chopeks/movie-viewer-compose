@@ -24,7 +24,6 @@ import io.ktor.client.engine.okhttp.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.*
@@ -33,86 +32,85 @@ import org.jetbrains.exposed.sql.Database
 import org.kodein.di.*
 import pl.chopeks.core.IImageConverter
 import pl.chopeks.core.data.dataModule
-import pl.chopeks.core.database.databaseModule
-import pl.chopeks.movies.screen.PreloadScreenModel
 import pl.chopeks.movies.screen.HomeScreen
+import pl.chopeks.movies.screen.PreloadScreenModel
 import pl.chopeks.movies.utils.KeyEventManager
 import java.awt.Toolkit
 
 object BGTasks {
-  val job = Job()
-  val scope = CoroutineScope(job)
+	val job = Job()
+	val scope = CoroutineScope(job)
 }
 
 fun getAsyncImageLoader(context: PlatformContext) =
-  ImageLoader.Builder(context)
-    .crossfade(true)
-    .memoryCachePolicy(CachePolicy.ENABLED).memoryCache {
-      MemoryCache.Builder().maxSizeBytes(2147483648).strongReferencesEnabled(true).build()
-    }
-    .components {
-      add(OkHttpNetworkFetcherFactory(callFactory = { OkHttpClient() }))
-    }
+	ImageLoader.Builder(context)
+		.crossfade(true)
+		.memoryCachePolicy(CachePolicy.ENABLED).memoryCache {
+			MemoryCache.Builder().maxSizeBytes(2147483648).strongReferencesEnabled(true).build()
+		}
+		.components {
+			add(OkHttpNetworkFetcherFactory(callFactory = { OkHttpClient() }))
+		}
 //    .logger(DebugLogger())
-    .build()
+		.build()
 
 @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 fun main() = application {
-  val screenSize = Toolkit.getDefaultToolkit().screenSize
-  val density = LocalDensity.current.density
-  val windowState = rememberWindowState(WindowPlacement.Maximized).apply {
-    isMinimized = false
-    size = DpSize(
-      width = ((screenSize.width - 60) / density).dp,
-      height = ((screenSize.height - 60) / density).dp
-    )
-  }
-  val di = DI.lazy {
-    import(dataModule)
-    bindProvider<IImageConverter> { ImageConverter() }
-    bindSingleton { KeyEventManager() }
-    bindProvider { PreloadScreenModel(lazy { instance<Database>() }) }
-    bindProvider {
-      HttpClient(OkHttp) {
-        engine {
-          config {
-            followRedirects(true)
-          }
-        }
-        expectSuccess = true
-        install(ContentNegotiation) {
-          json()
-        }
-        install(Logging)
-      }
-    }
-    // add platform specific stuff here
-  }
+	val screenSize = Toolkit.getDefaultToolkit().screenSize
+	val density = LocalDensity.current.density
+	val windowState = rememberWindowState(WindowPlacement.Maximized).apply {
+		isMinimized = false
+		size = DpSize(
+			width = ((screenSize.width - 60) / density).dp,
+			height = ((screenSize.height - 60) / density).dp
+		)
+	}
+	val di = DI.lazy {
+		import(dataModule)
+		bindProvider<IImageConverter> { ImageConverter() }
+		bindSingleton { KeyEventManager() }
+		bindProvider { PreloadScreenModel(lazy { instance<Database>() }) }
+		bindProvider {
+			HttpClient(OkHttp) {
+				engine {
+					config {
+						followRedirects(true)
+					}
+				}
+				expectSuccess = true
+				install(ContentNegotiation) {
+					json()
+				}
+				install(Logging)
+			}
+		}
+		// add platform specific stuff here
+	}
 
-  Napier.base(DebugAntilog())
+	Napier.base(DebugAntilog())
 
-  setSingletonImageLoaderFactory { context ->
-    getAsyncImageLoader(context)
-  }
+	setSingletonImageLoaderFactory { context ->
+		getAsyncImageLoader(context)
+	}
 
-  BGTasks.scope.launch(newSingleThreadContext("server-thread")) {
-    embeddedServer(Netty, port = 15551, module = Application::module).start(wait = true)
-  }
+	BGTasks.scope.launch(newSingleThreadContext("server-thread")) {
+		embeddedServer(Netty, port = 15551, module = { module(di) }).start(wait = true)
+	}
 
-  Window(
-    onCloseRequest = {
-      BGTasks.job.cancel()
-      BGTasks.scope.cancel()
-      exitApplication()
-    },
-    state = windowState,
-    title = "Movie Viewer",
-    onKeyEvent = {
-      di.direct.instance<KeyEventManager>().propagateKeyEvent(it)
-    }
-  ) {
-    MaterialTheme(colors = darkColors()) {
-      Navigator(HomeScreen(di))
-    }
-  }
+	Window(
+		onCloseRequest = {
+			BGTasks.job.cancel()
+			BGTasks.scope.cancel()
+			exitApplication()
+		},
+		state = windowState,
+		title = "Movie Viewer",
+		onKeyEvent = {
+			di.direct.instance<KeyEventManager>().propagateKeyEvent(it)
+		}
+	) {
+		MaterialTheme(colors = darkColors()) {
+			Navigator(HomeScreen(di))
+		}
+	}
 }

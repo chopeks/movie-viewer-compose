@@ -25,20 +25,20 @@ class DirectoriesLocalDataSource(
 
 	fun remove(path: Path) {
 		transaction(db) {
-			try {
-				PathsTable.insert {
-					it[PathsTable.path] = path.path
-					it[count] = getFiles(File(path.path)).size
-				}
-			} catch (e: Throwable) {
-			}
+			PathsTable.deleteWhere { PathsTable.path eq path.path }
+			MovieTable.deleteWhere { MovieTable.path like "${path}%" }
 		}
 	}
 
 	fun add(path: String) {
 		transaction(db) {
-			PathsTable.deleteWhere { PathsTable.path eq path }
-			MovieTable.deleteWhere { MovieTable.path like "${path}%" }
+			try {
+				PathsTable.insert {
+					it[PathsTable.path] = path
+					it[count] = getFiles(File(path)).size
+				}
+			} catch (e: Throwable) {
+			}
 		}
 	}
 }

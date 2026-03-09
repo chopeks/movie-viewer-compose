@@ -6,9 +6,13 @@ import pl.chopeks.core.model.Video
 
 class ActorRepository(
 	private val dataSource: ActorLocalDataSource
-): IActorRepository {
+) : IActorRepository {
 	override suspend fun getActors(): List<Actor> {
 		return dataSource.getActors()
+	}
+
+	override suspend fun getActor(id: Int): Actor? {
+		return dataSource.getActor(id)
 	}
 
 	override suspend fun getImage(actor: Actor): String? {
@@ -23,12 +27,16 @@ class ActorRepository(
 		dataSource.unbind(actor, video)
 	}
 
-	override suspend fun add(name: String, url: String) {
-		dataSource.add(name, url)
+	override suspend fun add(name: String, url: String?) {
+		dataSource.edit(0, name, url)
 	}
 
-	override suspend fun edit(id: Int, name: String, url: String) {
+	override suspend fun edit(id: Int, name: String, url: String?) {
 		dataSource.edit(id, name, url)
+	}
+
+	override suspend fun delete(actor: Actor) {
+		dataSource.delete(actor)
 	}
 
 	override fun close() {

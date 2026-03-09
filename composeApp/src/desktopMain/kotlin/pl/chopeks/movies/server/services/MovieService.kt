@@ -4,15 +4,22 @@ import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.kodein.di.DI
+import org.kodein.di.instance
+import pl.chopeks.core.data.repository.IVideoRepository
 import pl.chopeks.core.database.*
 import pl.chopeks.core.database.cache.Cache
+import pl.chopeks.core.model.Actor
+import pl.chopeks.core.model.Category
+import pl.chopeks.core.model.Video
 import pl.chopeks.movies.server.model.MoviePojo
 import pl.chopeks.movies.server.utils.runCommand
 import java.io.File
 
-fun Route.movieService() {
+fun Route.movieService(di: DI) {
+	val repository by di.instance<IVideoRepository>()
+
 	get("/movie/play/{id}") {
 		transaction {
 			MovieTable.selectAll().where { MovieTable.id eq (call.parameters["id"]!!.toInt()) }.limit(1).firstOrNull().also {
@@ -24,95 +31,36 @@ fun Route.movieService() {
 		call.respond(HttpStatusCode.OK)
 	}
 	get("/movie/{from}/{count}") {
-		call.respond(transaction {
-			val categories = call.request.queryParameters["category"]
-			val actors = call.request.queryParameters["actor"]
+		val categories = call.request.queryParameters["category"]?.split(",")?.map { it.toIntOrNull() }?.filterNotNull()
+		val actors = call.request.queryParameters["actor"]?.split(",")?.map { it.toIntOrNull() }?.filterNotNull()
+		val filter = call.request.queryParameters["filter"]?.toIntOrNull() ?: 0
+		val count = call.request.queryParameters["count"]?.toIntOrNull() ?: 15
+		val from = call.request.queryParameters["from"]?.toLongOrNull() ?: 0L
 
-			var columnCategory: Column<*> = MovieTable.id
-			val viaCategory = when (categories) {
-				null, "null" -> MovieTable.select(MovieTable.id)
-				"0" -> MovieTable
-					.join(MovieCategories, JoinType.LEFT, MovieTable.id, MovieCategories.movie)
-					.select(MovieTable.id)
-					.where { MovieCategories.category.isNull() }
-
-				else -> categories.split(",").map { it.toInt() }.let {
-					columnCategory = MovieCategories.movie
-					MovieCategories
-						.select(MovieCategories.movie)
-						.where { MovieCategories.category inList it }
-						.groupBy(MovieCategories.movie)
-						.having { MovieCategories.movie.count() eq it.size.toLong() }
-				}
-			}.alias("q1")
-
-			var columnActor: Column<*> = MovieTable.id
-			val viaActor = when (actors) {
-				null, "null" -> MovieTable.select(MovieTable.id)
-				"0" -> MovieTable
-					.join(MovieActors, JoinType.LEFT, MovieTable.id, MovieActors.movie)
-					.select(MovieTable.id)
-					.where { MovieActors.actor.isNull() }
-
-				else -> actors.split(",").map { it.toInt() }.let {
-					columnActor = MovieActors.movie
-					MovieActors
-						.select(MovieActors.movie)
-						.where { MovieActors.actor inList it }
-						.groupBy(MovieActors.movie)
-						.having { MovieActors.movie.count() eq it.size.toLong() }
-				}
-			}.alias("q2")
-
-			mapOf(
-				"movies" to Join(MovieTable)
-					.join(viaActor, JoinType.LEFT, onColumn = MovieTable.id, otherColumn = viaActor[columnActor])
-					.join(viaCategory, JoinType.LEFT, onColumn = MovieTable.id, otherColumn = viaCategory[columnCategory])
-					.selectAll().where { viaActor[columnActor].isNotNull() and viaCategory[columnCategory].isNotNull() }
-					.groupBy(MovieTable.id)
-					.apply {
-						when (call.request.queryParameters["filter"]?.toIntOrNull()) {
-							1 -> orderBy(MovieTable.duration, SortOrder.DESC)
-							else -> orderBy(MovieTable.id, SortOrder.DESC)
-						}
-					}
-					.limit(call.parameters["count"]!!.toInt())
-					.offset(call.parameters["from"]!!.toLong())
-					.map { MoviePojo(it[MovieTable.id].value, it[MovieTable.name], it[MovieTable.duration]) },
-				"count" to Join(MovieTable)
-					.join(viaActor, JoinType.LEFT, MovieTable.id, viaActor[columnActor])
-					.join(viaCategory, JoinType.LEFT, MovieTable.id, viaCategory[columnCategory])
-					.selectAll().where { viaActor[columnActor].isNotNull() and viaCategory[columnCategory].isNotNull() }
-					.groupBy(MovieTable.id)
-					.orderBy(MovieTable.id, SortOrder.ASC)
-					.count()
-			)
-		})
+		call.respond(
+			HttpStatusCode.OK, repository.getVideos(
+				from,
+				actors = when {
+					actors == null -> emptyList()
+					actors.contains(0) -> listOf(Actor(0, ""))
+					else -> actors.map { Actor(it, "") }
+				},
+				categories = when {
+					categories == null -> emptyList()
+					categories.contains(0) -> listOf(Category(0, ""))
+					else -> categories.map { Category(it, "") }
+				},
+				filter, count)
+		)
 	}
 	get("/movie/{id}") {
-		call.respond(transaction {
-			mapOf<String, Any>(
-				"categories" to MovieCategories.selectAll().where { MovieCategories.movie eq call.parameters["id"]!!.toInt() }
-					.map { it[MovieCategories.category].toString() },
-				"actors" to MovieActors.selectAll().where { MovieActors.movie eq call.parameters["id"]!!.toInt() }
-					.map { it[MovieActors.actor].toString() }
-			)
-		})
+		call.parameters["id"]?.toInt()!!.also { id ->
+			call.respond(HttpStatusCode.OK, repository.getInfo(Video(id, "", null)))
+		}
 	}
 	delete("/movie/{id}") {
-		call.parameters["id"]?.toIntOrNull()?.also { id ->
-			val path = transaction {
-				val ret = MovieTable.selectAll().where { MovieTable.id eq id }.first()[MovieTable.path]
-				MovieTable.deleteWhere { MovieTable.id eq id }
-				MovieActors.deleteWhere { MovieActors.movie eq id }
-				MovieCategories.deleteWhere { MovieCategories.movie eq id }
-				DetectedDuplicatesTable.deleteWhere { DetectedDuplicatesTable.movie eq id }
-				DetectedDuplicatesTable.deleteWhere { DetectedDuplicatesTable.otherMovie eq id }
-				MoviesToBeCheckedTable.deleteWhere { MoviesToBeCheckedTable.id eq id }
-				AudioToBeCheckedTable.deleteWhere { AudioToBeCheckedTable.id eq id }
-				ret
-			}
-			File(path).delete()
+		call.parameters["id"]?.toInt()!!.also { id ->
+			repository.remove(Video(id, "", null))
 			call.respond("{}")
 		}
 	}

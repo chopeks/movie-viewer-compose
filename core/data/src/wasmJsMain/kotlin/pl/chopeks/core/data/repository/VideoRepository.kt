@@ -12,7 +12,7 @@ class VideoRepository(
 	private suspend fun get(path: String) = httpClient.get(Backend.URL + path)
 	private suspend fun delete(path: String) = httpClient.delete(Backend.URL + path) {}
 
-	override suspend fun getVideos(from: Long, actors: List<Actor>, categories: List<Category>, filter: Int): VideoContainer {
+	override suspend fun getVideos(from: Long, actors: List<Actor>, categories: List<Category>, filter: Int, count: Int): VideoContainer {
 		var path = "movie/${from * 15}/15?"
 		path += if (categories.isNotEmpty())
 			"&category=${categories.joinToString(",") { it.id.toString() }}"

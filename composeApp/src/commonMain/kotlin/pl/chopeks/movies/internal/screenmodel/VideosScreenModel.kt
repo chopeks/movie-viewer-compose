@@ -4,9 +4,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pl.chopeks.core.data.repository.IActorRepository
@@ -27,8 +27,13 @@ class VideosScreenModel(
 	private val actorRepository: IActorRepository,
 	private val categoryRepository: ICategoryRepository,
 ) : ScreenModel {
+	private data class FilterState(
+		val actors: List<Actor>,
+		val categories: List<Category>,
+		val filter: Int
+	)
+
 	private var isInitialized = false
-	private var job: Job? = null
 	var isBusy = false
 		private set
 
@@ -44,18 +49,31 @@ class VideosScreenModel(
 	val selectedCategories = mutableStateListOf<Category>()
 
 	fun init() {
+		if (isInitialized)
+			return
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
 			actors.addAll(actorRepository.getActors())
 			categories.addAll(categoryRepository.getCategories())
 			isInitialized = true
+			
 			getVideos()
+
+			snapshotFlow {
+				FilterState(
+					actors = selectedActors.toList(),
+					categories = selectedCategories.toList(),
+					filter = filter
+				)
+			}.collect {
+				changePage(0)
+			}
 		}
 	}
 
 	fun changePage(page: Int) {
 		if (isBusy)
 			return
-		if (videos.size == 0)
+		if (videos.isEmpty())
 			return
 		videos.clear()
 		val newPage = min(count, max(0, currentPage + page))
@@ -68,7 +86,7 @@ class VideosScreenModel(
 			return
 		isBusy = true
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
-			val data = videoRepository.getVideos(currentPage, selectedActors, selectedCategories, filter)
+			val data = videoRepository.getVideos(currentPage, selectedActors, selectedCategories, filter, 15)
 			videos.clear()
 			videos.addAll(data.movies)
 			count = (data.count - 1) / 15
@@ -87,7 +105,7 @@ class VideosScreenModel(
 					)
 				}
 			}
-			delay(500)
+			delay(200)
 			isBusy = false
 		}
 	}

@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -161,18 +159,26 @@ class ActorsScreen : Screen {
 					}
 				},
 				confirmButton = {
-					Button(onClick = {
-						if (name.isNotBlank()) {
-							screenModel.edit(actor.value!!, name, url)
+					Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+						Button(onClick = {
+							screenModel.remove(actor.value!!)
 							actor.value = null
+						}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+							Text("Remove", color = Color.Red)
 						}
-					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-						Text("Confirm", color = Color.White)
-					}
-				},
-				dismissButton = {
-					Button(onClick = { actor.value = null }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-						Text("Cancel", color = Color.LightGray)
+
+						Button(onClick = { actor.value = null }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+							Text("Cancel", color = Color.LightGray)
+						}
+
+						Button(onClick = {
+							if (name.isNotBlank()) {
+								screenModel.edit(actor.value!!, name, url)
+								actor.value = null
+							}
+						}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+							Text("Confirm", color = Color.White)
+						}
 					}
 				}
 			)

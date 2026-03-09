@@ -6,8 +6,8 @@ import pl.chopeks.core.model.*
 class VideoRepository(
 	private val dataSource: VideoLocalDataSource,
 ) : IVideoRepository {
-	override suspend fun getVideos(from: Long, actors: List<Actor>, categories: List<Category>, filter: Int): VideoContainer {
-		return dataSource.getVideos(from, actors, categories, filter)
+	override suspend fun getVideos(from: Long, actors: List<Actor>, categories: List<Category>, filter: Int, count: Int): VideoContainer {
+		return dataSource.getVideos(from, actors, categories, filter, count)
 	}
 
 	override suspend fun getImage(video: Video): String? {

@@ -25,6 +25,10 @@ class ActorRepository(
 			.sortedBy { it.name.lowercase() }
 	}
 
+	override suspend fun getActor(id: Int): Actor? {
+		return get("actors/$id").body<Actor?>()
+	}
+
 	override suspend fun getImage(actor: Actor): String? {
 		return get("image/actor/${actor.id}").body<Array<String?>>().firstOrNull()
 			?.substringAfter(",")
@@ -38,12 +42,16 @@ class ActorRepository(
 		delete("actors/${actor.id}/${video.id}").body<Any>()
 	}
 
-	override suspend fun add(name: String, url: String) {
+	override suspend fun add(name: String, url: String?) {
 		post("actor", mapOf("name" to name, "url" to url)).body<Any>()
 	}
 
-	override suspend fun edit(id: Int, name: String, url: String) {
+	override suspend fun edit(id: Int, name: String, url: String?) {
 		post("actor", Actor(id, name, url)).body<Any>()
+	}
+
+	override suspend fun delete(actor: Actor) {
+		delete("actors/${actor.id}").body<Any>()
 	}
 
 	override fun close() {

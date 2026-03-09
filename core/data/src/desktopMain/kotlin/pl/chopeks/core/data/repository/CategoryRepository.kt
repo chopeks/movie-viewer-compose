@@ -23,12 +23,16 @@ class CategoryRepository(
 		dataSource.unbind(category, video)
 	}
 
-	override suspend fun add(name: String, url: String) {
+	override suspend fun add(name: String, url: String?) {
 		dataSource.add(name, url)
 	}
 
-	override suspend fun edit(id: Int, name: String, url: String) {
+	override suspend fun edit(id: Int, name: String, url: String?) {
 		dataSource.edit(id, name, url)
+	}
+
+	override suspend fun delete(category: Category) {
+		dataSource.delete(category)
 	}
 
 	override fun close() {

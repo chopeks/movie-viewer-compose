@@ -144,18 +144,28 @@ class CategoriesScreen : Screen {
 					)
 				}
 			}, confirmButton = {
-				Button(onClick = {
-					if (name.isNotBlank()) {
-						screenModel.edit(category.value!!, name, url)
+				Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+					Button(onClick = {
+						screenModel.remove(category.value!!)
 						category.value = null
+					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+						Text("Remove", color = Color.Red)
 					}
-				}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-					Text("Confirm", color = Color.White)
+
+					Button(onClick = { category.value = null }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+						Text("Cancel", color = Color.LightGray)
+					}
+
+					Button(onClick = {
+						if (name.isNotBlank()) {
+							screenModel.edit(category.value!!, name, url)
+							category.value = null
+						}
+					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+						Text("Confirm", color = Color.White)
+					}
 				}
-			}, dismissButton = {
-				Button(onClick = { category.value = null }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-					Text("Cancel", color = Color.LightGray)
-				}
+
 			})
 		}
 	}

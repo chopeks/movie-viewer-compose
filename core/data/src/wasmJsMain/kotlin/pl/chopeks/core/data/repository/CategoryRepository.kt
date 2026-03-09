@@ -38,12 +38,16 @@ class CategoryRepository(
 		delete("categories/${category.id}/${video.id}").body<Any>()
 	}
 
-	override suspend fun add(name: String, url: String) {
+	override suspend fun add(name: String, url: String?) {
 		post("category", mapOf("name" to name, "url" to url)).body<Any>()
 	}
 
-	override suspend fun edit(id: Int, name: String, url: String) {
+	override suspend fun edit(id: Int, name: String, url: String?) {
 		post("category", Category(id, name, url)).body<Any>()
+	}
+
+	override suspend fun delete(category: Category) {
+		delete("category/${category.id}").body<Any>()
 	}
 
 	override fun close() {

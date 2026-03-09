@@ -7,6 +7,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.lessEq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.kodein.di.DI
 import pl.chopeks.core.database.AudioToBeCheckedTable
 import pl.chopeks.core.database.DetectedDuplicatesTable
 import pl.chopeks.core.database.MovieTable
@@ -16,7 +17,7 @@ import pl.chopeks.movies.server.model.DuplicatesPojo
 import pl.chopeks.movies.server.model.MoviePojo
 import java.io.File
 
-fun Route.duplicatesService() {
+fun Route.duplicatesService(di: DI) {
 	get("/duplicates") {
 		call.respond(transaction {
 			val joinColumn: Column<*> = MovieTable.duration

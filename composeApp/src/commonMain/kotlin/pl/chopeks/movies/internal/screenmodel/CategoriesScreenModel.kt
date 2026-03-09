@@ -42,7 +42,6 @@ class CategoriesScreenModel(
       initialValue = emptyList()
     )
 
-
   fun getCategories() {
     screenModelScope.launch(bestConcurrencyDispatcher()) {
       with(repository.getCategories().sortedBy { it.name.toLowerCase(Locale.current) }) {
@@ -64,6 +63,13 @@ class CategoriesScreenModel(
   fun edit(category: Category, name: String, url: String) {
     screenModelScope.launch(bestConcurrencyDispatcher()) {
       repository.edit(category.id, name, imageConverter.urlToBase64(url, 425, 240))
+      getCategories()
+    }
+  }
+
+  fun remove(category: Category) {
+    screenModelScope.launch(bestConcurrencyDispatcher()) {
+      repository.delete(category)
       getCategories()
     }
   }

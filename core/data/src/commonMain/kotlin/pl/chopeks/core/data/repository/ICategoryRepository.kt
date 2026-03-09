@@ -8,6 +8,7 @@ interface ICategoryRepository : AutoCloseable {
 	suspend fun getImage(category: Category): String?
 	suspend fun bind(category: Category, video: Video)
 	suspend fun unbind(category: Category, video: Video)
-	suspend fun add(name: String, url: String)
-	suspend fun edit(id: Int, name: String, url: String)
+	suspend fun add(name: String, url: String?)
+	suspend fun edit(id: Int, name: String, url: String?)
+	suspend fun delete(category: Category)
 }

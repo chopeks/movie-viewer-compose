@@ -15,12 +15,12 @@ class VideoLocalDataSource(
 ) {
 	suspend fun getVideos(from: Long, actors: List<Actor>, categories: List<Category>, filter: Int?, count: Int = 15): VideoContainer = withContext(Dispatchers.IO) {
 		transaction(db) {
-			var matchedIdsQuery = MovieTable.select(MovieTable.id)
+			val matchedIdsQuery = MovieTable.select(MovieTable.id)
 
 			if (actors.isNotEmpty()) {
 				val actorIds = actors.map { it.id }
 				if (actorIds.contains(0)) {
-					matchedIdsQuery = matchedIdsQuery.where {
+					matchedIdsQuery.where {
 						MovieTable.id notInSubQuery MovieActors.select(MovieActors.movie)
 					}
 				} else {
@@ -31,25 +31,32 @@ class VideoLocalDataSource(
 						.having { MovieActors.movie.count() eq actorIds.size.toLong() }
 						.map { it[MovieActors.movie] }
 
-					matchedIdsQuery = matchedIdsQuery.where { MovieTable.id inList matches }
+					matchedIdsQuery.where { MovieTable.id inList matches }
 				}
 			}
 
 			if (categories.isNotEmpty()) {
 				val catIds = categories.map { it.id }
-				if (catIds.contains(0)) {
-					matchedIdsQuery = matchedIdsQuery.where {
-						MovieTable.id notInSubQuery MovieCategories.select(MovieCategories.movie)
-					}
-				} else {
-					val matches = MovieCategories
-						.select(MovieCategories.movie)
-						.where { MovieCategories.category inList catIds }
-						.groupBy(MovieCategories.movie)
-						.having { MovieCategories.movie.count() eq catIds.size.toLong() }
-						.map { it[MovieCategories.movie] }
 
-					matchedIdsQuery = matchedIdsQuery.where { MovieTable.id inList matches }
+				val categoryCondition: SqlExpressionBuilder.() -> Op<Boolean> = {
+					if (catIds.contains(0)) {
+						MovieTable.id notInSubQuery MovieCategories.select(MovieCategories.movie)
+					} else {
+						val matches = MovieCategories
+							.select(MovieCategories.movie)
+							.where { MovieCategories.category inList catIds }
+							.groupBy(MovieCategories.movie)
+							.having { MovieCategories.movie.count() eq catIds.size.toLong() }
+							.map { it[MovieCategories.movie] }
+
+						MovieTable.id inList matches
+					}
+				}
+
+				if (matchedIdsQuery.where == null) {
+					matchedIdsQuery.where(categoryCondition)
+				} else {
+					matchedIdsQuery.andWhere(categoryCondition)
 				}
 			}
 
@@ -63,7 +70,8 @@ class VideoLocalDataSource(
 						else -> orderBy(MovieTable.id to SortOrder.DESC)
 					}
 				}
-				.limit(count, offset = from * count)
+				.limit(count)
+				.offset(start = from * count)
 				.map { it[MovieTable.id].value }
 
 			val movies = if (pagedIds.isEmpty()) emptyList() else {

@@ -4,71 +4,46 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.transactions.transaction
-import pl.chopeks.core.database.CategoryTable
-import pl.chopeks.core.database.MovieCategories
-import pl.chopeks.movies.server.model.Category
-import pl.chopeks.movies.server.model.CategoryPojo
+import org.kodein.di.DI
+import org.kodein.di.instance
+import pl.chopeks.core.data.repository.ICategoryRepository
+import pl.chopeks.core.model.Category
+import pl.chopeks.core.model.Video
 import pl.chopeks.movies.server.utils.urlImageToBase64
 
-fun Route.categoryService() {
-	get("/categories") { call.respond(transaction { Category.all().sortedBy { it.name }.map { it.pojo } }) }
+fun Route.categoryService(di: DI) {
+	val repository by di.instance<ICategoryRepository>()
+
+	get("/categories") { call.respond(repository.getCategories()) }
 
 	//region crud
 	post("/category") {
-		kotlin.runCatching { call.receiveNullable<CategoryPojo>() }.getOrNull()?.let {
-			call.respond(HttpStatusCode.OK, transaction {
-				if (it.image?.startsWith("http") == true) {
-					it.image = it.image?.urlImageToBase64(425, 240)
-				}
-				if (Category.find { CategoryTable.id eq it.id }.firstOrNull() != null) {
-					CategoryTable.update({ CategoryTable.id eq it.id }) { obj ->
-						obj[CategoryTable.name] = it.name
-						obj[CategoryTable.image] = it.image
-					}
-				} else {
-					CategoryTable.insert { new ->
-						new[CategoryTable.name] = it.name
-						new[CategoryTable.image] = it.image
-					}
-				}
-				"{}"
-			})
+		runCatching { call.receiveNullable<Category>() }.getOrNull()?.let {
+			if (it.image?.startsWith("http") == true) {
+				it.image = it.image?.urlImageToBase64(425, 240)
+			}
+			if (it.id == 0) {
+				repository.add(it.name, it.image ?: "")
+			} else {
+				repository.edit(it.id, it.name, it.image ?: "")
+			}
+			call.respond(HttpStatusCode.OK, "{}")
 		}
 	}
 	delete("/category/{id}") {
-		transaction {
-			CategoryTable.deleteWhere { CategoryTable.id eq call.parameters["id"]!!.toInt() }
-			MovieCategories.deleteWhere { MovieCategories.category eq call.parameters["id"]!!.toInt() }
-		}
+		repository.delete(Category(call.parameters["id"]!!.toInt(), ""))
 		call.respond(HttpStatusCode.OK, "{}")
 	}
 	//endregion
 
 	//region binding
 	post("/categories/{category}/{movie}") {
-		val row = transaction {
-			MovieCategories.selectAll().where { (MovieCategories.movie eq call.parameters["movie"]!!.toInt()) and (MovieCategories.category eq call.parameters["category"]!!.toInt()) }
-				.firstOrNull()
-		}
-		if (row != null) {
-			call.respond(HttpStatusCode.Conflict)
-		} else {
-			transaction {
-				MovieCategories.insert {
-					it[MovieCategories.movie] = call.parameters["movie"]!!.toInt()
-					it[MovieCategories.category] = call.parameters["category"]!!.toInt()
-				}
-			}
-			call.respond("{}")
-		}
+		repository.bind(Category(call.parameters["actor"]!!.toInt(), ""), Video(call.parameters["movie"]!!.toInt(), "", null))
+		call.respond("{}")
 	}
+
 	delete("/categories/{category}/{movie}") {
-		transaction {
-			MovieCategories.deleteWhere { (MovieCategories.movie eq call.parameters["movie"]!!.toInt()) and (MovieCategories.category eq call.parameters["category"]!!.toInt()) }
-		}
+		repository.unbind(Category(call.parameters["id"]!!.toInt(), ""), Video(call.parameters["movie"]!!.toInt(), "", null))
 		call.respond("{}")
 	}
 	//endregion
