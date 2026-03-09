@@ -6,5 +6,4 @@ import org.kodein.di.instance
 
 val webServiceModule; get() = DI.Module(name = "webService") {
   bindProvider { VideosAPI(instance()) }
-  bindProvider { DuplicatesAPI(instance()) }
 }

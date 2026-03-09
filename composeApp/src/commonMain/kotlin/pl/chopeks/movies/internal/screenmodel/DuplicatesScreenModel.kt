@@ -9,17 +9,17 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import pl.chopeks.core.data.repository.IDuplicateRepository
 import pl.chopeks.core.data.repository.IVideoRepository
 import pl.chopeks.core.model.Duplicates
 import pl.chopeks.core.model.Video
 import pl.chopeks.movies.bestConcurrencyDispatcher
-import pl.chopeks.movies.internal.webservice.DuplicatesAPI
 import pl.chopeks.movies.internal.webservice.VideosAPI
 
 class DuplicatesScreenModel(
-	private val webService: DuplicatesAPI,
 	private val videoWebService: VideosAPI,
 	private val videoRepository: IVideoRepository,
+	private val duplicatesRepository: IDuplicateRepository,
 ) : ScreenModel {
 	var count by mutableStateOf(0)
 	val duplicates = mutableStateListOf<Duplicates>()
@@ -27,7 +27,7 @@ class DuplicatesScreenModel(
 	init {
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
 			while (isActive) {
-				count = webService.count()
+				count = duplicatesRepository.count()
 				delay(10000)
 			}
 		}
@@ -36,7 +36,7 @@ class DuplicatesScreenModel(
 	fun getDuplicates() {
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
 			duplicates.clear()
-			val entries = webService.get().toMutableList()
+			val entries = duplicatesRepository.getCertainDuplicates().toMutableList()
 			for (duplicate in entries) {
 				val index = entries.indexOf(duplicate)
 				val videos = duplicate.list
@@ -54,7 +54,7 @@ class DuplicatesScreenModel(
 
 	fun cancel(model: Duplicates) {
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
-			webService.cancel(model)
+			duplicatesRepository.cancel(model)
 			duplicates.clear()
 			getDuplicates()
 		}
@@ -76,8 +76,8 @@ class DuplicatesScreenModel(
 
 	override fun onDispose() {
 		super.onDispose()
-		webService.close()
 		videoWebService.close()
 		videoRepository.close()
+		duplicatesRepository.close()
 	}
 }

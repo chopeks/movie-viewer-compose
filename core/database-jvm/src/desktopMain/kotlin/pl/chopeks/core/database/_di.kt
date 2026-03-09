@@ -7,6 +7,7 @@ import org.kodein.di.instance
 import pl.chopeks.core.database.datasource.ActorLocalDataSource
 import pl.chopeks.core.database.datasource.CategoriesDataSource
 import pl.chopeks.core.database.datasource.DirectoriesLocalDataSource
+import pl.chopeks.core.database.datasource.DuplicateLocalDataSource
 import pl.chopeks.core.database.datasource.SettingsLocalDataSource
 import pl.chopeks.core.database.datasource.VideoLocalDataSource
 
@@ -17,4 +18,5 @@ val databaseModule = DI.Module("databaseModule") {
 	bindProvider { DirectoriesLocalDataSource(instance()) }
 	bindProvider { CategoriesDataSource(instance()) }
 	bindProvider { VideoLocalDataSource(instance()) }
+	bindProvider { DuplicateLocalDataSource(instance()) }
 }
