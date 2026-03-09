@@ -8,6 +8,7 @@ import pl.chopeks.core.database.datasource.ActorLocalDataSource
 import pl.chopeks.core.database.datasource.CategoriesDataSource
 import pl.chopeks.core.database.datasource.DirectoriesLocalDataSource
 import pl.chopeks.core.database.datasource.SettingsLocalDataSource
+import pl.chopeks.core.database.datasource.VideoLocalDataSource
 
 val databaseModule = DI.Module("databaseModule") {
 	bindSingleton { DatabaseHelper.connect() }
@@ -15,4 +16,5 @@ val databaseModule = DI.Module("databaseModule") {
 	bindProvider { SettingsLocalDataSource() }
 	bindProvider { DirectoriesLocalDataSource(instance()) }
 	bindProvider { CategoriesDataSource(instance()) }
+	bindProvider { VideoLocalDataSource(instance()) }
 }

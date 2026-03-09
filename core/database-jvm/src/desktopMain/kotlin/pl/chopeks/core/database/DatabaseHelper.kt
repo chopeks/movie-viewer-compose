@@ -1,6 +1,7 @@
 package pl.chopeks.core.database
 
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.Index
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
@@ -72,6 +73,13 @@ object DatabaseHelper {
 
 		transaction(db) {
 			SchemaUtils.addMissingColumnsStatements(MovieTable).forEach(::exec)
+		}
+
+		transaction(db) { // idk why isn't it working with exposed apis, but this works somehow
+			exec("CREATE INDEX IF NOT EXISTS idx_movie_categories_movie ON movie_category (movie)")
+			exec("CREATE INDEX IF NOT EXISTS idx_movie_categories_cat ON movie_category (category)")
+			exec("CREATE INDEX IF NOT EXISTS idx_movie_actors_movie ON movie_actor (movie)")
+			exec("CREATE INDEX IF NOT EXISTS idx_movie_actors_actor ON movie_actor (actor)")
 		}
 
 		return db

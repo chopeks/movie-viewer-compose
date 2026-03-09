@@ -26,29 +26,30 @@ fun Route.imageService() {
 	get("/image/movie/{id}") {
 		val image = transaction {
 			MovieTable.selectAll().where { MovieTable.id eq call.parameters["id"]!!.toInt() }.firstOrNull().also {
-				if (it != null) {
-					if (it[thumbnail] != null && call.request.queryParameters["refresh"] != "true") {
-						return@transaction it[thumbnail]
-					} else {
-						val images = mutableListOf<String>()
-						makeScreenshot(File(it[MovieTable.path]), (1..999).random().toLong()).also { img ->
-							val bytes = ImageIO.read(img.inputStream())
-								.normalizeImage()
-								.let {
-									ByteArrayOutputStream().use { os ->
-										ImageIO.write(it, "jpg", os)
-										os.toByteArray()
-									}
+				if (it == null)
+					return@also
+
+				if (it[thumbnail] != null && call.request.queryParameters["refresh"] != "true") {
+					return@transaction it[thumbnail]
+				} else {
+					val images = mutableListOf<String>()
+					makeScreenshot(File(it[MovieTable.path]), (1..999).random().toLong()).also { img ->
+						val bytes = ImageIO.read(img.inputStream())
+							.normalizeImage()
+							.let {
+								ByteArrayOutputStream().use { os ->
+									ImageIO.write(it, "jpg", os)
+									os.toByteArray()
 								}
-							transaction {
-								MovieTable.update({ MovieTable.id eq call.parameters["id"]!!.toInt() }, body = {
-									it[thumbnail] = "data:image/jpg;base64," + String(Base64.getMimeEncoder().encode(bytes))
-								})
 							}
-							images.add("data:image/jpg;base64," + String(Base64.getMimeEncoder().encode(bytes)))
+						transaction {
+							MovieTable.update({ MovieTable.id eq call.parameters["id"]!!.toInt() }, body = {
+								it[thumbnail] = "data:image/jpg;base64," + String(Base64.getMimeEncoder().encode(bytes))
+							})
 						}
-						return@transaction images[0]
+						images.add("data:image/jpg;base64," + String(Base64.getMimeEncoder().encode(bytes)))
 					}
+					return@transaction images[0]
 				}
 			}
 		}

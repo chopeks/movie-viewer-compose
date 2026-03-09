@@ -78,39 +78,48 @@ class VideosScreen(
     }, actions = {
       Text("Page ${screenModel.currentPage + 1} of ${screenModel.count + 1}", color = Color.Green.copy(alpha = 0.6f))
     }) { scope ->
-      Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        val items = screenModel.videos.chunked(5)
-        items.forEach { chunk ->
-          Row(modifier = Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-            chunk.forEach { video ->
-              Box(modifier = Modifier.weight(1f)) {
-                VideoCard(video, onClick = {
-                  screenModel.play(it)
-                }, onActorChipClick = {
-                  scope.launch {
-                    editedVideoChips = screenModel.videos.indexOf(video)
-                    editActorsBottomSheetState.show()
-                  }
-                }, onCategoryChipClick = {
-                  scope.launch {
-                    editedVideoChips = screenModel.videos.indexOf(video)
-                    editCategoriesBottomSheetState.show()
-                  }
-                }, onThumbnailClick = {
-                  screenModel.generateThumbnail(video)
-                }, onRemoveClick = {
-                  editedVideoChips = screenModel.videos.indexOf(video)
-                  removeConfirmDialog.value = true
-                })
+      Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+      ) {
+        for (rowIndex in 0 until 3) {
+          Row(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
+          ) {
+            for (columnIndex in 0 until 5) {
+              val itemIndex = rowIndex * 5 + columnIndex
+              val video = screenModel.videos.getOrNull(itemIndex)
+
+              Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                if (video != null) {
+                  VideoCard(
+                    video = video,
+                    onClick = { screenModel.play(it) },
+                    onActorChipClick = {
+                      scope.launch {
+                        editedVideoChips = screenModel.videos.indexOf(video)
+                        editActorsBottomSheetState.show()
+                      }
+                    },
+                    onCategoryChipClick = {
+                      scope.launch {
+                        editedVideoChips = screenModel.videos.indexOf(video)
+                        editCategoriesBottomSheetState.show()
+                      }
+                    },
+                    onThumbnailClick = { screenModel.generateThumbnail(video) },
+                    onRemoveClick = {
+                      editedVideoChips = screenModel.videos.indexOf(video)
+                      removeConfirmDialog.value = true
+                    }
+                  )
+                } else {
+                  Box(Modifier.fillMaxSize())
+                }
               }
             }
-            repeat(5 - chunk.size) {
-              Spacer(Modifier.weight(1f))
-            }
           }
-        }
-        repeat(3 - items.size) {
-          Spacer(Modifier.weight(1f))
         }
       }
 

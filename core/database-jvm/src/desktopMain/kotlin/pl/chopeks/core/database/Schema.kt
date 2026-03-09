@@ -24,13 +24,13 @@ object MovieTable : IntIdTable("movie") {
 }
 
 object MovieCategories : IntIdTable("movie_category") {
-  val movie = integer("movie")
-  val category = integer("category")
+  val movie = integer("movie").index("idx_movie_categories_movie")
+  val category = integer("category").index("idx_movie_categories_cat")
 }
 
 object MovieActors : IntIdTable("movie_actor") {
-  val movie = integer("movie")
-  val actor = integer("actor")
+  val movie = integer("movie").index("idx_movie_actors_movie")
+  val actor = integer("actor").index("idx_movie_actors_actor")
 }
 
 object PathsTable : Table("paths") {

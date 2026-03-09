@@ -9,6 +9,7 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import pl.chopeks.core.data.repository.IVideoRepository
 import pl.chopeks.core.model.Duplicates
 import pl.chopeks.core.model.Video
 import pl.chopeks.movies.bestConcurrencyDispatcher
@@ -17,7 +18,8 @@ import pl.chopeks.movies.internal.webservice.VideosAPI
 
 class DuplicatesScreenModel(
 	private val webService: DuplicatesAPI,
-	private val videoWebService: VideosAPI
+	private val videoWebService: VideosAPI,
+	private val videoRepository: IVideoRepository,
 ) : ScreenModel {
 	var count by mutableStateOf(0)
 	val duplicates = mutableStateListOf<Duplicates>()
@@ -40,8 +42,8 @@ class DuplicatesScreenModel(
 				val videos = duplicate.list
 				entries[index] = duplicate.copy(
 					list = listOf(
-						videos.first().copy(image = videoWebService.getImage(videos.first())),
-						videos.last().copy(image = videoWebService.getImage(videos.last())),
+						videos.first().copy(image = videoRepository.getImage(videos.first())),
+						videos.last().copy(image = videoRepository.getImage(videos.last())),
 					)
 				)
 			}
@@ -60,7 +62,7 @@ class DuplicatesScreenModel(
 
 	fun remove(model: Video) {
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
-			videoWebService.remove(model)
+			videoRepository.remove(model)
 			duplicates.clear()
 			getDuplicates()
 		}
@@ -76,5 +78,6 @@ class DuplicatesScreenModel(
 		super.onDispose()
 		webService.close()
 		videoWebService.close()
+		videoRepository.close()
 	}
 }
