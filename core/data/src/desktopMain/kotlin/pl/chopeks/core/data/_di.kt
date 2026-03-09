@@ -11,6 +11,6 @@ val dataModule = DI.Module("data-di") {
 	bindProvider<IActorRepository> { ActorRepository(instance()) }
 	bindProvider<ISettingsRepository> { SettingsRepository(instance(), instance()) }
 	bindProvider<ICategoryRepository> { CategoryRepository(instance()) }
-	bindProvider<IVideoRepository> { VideoRepository(instance()) }
+	bindProvider<IVideoRepository> { VideoRepository(instance(), instance()) }
 	bindProvider<IDuplicateRepository> { DuplicateRepository(instance()) }
 }

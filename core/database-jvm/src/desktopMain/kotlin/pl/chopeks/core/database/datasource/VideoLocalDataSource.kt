@@ -92,6 +92,12 @@ class VideoLocalDataSource(
 		}
 	}
 
+	suspend fun getVideoPath(id: Int): String? = withContext(Dispatchers.IO) {
+		transaction(db) {
+			MovieTable.select(MovieTable.path).where { MovieTable.id eq id }.firstOrNull()?.get(MovieTable.path)
+		}
+	}
+
 	suspend fun getImage(video: Video): String? = withContext(Dispatchers.IO) {
 		transaction(db) {
 			MovieTable.selectAll().where { MovieTable.id eq video.id }.firstOrNull()
@@ -137,5 +143,14 @@ class VideoLocalDataSource(
 			ret
 		}
 		File(path).delete()
+	}
+
+	suspend fun setImage(video: Video, img: String?): String? = withContext(Dispatchers.IO) {
+		transaction(db) {
+			MovieTable.update({ MovieTable.id eq video.id }, body = {
+				it[thumbnail] = img
+			})
+		}
+		img
 	}
 }

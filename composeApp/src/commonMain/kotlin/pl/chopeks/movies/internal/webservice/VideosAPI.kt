@@ -14,11 +14,6 @@ class VideosAPI(
 ) : AutoCloseable {
   private suspend fun get(path: String) = httpClient.get(Backend.URL + path)
 
-  suspend fun refreshImage(video: Video): String? {
-    return get("image/movie/${video.id}?refresh=true").body<Array<String?>>().firstOrNull()
-      ?.substringAfter(",")
-  }
-
   suspend fun play(video: Video) {
     get("movie/play/${video.id}").body<Any>()
   }

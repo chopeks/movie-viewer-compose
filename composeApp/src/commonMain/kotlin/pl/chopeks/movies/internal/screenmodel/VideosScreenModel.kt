@@ -55,7 +55,7 @@ class VideosScreenModel(
 			actors.addAll(actorRepository.getActors())
 			categories.addAll(categoryRepository.getCategories())
 			isInitialized = true
-			
+
 			getVideos()
 
 			snapshotFlow {
@@ -153,7 +153,7 @@ class VideosScreenModel(
 	fun generateThumbnail(video: Video) {
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
 			val index = videos.indexOf(video)
-			videos[index] = video.copy(image = webService.refreshImage(video))
+			videos[index] = video.copy(image = videoRepository.refreshImage(video))
 		}
 	}
 

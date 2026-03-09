@@ -13,7 +13,6 @@ import pl.chopeks.core.database.cache.Cache
 import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Category
 import pl.chopeks.core.model.Video
-import pl.chopeks.movies.server.model.MoviePojo
 import pl.chopeks.movies.server.utils.runCommand
 import java.io.File
 

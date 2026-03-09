@@ -2,22 +2,12 @@ package pl.chopeks.movies.server.services
 
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.lessEq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.kodein.di.DI
 import org.kodein.di.instance
 import pl.chopeks.core.data.repository.IDuplicateRepository
-import pl.chopeks.core.database.DetectedDuplicatesTable
-import pl.chopeks.core.database.MovieTable
 import pl.chopeks.core.model.Duplicates
 import pl.chopeks.core.model.DuplicatesCount
 import pl.chopeks.core.model.Video
-import pl.chopeks.movies.server.model.DuplicatePojo
-import pl.chopeks.movies.server.model.DuplicatesPojo
-import pl.chopeks.movies.server.model.MoviePojo
-import java.io.File
 
 fun Route.duplicatesService(di: DI) {
 	val repository by di.instance<IDuplicateRepository>()
