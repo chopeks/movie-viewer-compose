@@ -9,6 +9,7 @@ import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import pl.chopeks.core.IVideoPlayer
 import pl.chopeks.core.data.repository.IActorRepository
 import pl.chopeks.core.data.repository.ICategoryRepository
 import pl.chopeks.core.data.repository.IVideoRepository
@@ -17,12 +18,11 @@ import pl.chopeks.core.model.Category
 import pl.chopeks.core.model.Video
 import pl.chopeks.core.model.VideoChips
 import pl.chopeks.movies.bestConcurrencyDispatcher
-import pl.chopeks.movies.internal.webservice.VideosAPI
 import kotlin.math.max
 import kotlin.math.min
 
 class VideosScreenModel(
-	private val webService: VideosAPI,
+	private val videoPlayer: IVideoPlayer,
 	private val videoRepository: IVideoRepository,
 	private val actorRepository: IActorRepository,
 	private val categoryRepository: ICategoryRepository,
@@ -112,7 +112,7 @@ class VideosScreenModel(
 
 	fun play(video: Video) {
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
-			webService.play(video)
+			videoPlayer.play(video)
 		}
 	}
 
@@ -167,7 +167,7 @@ class VideosScreenModel(
 
 	override fun onDispose() {
 		super.onDispose()
-		webService.close()
+		videoPlayer.close()
 		actorRepository.close()
 		categoryRepository.close()
 		videoRepository.close()

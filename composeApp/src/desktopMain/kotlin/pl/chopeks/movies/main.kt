@@ -31,7 +31,10 @@ import okhttp3.OkHttpClient
 import org.jetbrains.exposed.sql.Database
 import org.kodein.di.*
 import pl.chopeks.core.IImageConverter
+import pl.chopeks.core.IVideoPlayer
 import pl.chopeks.core.data.dataModule
+import pl.chopeks.movies.platform.ImageConverter
+import pl.chopeks.movies.platform.VideoPlayer
 import pl.chopeks.movies.screen.HomeScreen
 import pl.chopeks.movies.screen.PreloadScreenModel
 import pl.chopeks.movies.utils.KeyEventManager
@@ -68,6 +71,7 @@ fun main() = application {
 	val di = DI.lazy {
 		import(dataModule)
 		bindProvider<IImageConverter> { ImageConverter() }
+		bindProvider<IVideoPlayer> { VideoPlayer(instance(), instance()) }
 		bindSingleton { KeyEventManager() }
 		bindProvider { PreloadScreenModel(lazy { instance<Database>() }) }
 		bindProvider {

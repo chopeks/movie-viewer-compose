@@ -3,32 +3,23 @@ package pl.chopeks.movies.server.services
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.kodein.di.DI
 import org.kodein.di.instance
+import pl.chopeks.core.IVideoPlayer
 import pl.chopeks.core.data.repository.IVideoRepository
-import pl.chopeks.core.database.*
-import pl.chopeks.core.database.cache.Cache
 import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Category
 import pl.chopeks.core.model.Video
-import pl.chopeks.movies.server.utils.runCommand
-import java.io.File
 
 fun Route.movieService(di: DI) {
 	val repository by di.instance<IVideoRepository>()
+	val videoPlayer by di.instance<IVideoPlayer>()
 
 	get("/movie/play/{id}") {
-		transaction {
-			MovieTable.selectAll().where { MovieTable.id eq (call.parameters["id"]!!.toInt()) }.limit(1).firstOrNull().also {
-				if (it != null) {
-					arrayOf(Cache.moviePlayer, "\"${it[MovieTable.path]}\"").runCommand(File(it[MovieTable.path]).parentFile)
-				}
-			}
-		}
+		videoPlayer.play(Video(call.parameters["id"]!!.toInt(), "", null))
 		call.respond(HttpStatusCode.OK)
 	}
+
 	get("/movie/{from}/{count}") {
 		val categories = call.request.queryParameters["category"]?.split(",")?.map { it.toIntOrNull() }?.filterNotNull()
 		val actors = call.request.queryParameters["actor"]?.split(",")?.map { it.toIntOrNull() }?.filterNotNull()

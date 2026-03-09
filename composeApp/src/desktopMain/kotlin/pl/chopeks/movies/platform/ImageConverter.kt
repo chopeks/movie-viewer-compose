@@ -1,4 +1,4 @@
-package pl.chopeks.movies
+package pl.chopeks.movies.platform
 
 import pl.chopeks.core.IImageConverter
 import pl.chopeks.movies.server.utils.normalizeImage

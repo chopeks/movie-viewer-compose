@@ -12,6 +12,10 @@ class VideoRepository(
 		return dataSource.getVideos(from, actors, categories, filter, count)
 	}
 
+	override suspend fun getVideoPath(video: Video): String? {
+		return dataSource.getVideoPath(video.id)
+	}
+
 	override suspend fun getImage(video: Video): String? {
 		return dataSource.getImage(video)?.substringAfter(",")
 	}
