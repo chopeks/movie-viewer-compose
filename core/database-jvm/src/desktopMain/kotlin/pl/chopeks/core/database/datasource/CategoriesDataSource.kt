@@ -17,7 +17,7 @@ class CategoriesDataSource(
 	suspend fun getCategories(): List<Category> {
 		return withContext(Dispatchers.IO) {
 			transaction(db) {
-				CategoryEntity.all().sortedBy { it.name }.map { it.pojo }
+				CategoryEntity.all().sortedBy { it.name.lowercase() }.map { it.pojo }
 			}
 		}
 	}

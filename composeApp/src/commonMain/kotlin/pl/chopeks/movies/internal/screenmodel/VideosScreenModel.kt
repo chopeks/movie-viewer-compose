@@ -20,13 +20,6 @@ import pl.chopeks.movies.bestConcurrencyDispatcher
 import pl.chopeks.movies.internal.webservice.VideosAPI
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.time.measureTimedValue
-
-suspend fun <T> measureTime(block: suspend () -> T): T {
-	val x = measureTimedValue { block() }
-	println(x.duration)
-	return x.value
-}
 
 class VideosScreenModel(
 	private val webService: VideosAPI,
@@ -75,7 +68,7 @@ class VideosScreenModel(
 			return
 		isBusy = true
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
-			val data = measureTime { videoRepository.getVideos(currentPage, selectedActors, selectedCategories, filter) }
+			val data = videoRepository.getVideos(currentPage, selectedActors, selectedCategories, filter)
 			videos.clear()
 			videos.addAll(data.movies)
 			count = (data.count - 1) / 15

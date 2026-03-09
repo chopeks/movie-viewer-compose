@@ -2,19 +2,8 @@ package pl.chopeks.core.database.datasource
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.Join
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.Query
-import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.alias
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.count
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.except
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import pl.chopeks.core.database.*
 import pl.chopeks.core.database.cache.Cache
@@ -26,20 +15,15 @@ class VideoLocalDataSource(
 ) {
 	suspend fun getVideos(from: Long, actors: List<Actor>, categories: List<Category>, filter: Int?, count: Int = 15): VideoContainer = withContext(Dispatchers.IO) {
 		transaction(db) {
-			// 1. Build the base query for matching IDs
-			// Passing the ID to .select() replaces the old .slice().selectAll()
 			var matchedIdsQuery = MovieTable.select(MovieTable.id)
 
-			// Apply Actor Filtering
 			if (actors.isNotEmpty()) {
 				val actorIds = actors.map { it.id }
 				if (actorIds.contains(0)) {
-					// "None" actor logic: Find movies NOT in the MovieActors table
 					matchedIdsQuery = matchedIdsQuery.where {
 						MovieTable.id notInSubQuery MovieActors.select(MovieActors.movie)
 					}
 				} else {
-					// Relational Division: Find movies that have ALL selected actors
 					val matches = MovieActors
 						.select(MovieActors.movie)
 						.where { MovieActors.actor inList actorIds }
@@ -51,7 +35,6 @@ class VideoLocalDataSource(
 				}
 			}
 
-			// Apply Category Filtering
 			if (categories.isNotEmpty()) {
 				val catIds = categories.map { it.id }
 				if (catIds.contains(0)) {
@@ -70,10 +53,8 @@ class VideoLocalDataSource(
 				}
 			}
 
-			// 2. Get Total Count (Now a lightweight operation)
 			val totalCount = matchedIdsQuery.count()
 
-			// 3. Get the specific page of IDs
 			val pagedIds = matchedIdsQuery
 				.copy()
 				.apply {
@@ -85,7 +66,6 @@ class VideoLocalDataSource(
 				.limit(count, offset = from * count)
 				.map { it[MovieTable.id].value }
 
-			// 4. Final Fetch for data
 			val movies = if (pagedIds.isEmpty()) emptyList() else {
 				MovieTable.select(MovieTable.id, MovieTable.name, MovieTable.duration)
 					.where { MovieTable.id inList pagedIds }
