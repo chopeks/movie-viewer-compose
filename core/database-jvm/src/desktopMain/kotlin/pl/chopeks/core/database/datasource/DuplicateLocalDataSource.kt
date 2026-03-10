@@ -7,10 +7,8 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.lessEq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.transactions.transaction
-import pl.chopeks.core.database.AudioToBeCheckedTable
-import pl.chopeks.core.database.DetectedDuplicatesTable
-import pl.chopeks.core.database.MovieTable
-import pl.chopeks.core.database.MoviesToBeCheckedTable
+import pl.chopeks.core.database.*
+import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Duplicates
 import pl.chopeks.core.model.Video
 import java.io.File
@@ -71,5 +69,26 @@ class DuplicateLocalDataSource(
 
 	fun count(): Int {
 		return transaction { (MoviesToBeCheckedTable.selectAll().count() + AudioToBeCheckedTable.selectAll().count()).toInt() }
+	}
+
+
+	suspend fun deduplicate(actor: Actor) = withContext(Dispatchers.IO) {
+		transaction(db) {
+			MovieActors
+				.select(MovieActors.movie, MovieActors.actor)
+				.where { MovieActors.actor eq actor.id }
+				.forEach { video ->
+					AudioToBeCheckedTable.upsert { it[AudioToBeCheckedTable.id] = video[MovieActors.movie] }
+				}
+		}
+	}
+
+	suspend fun deduplicateAll() = withContext(Dispatchers.IO) {
+		transaction(db) {
+			AudioToBeCheckedTable.deleteAll()
+			MovieTable.select(MovieTable.id).distinct().forEach { video ->
+				AudioToBeCheckedTable.upsert { it[AudioToBeCheckedTable.id] = video[MovieTable.id] }
+			}
+		}
 	}
 }

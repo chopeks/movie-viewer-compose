@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import pl.chopeks.core.IImageConverter
 import pl.chopeks.core.data.repository.IActorRepository
+import pl.chopeks.core.data.repository.IDuplicateRepository
 import pl.chopeks.core.model.Actor
 import pl.chopeks.movies.bestConcurrencyDispatcher
 import kotlin.io.encoding.Base64
@@ -19,6 +20,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 
 class ActorsScreenModel(
 	private val repository: IActorRepository,
+	private val duplicatesRepository: IDuplicateRepository,
 	private val imageConverter: IImageConverter
 ) : ScreenModel {
 	var searchFilter by mutableStateOf("")
@@ -64,6 +66,12 @@ class ActorsScreenModel(
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
 			repository.delete(actor)
 			getActors()
+		}
+	}
+
+	fun dedup(actor: Actor) {
+		screenModelScope.launch(bestConcurrencyDispatcher()) {
+			duplicatesRepository.deduplicate(actor)
 		}
 	}
 

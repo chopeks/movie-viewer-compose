@@ -118,6 +118,10 @@ object CompareAudioUseCase {
 					it[movie] = video.id
 					it[otherMovie] = match.id
 				}
+				DetectedDuplicatesTable.insert {
+					it[movie] = match.id
+					it[otherMovie] = video.id
+				}
 			}
 			val deleted = AudioToBeCheckedTable.deleteWhere { AudioToBeCheckedTable.id eq video.id }
 			if (deleted > 1)

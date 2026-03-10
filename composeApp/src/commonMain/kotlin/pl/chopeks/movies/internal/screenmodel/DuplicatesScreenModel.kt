@@ -74,6 +74,12 @@ class DuplicatesScreenModel(
 		}
 	}
 
+	fun deduplicate() {
+		screenModelScope.launch(bestConcurrencyDispatcher()) {
+			duplicatesRepository.deduplicateAll()
+		}
+	}
+
 	override fun onDispose() {
 		super.onDispose()
 		videoPlayer.close()

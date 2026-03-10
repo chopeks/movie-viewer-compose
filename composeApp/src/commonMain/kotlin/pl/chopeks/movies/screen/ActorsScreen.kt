@@ -161,6 +161,12 @@ class ActorsScreen : Screen {
 				confirmButton = {
 					Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
 						Button(onClick = {
+							screenModel.dedup(actor.value!!)
+							actor.value = null
+						}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+							Text("De-dup", color = Color.LightGray)
+						}
+						Button(onClick = {
 							screenModel.remove(actor.value!!)
 							actor.value = null
 						}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {

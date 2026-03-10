@@ -1,6 +1,7 @@
 package pl.chopeks.core.data.repository
 
 import pl.chopeks.core.database.datasource.DuplicateLocalDataSource
+import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Duplicates
 
 class DuplicateRepository(
@@ -16,6 +17,14 @@ class DuplicateRepository(
 
 	override suspend fun count(): Int {
 		return dataSource.count()
+	}
+
+	override suspend fun deduplicate(actor: Actor) {
+		return dataSource.deduplicate(actor)
+	}
+
+	override suspend fun deduplicateAll() {
+		return dataSource.deduplicateAll()
 	}
 
 	override fun close() {

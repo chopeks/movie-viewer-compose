@@ -2,6 +2,7 @@ package pl.chopeks.movies.screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -31,6 +32,12 @@ class DuplicatesScreen : Screen {
 		ScreenSkeleton(
 			title = "Duplicates",
 			actions = {
+				TextButton({
+					screenModel.deduplicate()
+				}) {
+					Text("Deduplicate all".uppercase(), color = Color.Green.copy(alpha = 0.5f))
+				}
+				Spacer(Modifier.width(32.dp))
 				Text("Left to check ${screenModel.count}", color = Color.LightGray)
 			}
 		) { scope ->

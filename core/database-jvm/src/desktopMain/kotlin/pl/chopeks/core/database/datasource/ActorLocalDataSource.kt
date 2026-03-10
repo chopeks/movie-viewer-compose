@@ -15,17 +15,13 @@ import pl.chopeks.core.model.Video
 class ActorLocalDataSource(
 	private val db: Database
 ) {
-	suspend fun getActors(): List<Actor> {
-		return withContext(Dispatchers.IO) {
-			transaction(db) { ActorEntity.all().sortedBy { it.name.lowercase() }.map { it.pojo } }
-		}
+	suspend fun getActors(): List<Actor> = withContext(Dispatchers.IO) {
+		transaction(db) { ActorEntity.all().sortedBy { it.name.lowercase() }.map { it.pojo } }
 	}
 
-	suspend fun getImage(actor: Actor): String? {
-		return withContext(Dispatchers.IO) {
-			transaction(db) {
-				ActorEntity.findById(actor.id)?.image?.substringAfter(",")
-			}
+	suspend fun getImage(actor: Actor): String? = withContext(Dispatchers.IO) {
+		transaction(db) {
+			ActorEntity.findById(actor.id)?.image?.substringAfter(",")
 		}
 	}
 
@@ -50,11 +46,9 @@ class ActorLocalDataSource(
 		}
 	}
 
-	suspend fun unbind(actor: Actor, video: Video) {
-		withContext(Dispatchers.IO) {
-			transaction(db) {
-				MovieActors.deleteWhere { (MovieActors.movie eq video.id and (MovieActors.actor eq actor.id)) }
-			}
+	suspend fun unbind(actor: Actor, video: Video) = withContext(Dispatchers.IO) {
+		transaction(db) {
+			MovieActors.deleteWhere { (MovieActors.movie eq video.id and (MovieActors.actor eq actor.id)) }
 		}
 	}
 
@@ -76,15 +70,15 @@ class ActorLocalDataSource(
 		}
 	}
 
-	fun delete(actor: Actor) {
+	suspend fun delete(actor: Actor) = withContext(Dispatchers.IO) {
 		transaction(db) {
 			ActorTable.deleteWhere { ActorTable.id eq actor.id }
 			MovieActors.deleteWhere { MovieActors.actor eq actor.id }
 		}
 	}
 
-	fun getActor(id: Int): Actor? {
-		return transaction(db) {
+	suspend fun getActor(id: Int): Actor? = withContext(Dispatchers.IO) {
+		transaction(db) {
 			ActorTable.selectAll().where { ActorTable.id eq id }.map { Actor(it[ActorTable.id].value, it[ActorTable.name]) }
 		}.firstOrNull()
 	}

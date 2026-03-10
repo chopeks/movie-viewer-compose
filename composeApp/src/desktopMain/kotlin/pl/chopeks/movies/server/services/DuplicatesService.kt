@@ -5,6 +5,7 @@ import io.ktor.server.routing.*
 import org.kodein.di.DI
 import org.kodein.di.instance
 import pl.chopeks.core.data.repository.IDuplicateRepository
+import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Duplicates
 import pl.chopeks.core.model.DuplicatesCount
 import pl.chopeks.core.model.Video
@@ -50,6 +51,17 @@ fun Route.duplicatesService(di: DI) {
 		val id = call.parameters["id"]?.toIntOrNull()!!
 		val otherId = call.parameters["otherId"]?.toIntOrNull()!!
 		repository.cancel(Duplicates(listOf(Video(id, "", null), Video(otherId, "", null))))
+		call.respond("{}")
+	}
+
+	get("/duplicates/dedup/actor/{actor}") {
+		val actor = call.parameters["actor"]?.toIntOrNull()!!
+		repository.deduplicate(Actor(actor))
+		call.respond("{}")
+	}
+
+	get("/duplicates/dedup/all") {
+		repository.deduplicateAll()
 		call.respond("{}")
 	}
 }
