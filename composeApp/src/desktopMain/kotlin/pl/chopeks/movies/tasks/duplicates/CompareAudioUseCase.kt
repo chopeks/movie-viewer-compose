@@ -4,28 +4,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.transactions.transaction
-import pl.chopeks.core.database.AudioToBeCheckedTable
-import pl.chopeks.core.database.DetectedDuplicatesTable
-import pl.chopeks.core.database.MovieActors
-import pl.chopeks.core.database.MovieTable
+import pl.chopeks.core.database.datasource.ActorLocalDataSource
+import pl.chopeks.core.database.duplicates.AudioDedupLocalDataSource
 import pl.chopeks.movies.server.utils.FpcalcUtils
 import pl.chopeks.movies.utils.AppLogger
-import java.io.File
 import kotlin.math.min
-import kotlin.math.roundToInt
-import kotlin.math.roundToLong
 
-object CompareAudioUseCase {
-	private data class PossibleDuplicate(
-		val id: Int,
-		val duration: Int,
-		val path: File,
-		val candidates: List<Int> = emptyList()
-	)
-
+class CompareAudioUseCase(
+	private val dataSource: AudioDedupLocalDataSource,
+	private val actorDataSource: ActorLocalDataSource,
+) {
 	data class MatchResult(
 		val id: Int = 0,
 		val confidence: Double,
@@ -38,58 +26,16 @@ object CompareAudioUseCase {
 	 * @return true if a movie was checked and is ready to check next
 	 */
 	suspend fun run(threshold: Int = 60 * 1000): Boolean = withContext(Dispatchers.Default) {
-		val video = transaction {
-			AudioToBeCheckedTable
-				.join(MovieTable, JoinType.INNER, onColumn = AudioToBeCheckedTable.id, otherColumn = MovieTable.id) { AudioToBeCheckedTable.id eq MovieTable.id }
-				.select(AudioToBeCheckedTable.id, MovieTable.duration, MovieTable.path)
-				.where { MovieTable.duration.isNotNull() }
-				.orderBy(MovieTable.duration, SortOrder.ASC)
-				.limit(1)
-				.singleOrNull()
-				?.let { PossibleDuplicate(it[AudioToBeCheckedTable.id].value, it[MovieTable.duration]!!, File(it[MovieTable.path])) }
-		}
-
-		if (video == null)
-			return@withContext false
+		val video = dataSource.nextVideo()
+			?: return@withContext false
 
 		if (video.duration < threshold) {
-			transaction {
-				AudioToBeCheckedTable.deleteWhere { AudioToBeCheckedTable.id eq video.id }
-			}
+			dataSource.removeRequest(video.id)
 			return@withContext true
 		}
 
 		AppLogger.log("checking ${video.path}")
 
-		val dbTask = async {
-			val videos = transaction {
-				val actors = MovieActors.selectAll().where { MovieActors.movie eq video.id }.map { it[MovieActors.actor] }
-				MovieActors.selectAll().where { MovieActors.actor inList actors }.distinct().map { it[MovieActors.id].value }
-			}
-
-			if (videos.isEmpty()) {
-				transaction { // in case when no actor found, check same directory
-					MovieTable.select(MovieTable.id, MovieTable.path, MovieTable.fingerprint)
-						.where {
-							(MovieTable.path like "${video.path.parentFile.absolutePath}%") and
-								(MovieTable.duration greaterEq threshold) and
-								(MovieTable.id neq video.id)
-						}
-						.map { it[MovieTable.id].value to it[MovieTable.fingerprint] }
-				}
-			} else {
-				transaction { // if there are actors, check all videos from all actors and current dir
-					MovieTable.select(MovieTable.id, MovieTable.path, MovieTable.duration, MovieTable.fingerprint)
-						.where {
-							((MovieTable.path like "${video.path.parentFile.absolutePath}%") or (MovieTable.id inList videos)) and
-								(MovieTable.duration greaterEq threshold) and
-								(MovieTable.id neq video.id)
-						}
-						.distinct()
-						.map { it[MovieTable.id].value to it[MovieTable.fingerprint] }
-				}
-			}
-		}
 		val duration = video.duration
 		val sampleLen = min(duration, 60_000)
 		val middle = duration / 2
@@ -97,6 +43,11 @@ object CompareAudioUseCase {
 
 		val fingerprintTask = async {
 			FpcalcUtils.getFingerprint(video.path, fragmentStart.toInt(), sampleLen)
+		}
+
+		val dbTask = async {
+			val actors = actorDataSource.findActorsByVideo(video.id)
+			dataSource.getVideos(actors, threshold, video)
 		}
 
 		dbTask.start()
@@ -111,22 +62,14 @@ object CompareAudioUseCase {
 
 		val result = performFastSearch(currentSample, fingerprints)
 
-		transaction {
-			result.filter { it.confidence in 0.9..0.999 }.forEach { match ->
-				AppLogger.log("found duplicate for ${video.id} -> ${match.id} (${match.confidence})")
-				DetectedDuplicatesTable.insert {
-					it[movie] = video.id
-					it[otherMovie] = match.id
-				}
-				DetectedDuplicatesTable.insert {
-					it[movie] = match.id
-					it[otherMovie] = video.id
-				}
-			}
-			val deleted = AudioToBeCheckedTable.deleteWhere { AudioToBeCheckedTable.id eq video.id }
-			if (deleted > 1)
-				AudioToBeCheckedTable.insert { it[AudioToBeCheckedTable.id] = video.id }
+		result.filter { it.confidence in 0.9..0.999 }.forEach { match ->
+			AppLogger.log("found duplicate for ${video.id} -> ${match.id} (${match.confidence})")
+			dataSource.addDuplicate(video.id, match.id);
 		}
+		val deleted = dataSource.removeRequest(video.id)
+		if (deleted > 1)
+			dataSource.addRequest(video.id)
+
 		println("finished the search for ${video.id}, checked ${result.size} videos")
 		return@withContext true
 	}

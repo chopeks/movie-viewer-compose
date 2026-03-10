@@ -33,7 +33,6 @@ class PreloadScreen : Screen {
     }
     LaunchedEffect(screenModel.isDone) {
       if (screenModel.isDone) {
-        DuplicatesSearchTask.run()
         navigator?.replace(ActorsScreen())
       }
     }

@@ -13,9 +13,11 @@ import org.jetbrains.exposed.sql.Database
 import pl.chopeks.core.database.DatabaseHelper
 import pl.chopeks.movies.server.utils.Python
 import pl.chopeks.movies.server.utils.RefreshUtils
+import pl.chopeks.movies.tasks.TaskManager
 
 class PreloadScreenModel(
-	val database: Lazy<Database>,
+	private val database: Lazy<Database>,
+	private val taskManager: Lazy<TaskManager>
 ) : ScreenModel {
 
 	var isDone by mutableStateOf(false)
@@ -31,10 +33,9 @@ class PreloadScreenModel(
 				DatabaseHelper.clean(db)
 				events.add("Removed files purged.")
 			}
-
-			RefreshUtils.refresh(events::add)
-			events.add("New files added.")
+			taskManager.value.start(events::add)
 			isDone = true
 		}
 	}
+
 }

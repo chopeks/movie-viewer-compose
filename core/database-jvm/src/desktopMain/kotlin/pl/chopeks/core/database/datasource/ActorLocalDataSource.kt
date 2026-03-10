@@ -82,4 +82,11 @@ class ActorLocalDataSource(
 			ActorTable.selectAll().where { ActorTable.id eq id }.map { Actor(it[ActorTable.id].value, it[ActorTable.name]) }
 		}.firstOrNull()
 	}
+
+	suspend fun findActorsByVideo(videoId: Int) = withContext(Dispatchers.IO) {
+		transaction(db) {
+			val actors = MovieActors.selectAll().where { MovieActors.movie eq videoId }.map { it[MovieActors.actor] }
+			MovieActors.selectAll().where { MovieActors.actor inList actors }.distinct().map { it[MovieActors.id].value }
+		}
+	}
 }
