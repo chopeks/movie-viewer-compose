@@ -67,7 +67,7 @@ class AudioDedupLocalDataSource(
 		}
 	}
 
-	suspend fun getVideos(actors: List<Int>, threshold: Int, video: PossibleDuplicate) = withContext(Dispatchers.IO) {
+	suspend fun getFingerprints(actors: List<Int>, threshold: Int, video: PossibleDuplicate) = withContext(Dispatchers.IO) {
 		if (actors.isEmpty()) {
 			transaction(db) { // in case when no actor found, check same directory
 				MovieTable.select(MovieTable.id, MovieTable.path, MovieTable.fingerprint)
@@ -89,6 +89,16 @@ class AudioDedupLocalDataSource(
 					.distinct()
 					.map { it[MovieTable.id].value to it[MovieTable.fingerprint] }
 			}
+		}
+	}
+
+	suspend fun getNeedle(videoId: Int) = withContext(Dispatchers.IO) {
+		transaction(db) {
+			MovieTable.select(MovieTable.id,  MovieTable.needle)
+				.where { MovieTable.id eq videoId }
+				.limit(1)
+				.map { it[MovieTable.needle] }
+				.firstOrNull()
 		}
 	}
 }

@@ -21,6 +21,7 @@ object MovieTable : IntIdTable("movie") {
   val thumbnail = text("thumbnail").nullable()
   val duration = integer("duration").nullable()
   val fingerprint = binary("fingerprint").nullable()
+  val needle = binary("needle").nullable()
 }
 
 object MovieCategories : IntIdTable("movie_category") {

@@ -11,6 +11,7 @@ import pl.chopeks.movies.server.utils.FpcalcUtils
 import pl.chopeks.movies.server.utils.toByteArray
 import pl.chopeks.movies.utils.AppLogger
 import java.io.File
+import kotlin.math.min
 import kotlin.system.measureTimeMillis
 
 class CollectFingerprintsUseCase(
@@ -32,11 +33,29 @@ class CollectFingerprintsUseCase(
 		val time = measureTimeMillis {
 			entries = entries.map {
 				async {
+					var entry = it
 					val file = File(it.path)
-					val fingerprint = diskSemaphore.withPermit {
-						FpcalcUtils.getFingerprint(file)
+
+					if (it.fingerprint == null) {
+						val fingerprint = diskSemaphore.withPermit {
+							FpcalcUtils.getFingerprint(file)
+						}
+						entry = it.copy(fingerprint = fingerprint?.toByteArray())
 					}
-					it.copy(fingerprint = fingerprint?.toByteArray())
+
+					if (it.needle == null) {
+						val duration = it.duration
+						val sampleLen = min(duration, 60_000)
+						val middle = duration / 2
+						val fragmentStart = (middle - sampleLen / 2).toDouble()
+
+						val needle = diskSemaphore.withPermit {
+							FpcalcUtils.getFingerprint(file, fragmentStart.toInt(), sampleLen)
+						}
+						entry = it.copy(needle = needle?.toByteArray())
+					}
+
+					entry
 				}
 			}.awaitAll()
 		}

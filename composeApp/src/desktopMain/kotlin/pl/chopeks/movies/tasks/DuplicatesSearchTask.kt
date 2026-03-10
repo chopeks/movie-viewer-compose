@@ -17,9 +17,9 @@ class DuplicatesSearchTask(
 		while (true)
 			if (!collectFingerprintsUseCase.run())
 				break
-		while (true)
-			if (!compareAudioUseCase.run())
-				break
+//		while (true)
+//			if (!compareAudioUseCase.run())
+//				break
 		isRunning = false
 	}
 }

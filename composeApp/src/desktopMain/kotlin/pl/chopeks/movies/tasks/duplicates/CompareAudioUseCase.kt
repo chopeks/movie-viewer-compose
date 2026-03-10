@@ -6,9 +6,8 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import pl.chopeks.core.database.datasource.ActorLocalDataSource
 import pl.chopeks.core.database.duplicates.AudioDedupLocalDataSource
-import pl.chopeks.movies.server.utils.FpcalcUtils
+import pl.chopeks.movies.server.utils.toUIntArray
 import pl.chopeks.movies.utils.AppLogger
-import kotlin.math.min
 
 class CompareAudioUseCase(
 	private val dataSource: AudioDedupLocalDataSource,
@@ -36,32 +35,14 @@ class CompareAudioUseCase(
 
 		AppLogger.log("checking ${video.path}")
 
-		val duration = video.duration
-		val sampleLen = min(duration, 60_000)
-		val middle = duration / 2
-		val fragmentStart = (middle - sampleLen / 2).toDouble()
+		val needle = dataSource.getNeedle(video.id)?.toUIntArray()
+			?: return@withContext false
 
-		val fingerprintTask = async {
-			FpcalcUtils.getFingerprint(video.path, fragmentStart.toInt(), sampleLen)
-		}
+		val actors = actorDataSource.findActorsByVideo(video.id)
+		val fingerprints = dataSource.getFingerprints(actors, threshold, video)
+			.filter { it.second != null && it.second!!.isNotEmpty() }
 
-		val dbTask = async {
-			val actors = actorDataSource.findActorsByVideo(video.id)
-			dataSource.getVideos(actors, threshold, video)
-		}
-
-		dbTask.start()
-		fingerprintTask.start()
-
-		val fingerprints = dbTask.await()
-		val currentSample = fingerprintTask.await()
-
-		if (currentSample == null)
-			return@withContext false
-
-
-		val result = performFastSearch(currentSample, fingerprints)
-
+		val result = performFastSearch(needle, fingerprints)
 		result.filter { it.confidence in 0.9..0.999 }.forEach { match ->
 			AppLogger.log("found duplicate for ${video.id} -> ${match.id} (${match.confidence})")
 			dataSource.addDuplicate(video.id, match.id);
@@ -85,6 +66,7 @@ class CompareAudioUseCase(
 
 	/**
 	 * Hamming distance search over a sliding window
+	 * TODO timestamps are bugged af and I don't have mental capacity to fix it
 	 */
 	private fun calculateMatch(
 		sparseNeedle: UIntArray,
