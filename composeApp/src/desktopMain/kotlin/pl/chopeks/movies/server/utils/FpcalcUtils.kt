@@ -8,7 +8,7 @@ object FpcalcUtils {
 	fun getFingerprint(video: File, start: Int? = null, duration: Int? = null): UIntArray? {
 		val ffmpegCmd = mutableListOf("ffmpeg")
 		if (start != null)
-			ffmpegCmd += listOf("-ss", start.toString())
+			ffmpegCmd += listOf("-ss", (start / 1000.0).toString())
 
 		ffmpegCmd += listOf("-i", video.absolutePath)
 
@@ -73,14 +73,16 @@ object FpcalcUtils {
 	}
 
 	fun getAudioDuration(video: File): Double? {
-		val process = ProcessBuilder(listOf(
-			"ffprobe",
-			"-v", "error",
-			"-select_streams", "a",
-			"-show_entries", "stream=duration",
-			"-of", "default=noprint_wrappers=1:nokey=1",
-			video.absolutePath
-		))
+		val process = ProcessBuilder(
+			listOf(
+				"ffprobe",
+				"-v", "error",
+				"-select_streams", "a",
+				"-show_entries", "stream=duration",
+				"-of", "default=noprint_wrappers=1:nokey=1",
+				video.absolutePath
+			)
+		)
 			.redirectError(ProcessBuilder.Redirect.DISCARD)
 			.start()
 

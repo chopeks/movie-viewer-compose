@@ -104,13 +104,41 @@ fun DuplicateCard(
           }
         }
       }
-      Box(Modifier.fillMaxSize().weight(0.5f)) {
-        TextButton({
-          onCancelClick()
-        }, colors = buttonColors(backgroundColor = Color.Black), modifier = Modifier.align(Alignment.Center)) {
-          Text("Not duplicate", color = Color.White)
+      Box(Modifier.fillMaxSize().weight(0.5f).padding(8.dp)) {
+        Column(Modifier.fillMaxSize().align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+//          Text(
+//            text = "Left side at: ${formatTimestamp(videos.timestamp)}",
+//            style = MaterialTheme.typography.h6
+//          )
+//          Text(
+//            text = "Right side at: ${formatTimestamp(videos.otherTimestamp)}",
+//            style = MaterialTheme.typography.h6
+//          )
+//
+//          Spacer(Modifier.height(16.dp))
+
+          TextButton({
+            onCancelClick()
+          }, colors = buttonColors(backgroundColor = Color.Black)) {
+            Text("Not duplicate", color = Color.White)
+          }
         }
       }
     }
+  }
+}
+
+fun formatTimestamp(totalSeconds: Int): String {
+  val h = totalSeconds / 3600
+  val m = (totalSeconds % 3600) / 60
+  val s = totalSeconds % 60
+
+  val mm = m.toString().padStart(2, '0')
+  val ss = s.toString().padStart(2, '0')
+
+  return if (h > 0) {
+    "${h.toString().padStart(2, '0')}:$mm:$ss"
+  } else {
+    "$mm:$ss"
   }
 }

@@ -30,6 +30,7 @@ class DuplicateLocalDataSource(
 					.join(alias, JoinType.INNER, onColumn = DetectedDuplicatesTable.otherMovie, otherColumn = MovieTable.alias("otherMovieAlias")[MovieTable.id])
 					.select(
 						DetectedDuplicatesTable.movie, DetectedDuplicatesTable.otherMovie,
+						DetectedDuplicatesTable.timestamp, DetectedDuplicatesTable.otherTimestamp,
 						MovieTable.id, MovieTable.name, MovieTable.duration, MovieTable.path,
 						alias[MovieTable.id],
 						alias[MovieTable.name],
@@ -39,10 +40,12 @@ class DuplicateLocalDataSource(
 					.limit(8)
 				query.map { row ->
 					Duplicates(
-						listOf(
+						list = listOf(
 							Video(row[MovieTable.id].value, row[MovieTable.name], row[MovieTable.duration]?.toLong() ?: 0L, "%.2f MB".format(File(row[MovieTable.path]).length() / 1024.0 / 1024.0)),
 							Video(row[alias[MovieTable.id]].value, row[alias[MovieTable.name]], row[alias[MovieTable.duration]]?.toLong() ?: 0L, "%.2f MB".format(File(row[alias[MovieTable.path]]).length() / 1024.0 / 1024.0))
-						)
+						),
+						timestamp = row[DetectedDuplicatesTable.timestamp],
+						otherTimestamp = row[DetectedDuplicatesTable.otherTimestamp]
 					)
 				}
 			}

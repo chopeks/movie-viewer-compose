@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import pl.chopeks.core.database.AudioToBeCheckedTable
+import pl.chopeks.core.database.DetectedDuplicatesTable
 import pl.chopeks.core.database.MovieTable
 import pl.chopeks.core.database.MoviesToBeCheckedTable
 import pl.chopeks.core.database.PathsTable
@@ -110,12 +111,15 @@ object RefreshUtils {
 
 	fun markAllMoviesToBeChecked() {
 		transaction {
-			MoviesToBeCheckedTable.deleteAll()
-			MovieTable.select(MovieTable.id).orderBy(MovieTable.id, SortOrder.DESC).take(5).map { it[MovieTable.id] }.forEach { movieId ->
-				MoviesToBeCheckedTable.insert { it[MoviesToBeCheckedTable.id] = movieId }
-			}
+//			DetectedDuplicatesTable.deleteAll()
+
+//			MoviesToBeCheckedTable.deleteAll()
+//			MovieTable.select(MovieTable.id).orderBy(MovieTable.id, SortOrder.DESC).take(5).map { it[MovieTable.id] }.forEach { movieId ->
+//				MoviesToBeCheckedTable.insert { it[MoviesToBeCheckedTable.id] = movieId }
+//			}
+
 			AudioToBeCheckedTable.deleteAll()
-			MovieTable.select(MovieTable.id).orderBy(MovieTable.id, SortOrder.DESC).take(5).map { it[MovieTable.id] }.forEach { movieId ->
+			MovieTable.select(MovieTable.id).orderBy(MovieTable.id, SortOrder.DESC).map { it[MovieTable.id] }.forEach { movieId ->
 				AudioToBeCheckedTable.insert { it[AudioToBeCheckedTable.id] = movieId }
 			}
 		}

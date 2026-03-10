@@ -6,6 +6,7 @@ import kotlinx.coroutines.newFixedThreadPoolContext
 import pl.chopeks.movies.BGTasks
 import pl.chopeks.movies.tasks.duplicates.CollectFingerprintsUseCase
 import pl.chopeks.movies.tasks.duplicates.CompareAudioTrackBruteForceUseCase
+import pl.chopeks.movies.tasks.duplicates.CompareAudioUseCase
 import pl.chopeks.movies.tasks.duplicates.CompareVideoFramesUseCase
 
 object DuplicatesSearchTask {
@@ -19,12 +20,15 @@ object DuplicatesSearchTask {
 		isRunning = true
 
 		BGTasks.scope.launch(Dispatchers.Default) {
-//				while (true)
-//					if (!CollectFingerprintsUseCase.run())
-//						break
 				while (true)
-					if (!CompareVideoFramesUseCase.run(this))
+					if (!CollectFingerprintsUseCase.run())
 						break
+				while (true)
+					if (!CompareAudioUseCase.run())
+						break
+//				while (true)
+//					if (!CompareVideoFramesUseCase.run(this))
+//						break
 //				while (true)
 //					if (!CompareAudioTrackBruteForceUseCase.run(this, pool))
 //						break

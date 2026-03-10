@@ -66,6 +66,11 @@ object DatabaseHelper {
 						SchemaVerionsTable.inc()
 					}
 
+					5 -> {
+						SchemaUtils.createMissingTablesAndColumns(DetectedDuplicatesTable)
+						SchemaVerionsTable.inc()
+					}
+
 					else -> break@loop
 				}
 			}

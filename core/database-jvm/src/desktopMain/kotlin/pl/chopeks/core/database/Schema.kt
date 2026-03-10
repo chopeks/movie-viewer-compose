@@ -45,6 +45,8 @@ object AudioToBeCheckedTable : IntIdTable("atbc")
 object DetectedDuplicatesTable: Table("dup") {
   val movie = integer("movie")
   val otherMovie = integer("other")
+  val timestamp = integer("t").default(0)
+  val otherTimestamp = integer("ot").default(0)
 }
 
 object SchemaVerionsTable : Table("schemasVer") {
