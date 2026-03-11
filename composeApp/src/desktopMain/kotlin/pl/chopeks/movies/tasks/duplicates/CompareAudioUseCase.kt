@@ -36,7 +36,11 @@ class CompareAudioUseCase(
 		AppLogger.log("checking ${video.path}")
 
 		val needle = dataSource.getNeedle(video.id)?.toUIntArray()
-			?: return@withContext false
+		if (needle == null || needle.isEmpty()) {
+			AppLogger.log("needle is ${needle?.isEmpty().let { "empty" }}")
+			dataSource.removeRequest(video.id)
+			return@withContext true
+		}
 
 		val actors = actorDataSource.findActorsByVideo(video.id)
 		val fingerprints = dataSource.getFingerprints(actors, threshold, video)
