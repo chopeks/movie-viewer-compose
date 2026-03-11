@@ -8,6 +8,7 @@ import pl.chopeks.core.IImageConverter
 import pl.chopeks.core.database.datasource.DirectoriesLocalDataSource
 import pl.chopeks.core.database.datasource.VideoLocalDataSource
 import pl.chopeks.core.database.datasource.VideoLocalDataSource.NewVideo
+import pl.chopeks.core.database.duplicates.AudioDedupLocalDataSource
 import pl.chopeks.core.model.Path
 import pl.chopeks.core.model.Video
 import pl.chopeks.core.utils.getDirectories
@@ -20,6 +21,7 @@ import kotlin.system.measureTimeMillis
 class VideoLookupTask(
 	private val directoryDataSource: DirectoriesLocalDataSource,
 	private val videoDataSource: VideoLocalDataSource,
+	private val audioDedupLocalDataSource: AudioDedupLocalDataSource,
 	private val imageConverter: IImageConverter,
 ) {
 	private var isRunning = false
@@ -81,23 +83,7 @@ class VideoLookupTask(
 				onEvent("Directory ${path.path} check completed.")
 			}
 		}
-//		markAllMoviesToBeChecked()
-	}
-
-	fun markAllMoviesToBeChecked() {
-//		transaction {
-//			DetectedDuplicatesTable.deleteAll()
-
-//			MoviesToBeCheckedTable.deleteAll()
-//			MovieTable.select(MovieTable.id).orderBy(MovieTable.id, SortOrder.DESC).take(5).map { it[MovieTable.id] }.forEach { movieId ->
-//				MoviesToBeCheckedTable.insert { it[MoviesToBeCheckedTable.id] = movieId }
-//			}
-
-//			AudioToBeCheckedTable.deleteAll()
-//			MovieTable.select(MovieTable.id).orderBy(MovieTable.id, SortOrder.DESC).map { it[MovieTable.id] }.forEach { movieId ->
-//				AudioToBeCheckedTable.insert { it[AudioToBeCheckedTable.videoId] = movieId.value }
-//			}
-//		}
+//		audioDedupLocalDataSource.reset()
 	}
 
 	suspend fun shouldCheckFiles(path: Path): Boolean {

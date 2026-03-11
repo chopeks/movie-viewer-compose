@@ -17,6 +17,10 @@ import kotlin.system.measureTimeMillis
 class CollectFingerprintsUseCase(
 	val dataSource: FingerprintLocalDataSource
 ) {
+	companion object {
+		private val SILENCE_BYTES = byteArrayOf(0x25.toByte(), 0x6D.toByte(), 0xF9.toByte(), 0x77.toByte())
+	}
+
 	private val diskSemaphore = Semaphore(4)
 
 	/**
@@ -39,8 +43,13 @@ class CollectFingerprintsUseCase(
 					if (it.fingerprint == null) {
 						val fingerprint = diskSemaphore.withPermit {
 							FpcalcUtils.getFingerprint(file)
+						}?.toByteArray() ?: byteArrayOf()
+
+						entry = if (isSilent(fingerprint)) {
+							it.copy(fingerprint = byteArrayOf())
+						} else {
+							it.copy(fingerprint = fingerprint)
 						}
-						entry = it.copy(fingerprint = fingerprint?.toByteArray())
 					}
 
 					if (it.needle == null) {
@@ -51,8 +60,12 @@ class CollectFingerprintsUseCase(
 
 						val needle = diskSemaphore.withPermit {
 							FpcalcUtils.getFingerprint(file, fragmentStart.toInt(), sampleLen)
+						}?.toByteArray() ?: byteArrayOf()
+						entry = if (isSilent(needle)) {
+							it.copy(needle = byteArrayOf())
+						} else {
+							it.copy(needle = needle)
 						}
-						entry = it.copy(needle = needle?.toByteArray())
 					}
 
 					entry
@@ -69,5 +82,29 @@ class CollectFingerprintsUseCase(
 
 		AppLogger.log("added fingerprint to ${entries.joinToString { it.id.toString(10) }} - todo: $left (took ${time / 1000}s)")
 		return@withContext true
+	}
+
+	fun isSilent(blob: ByteArray, threshold: Double = 0.9): Boolean {
+		if (blob.size < 4)
+			return true
+
+		val frameCount = blob.size / 4
+		var silenceCount = 0
+
+		for (i in 0 until frameCount) {
+			val base = i shl 2 // same as i * 4
+
+			// Compare 4 bytes at once
+			val isSilence = blob[base] == SILENCE_BYTES[0] &&
+				blob[base + 1] == SILENCE_BYTES[1] &&
+				blob[base + 2] == SILENCE_BYTES[2] &&
+				blob[base + 3] == SILENCE_BYTES[3]
+
+			if (isSilence)
+				silenceCount++
+		}
+
+		val ratio = silenceCount.toDouble() / frameCount
+		return ratio >= threshold
 	}
 }

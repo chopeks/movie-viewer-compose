@@ -103,4 +103,20 @@ class AudioDedupLocalDataSource(
 				.firstOrNull()
 		}
 	}
+
+	suspend fun reset() = withContext(Dispatchers.IO) {
+		transaction(db) {
+			DetectedDuplicatesTable.deleteAll()
+
+			AudioToBeCheckedTable.deleteAll()
+			MovieTable.select(MovieTable.id).orderBy(MovieTable.id, SortOrder.DESC).map { it[MovieTable.id] }.forEach { movieId ->
+				AudioToBeCheckedTable.insert { it[AudioToBeCheckedTable.videoId] = movieId.value }
+			}
+
+//			MoviesToBeCheckedTable.deleteAll()
+//			MovieTable.select(MovieTable.id).orderBy(MovieTable.id, SortOrder.DESC).take(5).map { it[MovieTable.id] }.forEach { movieId ->
+//				MoviesToBeCheckedTable.insert { it[MoviesToBeCheckedTable.id] = movieId }
+//			}
+		}
+	}
 }
