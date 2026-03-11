@@ -1,15 +1,9 @@
 package pl.chopeks.core.database
 
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.Index
-import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 import pl.chopeks.core.database.PathsTable.path
 import pl.chopeks.core.database.SchemaVerionsTable.version
 import pl.chopeks.core.utils.getFiles
@@ -78,6 +72,7 @@ object DatabaseHelper {
 
 		transaction(db) {
 			SchemaUtils.addMissingColumnsStatements(MovieTable).forEach(::exec)
+			SchemaUtils.addMissingColumnsStatements(AudioToBeCheckedTable).forEach(::exec)
 		}
 
 		transaction(db) { // idk why isn't it working with exposed apis, but this works somehow

@@ -30,13 +30,13 @@ import kotlinx.coroutines.*
 import okhttp3.OkHttpClient
 import org.kodein.di.*
 import pl.chopeks.core.IImageConverter
+import pl.chopeks.core.ITaskManager
 import pl.chopeks.core.IVideoPlayer
 import pl.chopeks.core.data.dataModule
 import pl.chopeks.movies.platform.ImageConverter
 import pl.chopeks.movies.platform.VideoPlayer
 import pl.chopeks.movies.screen.HomeScreen
 import pl.chopeks.movies.screen.platformScreenModule
-import pl.chopeks.movies.tasks.TaskManager
 import pl.chopeks.movies.tasks.taskModule
 import pl.chopeks.movies.utils.KeyEventManager
 import java.awt.Toolkit
@@ -105,7 +105,7 @@ fun main() = application {
 
 	Window(
 		onCloseRequest = {
-			di.direct.instance<TaskManager>().cancel()
+			di.direct.instance<ITaskManager>().cancel()
 			BGTasks.job.cancel()
 			BGTasks.scope.cancel()
 			exitApplication()

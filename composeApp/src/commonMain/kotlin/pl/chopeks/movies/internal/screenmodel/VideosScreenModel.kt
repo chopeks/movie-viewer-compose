@@ -1,14 +1,11 @@
 package pl.chopeks.movies.internal.screenmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.*
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import pl.chopeks.core.ITaskManager
 import pl.chopeks.core.IVideoPlayer
 import pl.chopeks.core.data.repository.IActorRepository
 import pl.chopeks.core.data.repository.ICategoryRepository
@@ -26,6 +23,7 @@ class VideosScreenModel(
 	private val videoRepository: IVideoRepository,
 	private val actorRepository: IActorRepository,
 	private val categoryRepository: ICategoryRepository,
+	private val taskManager: ITaskManager
 ) : ScreenModel {
 	private data class FilterState(
 		val actors: List<Actor>,
@@ -123,6 +121,7 @@ class VideosScreenModel(
 				actorRepository.unbind(actor, video)
 			} else {
 				actorRepository.bind(actor, video)
+				taskManager.startDedupTask()
 			}
 			val info = videoRepository.getInfo(video)
 			videos[index] = video.copy(

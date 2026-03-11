@@ -81,6 +81,23 @@ class VideoLookupTask(
 				onEvent("Directory ${path.path} check completed.")
 			}
 		}
+//		markAllMoviesToBeChecked()
+	}
+
+	fun markAllMoviesToBeChecked() {
+//		transaction {
+//			DetectedDuplicatesTable.deleteAll()
+
+//			MoviesToBeCheckedTable.deleteAll()
+//			MovieTable.select(MovieTable.id).orderBy(MovieTable.id, SortOrder.DESC).take(5).map { it[MovieTable.id] }.forEach { movieId ->
+//				MoviesToBeCheckedTable.insert { it[MoviesToBeCheckedTable.id] = movieId }
+//			}
+
+//			AudioToBeCheckedTable.deleteAll()
+//			MovieTable.select(MovieTable.id).orderBy(MovieTable.id, SortOrder.DESC).map { it[MovieTable.id] }.forEach { movieId ->
+//				AudioToBeCheckedTable.insert { it[AudioToBeCheckedTable.videoId] = movieId.value }
+//			}
+//		}
 	}
 
 	suspend fun shouldCheckFiles(path: Path): Boolean {

@@ -10,13 +10,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.sql.Database
+import pl.chopeks.core.ITaskManager
 import pl.chopeks.core.database.DatabaseHelper
 import pl.chopeks.movies.server.utils.Python
-import pl.chopeks.movies.tasks.TaskManager
 
 class PreloadScreenModel(
 	private val database: Lazy<Database>,
-	private val taskManager: Lazy<TaskManager>
+	private val taskManager: Lazy<ITaskManager>
 ) : ScreenModel {
 
 	var isDone by mutableStateOf(false)

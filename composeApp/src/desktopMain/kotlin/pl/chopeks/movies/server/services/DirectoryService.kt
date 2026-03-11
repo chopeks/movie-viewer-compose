@@ -5,13 +5,13 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.kodein.di.DI
 import org.kodein.di.instance
+import pl.chopeks.core.ITaskManager
 import pl.chopeks.core.data.repository.ISettingsRepository
 import pl.chopeks.core.model.Path
-import pl.chopeks.movies.tasks.TaskManager
 
 fun Route.directoryService(di: DI) {
 	val repository by di.instance<ISettingsRepository>()
-	val taskManager by di.instance<TaskManager>()
+	val taskManager by di.instance<ITaskManager>()
 
 	get("/directories") {
 		call.respond(repository.getPaths())

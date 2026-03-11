@@ -21,13 +21,13 @@ object CompareAudioTrackBruteForceUseCase {
 	fun run(scope: CoroutineScope, pool: ExecutorCoroutineDispatcher, threshold: Int = 3 * 60 * 1000): Boolean {
 		val video = transaction {
 			AudioToBeCheckedTable
-				.join(MovieTable, JoinType.INNER, onColumn = AudioToBeCheckedTable.id, otherColumn = MovieTable.id) { AudioToBeCheckedTable.id eq MovieTable.id }
-				.select(AudioToBeCheckedTable.id, MovieTable.duration, MovieTable.path)
+				.join(MovieTable, JoinType.INNER, onColumn = AudioToBeCheckedTable.videoId, otherColumn = MovieTable.id) { AudioToBeCheckedTable.videoId eq MovieTable.id }
+				.select(AudioToBeCheckedTable.videoId, MovieTable.duration, MovieTable.path)
 				.where { MovieTable.duration.isNotNull() }
-				.orderBy(AudioToBeCheckedTable.id, SortOrder.DESC)
+				.orderBy(AudioToBeCheckedTable.videoId, SortOrder.DESC)
 				.limit(1)
 				.singleOrNull()
-				?.let { PossibleDuplicate(it[AudioToBeCheckedTable.id].value, it[MovieTable.duration]!!, File(it[MovieTable.path])) }
+				?.let { PossibleDuplicate(it[AudioToBeCheckedTable.videoId], it[MovieTable.duration]!!, File(it[MovieTable.path])) }
 		}
 		if (video == null)
 			return false
@@ -88,7 +88,7 @@ object CompareAudioTrackBruteForceUseCase {
 
 	private fun cleanUp(movieId: Int): Boolean = transaction {
 		AppLogger.log("Removing with id $movieId")
-		AudioToBeCheckedTable.deleteWhere { AudioToBeCheckedTable.id eq movieId }
+		AudioToBeCheckedTable.deleteWhere { AudioToBeCheckedTable.videoId eq movieId }
 		return@transaction true
 	}
 

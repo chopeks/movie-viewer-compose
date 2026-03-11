@@ -138,7 +138,7 @@ class VideoLocalDataSource(
 			DetectedDuplicatesTable.deleteWhere { DetectedDuplicatesTable.movie eq video.id }
 			DetectedDuplicatesTable.deleteWhere { DetectedDuplicatesTable.otherMovie eq video.id }
 			MoviesToBeCheckedTable.deleteWhere { MoviesToBeCheckedTable.id eq video.id }
-			AudioToBeCheckedTable.deleteWhere { AudioToBeCheckedTable.id eq video.id }
+			AudioToBeCheckedTable.deleteWhere { AudioToBeCheckedTable.videoId eq video.id }
 			ret
 		}
 		File(path).delete()
@@ -184,7 +184,6 @@ class VideoLocalDataSource(
 				}
 				// TODO, to be decided what to do about the dedup when added
 				MoviesToBeCheckedTable.insert { it[MoviesToBeCheckedTable.id] = movie[MovieTable.id] }
-				AudioToBeCheckedTable.insert { it[AudioToBeCheckedTable.id] = movie[MovieTable.id] }
 			}
 		}
 	}

@@ -32,9 +32,9 @@ fun Array<String>.runCommand(workingDir: File) {
     .waitFor(1, TimeUnit.SECONDS)
 }
 
-fun Array<String>.runPipeCommand(callback: (InputStream) -> Unit) {
+fun Array<String>.runPipeCommand(errorRedirect: ProcessBuilder.Redirect = ProcessBuilder.Redirect.INHERIT, callback: (InputStream) -> Unit) {
   val process = ProcessBuilder(*this)
-    .redirectError(ProcessBuilder.Redirect.INHERIT)
+    .redirectError(errorRedirect)
     .start()
   process.inputStream.use(callback)
   process.waitFor(1, TimeUnit.SECONDS)

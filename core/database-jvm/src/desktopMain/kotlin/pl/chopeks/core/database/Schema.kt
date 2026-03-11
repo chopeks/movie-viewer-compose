@@ -41,7 +41,9 @@ object PathsTable : Table("paths") {
 
 object MoviesToBeCheckedTable : IntIdTable("tbc")
 
-object AudioToBeCheckedTable : IntIdTable("atbc")
+object AudioToBeCheckedTable : IntIdTable("atbc") {
+  val videoId = integer("vid").default(0)
+}
 
 object DetectedDuplicatesTable: Table("dup") {
   val movie = integer("movie")

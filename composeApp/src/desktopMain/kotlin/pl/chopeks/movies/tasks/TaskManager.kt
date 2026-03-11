@@ -1,16 +1,17 @@
 package pl.chopeks.movies.tasks
 
 import kotlinx.coroutines.*
+import pl.chopeks.core.ITaskManager
 import pl.chopeks.movies.utils.AppLogger
 
 class TaskManager(
 	private val duplicatesSearchTask: DuplicatesSearchTask,
 	private val videoLookupTask: VideoLookupTask,
-) {
+): ITaskManager {
 	val job = Job()
 	val scope = CoroutineScope(Dispatchers.Main + job)
 
-	suspend fun start(onEvent: (String) -> Unit) { // this is kinda fire once and forget
+	override suspend fun start(onEvent: (String) -> Unit) { // this is kinda fire once and forget
 		withContext(Dispatchers.IO + job) {
 			videoLookupTask.run {
 				AppLogger.log(it)
@@ -20,19 +21,19 @@ class TaskManager(
 		startDedupTask()
 	}
 
-	fun startDedupTask() {
+	override fun startDedupTask() {
 		scope.launch(Dispatchers.Default) {
 			duplicatesSearchTask.run()
 		}
 	}
 
-	fun startRefreshTask() {
+	override fun startRefreshTask() {
 		scope.launch(Dispatchers.Default) {
 			videoLookupTask.run()
 		}
 	}
 
-	fun cancel() {
+	override fun cancel() {
 		job.cancel()
 		scope.cancel()
 	}

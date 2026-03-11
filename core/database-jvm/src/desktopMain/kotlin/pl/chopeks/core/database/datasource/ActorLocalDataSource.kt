@@ -27,20 +27,13 @@ class ActorLocalDataSource(
 
 	suspend fun bind(actor: Actor, video: Video) {
 		withContext(Dispatchers.IO) {
-			val row = transaction(db) {
-				MovieActors.selectAll().where { (MovieActors.movie eq video.id) and (MovieActors.actor eq actor.id) }
-					.firstOrNull()
-			}
-			if (row != null)
-				return@withContext
-
 			transaction(db) {
-				MovieActors.insert {
+				MovieActors.upsert {
 					it[MovieActors.movie] = video.id
 					it[MovieActors.actor] = actor.id
 				}
-				AudioToBeCheckedTable.upsert {
-					it[AudioToBeCheckedTable.id] = video.id
+				AudioToBeCheckedTable.insert {
+					it[AudioToBeCheckedTable.videoId] = video.id
 				}
 			}
 		}

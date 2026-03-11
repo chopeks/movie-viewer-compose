@@ -26,7 +26,7 @@ fun makeScreenshot(video: File, percent: Long = 110): ByteArray {
     "-f", "image2pipe",
     "-vcodec", "mjpeg",
     "pipe:1"
-  ).runPipeCommand {
+  ).runPipeCommand(ProcessBuilder.Redirect.DISCARD) {
     bytes = it.readBytes()
   }
   return bytes

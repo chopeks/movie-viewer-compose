@@ -78,7 +78,7 @@ class DuplicateLocalDataSource(
 				.select(MovieActors.movie, MovieActors.actor)
 				.where { MovieActors.actor eq actor.id }
 				.forEach { video ->
-					AudioToBeCheckedTable.upsert { it[AudioToBeCheckedTable.id] = video[MovieActors.movie] }
+					AudioToBeCheckedTable.upsert { it[AudioToBeCheckedTable.videoId] = video[MovieActors.movie] }
 				}
 		}
 	}
@@ -87,7 +87,7 @@ class DuplicateLocalDataSource(
 		transaction(db) {
 			AudioToBeCheckedTable.deleteAll()
 			MovieTable.select(MovieTable.id).distinct().forEach { video ->
-				AudioToBeCheckedTable.upsert { it[AudioToBeCheckedTable.id] = video[MovieTable.id] }
+				AudioToBeCheckedTable.upsert { it[AudioToBeCheckedTable.videoId] = video[MovieTable.id].value }
 			}
 		}
 	}
