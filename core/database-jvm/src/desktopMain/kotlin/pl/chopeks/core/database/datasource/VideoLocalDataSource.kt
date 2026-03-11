@@ -13,6 +13,11 @@ import java.io.File
 class VideoLocalDataSource(
 	private val db: Database
 ) {
+	data class NewVideo(
+		val name: String,
+		val absolutePath: String,
+	)
+
 	suspend fun getVideos(from: Long, actors: List<Actor>, categories: List<Category>, filter: Int?, count: Int = 15): VideoContainer = withContext(Dispatchers.IO) {
 		transaction(db) {
 			val matchedIdsQuery = MovieTable.select(MovieTable.id)
@@ -106,12 +111,6 @@ class VideoLocalDataSource(
 		}
 	}
 
-	suspend fun refreshImage(video: Video): String? = withContext(Dispatchers.IO) {
-		transaction(db) {
-			return@transaction null
-		}
-	}
-
 	suspend fun getInfo(video: Video): VideoInfo = withContext(Dispatchers.IO) {
 		transaction(db) {
 			VideoInfo(
@@ -152,5 +151,59 @@ class VideoLocalDataSource(
 			})
 		}
 		img
+	}
+
+	suspend fun setDuration(videoId: Int, duration: Int) = withContext(Dispatchers.IO) {
+		transaction(db) {
+			MovieTable.update({ MovieTable.id eq videoId }, body = {
+				it[MovieTable.duration] = duration
+			})
+		}
+	}
+
+	suspend fun countVideosInPath(path: String) = withContext(Dispatchers.IO) {
+		transaction(db) {
+			MovieTable.select(MovieTable.id, MovieTable.path).where { MovieTable.path like "${path}%" }.count()
+		}
+	}
+
+	suspend fun getFilesInPath(path: String) = withContext(Dispatchers.IO) {
+		transaction(db) {
+			MovieTable.select(MovieTable.path)
+				.where { MovieTable.path like "${path}%" }
+				.map { it[MovieTable.path] }
+		}
+	}
+
+	suspend fun addNewVideos(list: List<NewVideo>) = withContext(Dispatchers.IO) {
+		transaction(db) {
+			list.forEach {
+				val movie = MovieTable.insert { new ->
+					new[MovieTable.name] = it.name
+					new[MovieTable.path] = it.absolutePath
+				}
+				// TODO, to be decided what to do about the dedup when added
+				MoviesToBeCheckedTable.insert { it[MoviesToBeCheckedTable.id] = movie[MovieTable.id] }
+				AudioToBeCheckedTable.insert { it[AudioToBeCheckedTable.id] = movie[MovieTable.id] }
+			}
+		}
+	}
+
+	suspend fun getVideosWithoutThumbnail(): List<Pair<Int, String>> = withContext(Dispatchers.IO) {
+		transaction(db) {
+			MovieTable
+				.select(MovieTable.id, MovieTable.path, MovieTable.thumbnail)
+				.where { MovieTable.thumbnail.isNull() }
+				.map { it[MovieTable.id].value to it[MovieTable.path] }
+		}
+	}
+
+	suspend fun getVideosWithoutDuration(): List<Pair<Int, String>> = withContext(Dispatchers.IO) {
+		transaction(db) {
+			MovieTable
+				.select(MovieTable.id, MovieTable.path, MovieTable.duration)
+				.where { MovieTable.duration.isNull() or MovieTable.duration.eq(0) }
+				.map { it[MovieTable.id].value to it[MovieTable.path] }
+		}
 	}
 }

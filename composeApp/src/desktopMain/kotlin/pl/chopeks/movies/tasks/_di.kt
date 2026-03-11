@@ -8,10 +8,11 @@ import pl.chopeks.movies.tasks.duplicates.CollectFingerprintsUseCase
 import pl.chopeks.movies.tasks.duplicates.CompareAudioUseCase
 
 val taskModule = DI.Module("taskModule") {
-	bindSingleton { TaskManager(instance()) }
+	bindSingleton { TaskManager(instance(), instance()) }
 
 	bindProvider { CollectFingerprintsUseCase(instance()) }
 	bindProvider { CompareAudioUseCase(instance(), instance()) }
 
 	bindProvider { DuplicatesSearchTask(instance(), instance()) }
+	bindProvider { VideoLookupTask(instance(), instance(), instance()) }
 }

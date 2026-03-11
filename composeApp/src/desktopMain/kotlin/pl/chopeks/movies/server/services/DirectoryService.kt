@@ -7,11 +7,11 @@ import org.kodein.di.DI
 import org.kodein.di.instance
 import pl.chopeks.core.data.repository.ISettingsRepository
 import pl.chopeks.core.model.Path
-import pl.chopeks.movies.server.utils.RefreshUtils
-import kotlin.concurrent.thread
+import pl.chopeks.movies.tasks.TaskManager
 
 fun Route.directoryService(di: DI) {
 	val repository by di.instance<ISettingsRepository>()
+	val taskManager by di.instance<TaskManager>()
 
 	get("/directories") {
 		call.respond(repository.getPaths())
@@ -21,7 +21,7 @@ fun Route.directoryService(di: DI) {
 			repository.addPath(json.path)
 			call.respond("{}")
 		}
-		thread { RefreshUtils.refresh {} }
+		taskManager.startRefreshTask()
 	}
 	post("/directory/remove") {
 		runCatching { call.receiveNullable<Path>() }.getOrNull()?.let { json ->

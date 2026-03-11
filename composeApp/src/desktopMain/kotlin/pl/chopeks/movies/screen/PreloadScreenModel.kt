@@ -12,7 +12,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.sql.Database
 import pl.chopeks.core.database.DatabaseHelper
 import pl.chopeks.movies.server.utils.Python
-import pl.chopeks.movies.server.utils.RefreshUtils
 import pl.chopeks.movies.tasks.TaskManager
 
 class PreloadScreenModel(

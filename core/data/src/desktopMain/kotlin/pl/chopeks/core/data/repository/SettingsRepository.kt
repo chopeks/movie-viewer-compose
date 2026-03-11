@@ -18,7 +18,7 @@ class SettingsRepository(
 	}
 
 	override suspend fun getPaths(): List<Path> {
-		return directoriesDataSource.getPathes()
+		return directoriesDataSource.getPaths()
 	}
 
 	override suspend fun removePath(path: Path) {

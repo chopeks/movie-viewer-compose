@@ -17,7 +17,7 @@ import java.io.File
 class DirectoriesLocalDataSource(
 	private val db: Database
 ) {
-	fun getPathes(): List<Path> {
+	fun getPaths(): List<Path> {
 		return transaction(db) {
 			PathsTable.selectAll().map { Path(it[path], it[PathsTable.count]) }
 		}
