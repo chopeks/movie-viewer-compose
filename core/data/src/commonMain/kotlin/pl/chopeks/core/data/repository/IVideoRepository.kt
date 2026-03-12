@@ -9,4 +9,5 @@ interface IVideoRepository: AutoCloseable {
 	suspend fun refreshImage(video: Video): String?
 	suspend fun getInfo(video: Video): VideoInfo
 	suspend fun remove(video: Video)
+	suspend fun moveToDump(video: Video)
 }

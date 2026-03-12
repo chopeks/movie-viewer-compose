@@ -68,10 +68,12 @@ class CompareAudioUseCase(
 		val result = searchThisInOther(needle, longerVideos) +
 			searchOtherInThis(haystack, shorterVideos)
 
-		result.filter { it.confidence > 0.9 }.forEach { match ->
-			AppLogger.log("found duplicate for ${video.id} -> ${match.id} (${match.confidence})")
-			dataSource.addDuplicate(video.id, match.id);
-		}
+		result.filter { it.confidence > 0.9 }
+			.distinctBy { it.id }
+			.forEach { match ->
+				AppLogger.log("found duplicate for ${video.id} -> ${match.id} (${match.confidence})")
+				dataSource.addDuplicate(video.id, match.id);
+			}
 		val deleted = dataSource.removeRequest(video.id)
 		if (deleted > 1)
 			dataSource.addRequest(video.id)

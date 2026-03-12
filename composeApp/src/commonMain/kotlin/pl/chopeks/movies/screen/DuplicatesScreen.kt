@@ -51,6 +51,8 @@ class DuplicatesScreen : Screen {
 									screenModel.play(it)
 								}, onRemoveClick = {
 									screenModel.remove(it)
+								}, onDumpClick = {
+									screenModel.dump(it)
 								}, onCancelClick = {
 									screenModel.cancel(item)
 								})

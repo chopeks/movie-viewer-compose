@@ -15,7 +15,7 @@ val databaseModule = DI.Module("databaseModule") {
 	bindProvider { SettingsLocalDataSource() }
 	bindProvider { DirectoriesLocalDataSource(instance()) }
 	bindProvider { CategoriesDataSource(instance()) }
-	bindProvider { VideoLocalDataSource(instance()) }
+	bindProvider { VideoLocalDataSource(instance(), instance()) }
 	bindProvider { DuplicateLocalDataSource(instance()) }
 	// for duplicate detection
 	bindProvider { AudioDedupLocalDataSource(instance()) }

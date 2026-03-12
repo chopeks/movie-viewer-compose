@@ -15,17 +15,16 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.kodein.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
-import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.kodein.di.compose.localDI
 import org.kodein.di.direct
 import org.kodein.di.instance
+import pl.chopeks.core.model.Actor
+import pl.chopeks.core.model.Category
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.cards.VideoCard
 import pl.chopeks.movies.internal.screenmodel.VideosScreenModel
-import pl.chopeks.core.model.Actor
-import pl.chopeks.core.model.Category
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
 
@@ -112,6 +111,9 @@ class VideosScreen(
                     onRemoveClick = {
                       editedVideoChips = screenModel.videos.indexOf(video)
                       removeConfirmDialog.value = true
+                    },
+                    onDumpClick = {
+                      screenModel.dump(video)
                     }
                   )
                 } else {

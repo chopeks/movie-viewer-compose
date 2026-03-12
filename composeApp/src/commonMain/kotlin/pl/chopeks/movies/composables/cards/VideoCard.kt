@@ -49,7 +49,8 @@ fun VideoCard(
   onActorChipClick: () -> Unit,
   onCategoryChipClick: () -> Unit,
   onThumbnailClick: () -> Unit,
-  onRemoveClick: () -> Unit
+  onRemoveClick: () -> Unit,
+  onDumpClick: () -> Unit,
 ) {
   Card(Modifier.fillMaxSize(), backgroundColor = Color.DarkGray.copy(alpha = 0.5f), elevation = 0.dp) {
     Column(Modifier.fillMaxWidth()) {
@@ -84,7 +85,7 @@ fun VideoCard(
             .offset(y = (-2).dp)
         )
 
-        ExpandableMenuButton(onThumbnailClick, onRemoveClick)
+        ExpandableMenuButton(onThumbnailClick, onRemoveClick, onDumpClick)
       }
       ActorChips(video.chips, onActorChipClick)
       CategoryChips(video.chips, onCategoryChipClick)
@@ -95,7 +96,8 @@ fun VideoCard(
 @Composable
 fun BoxScope.ExpandableMenuButton(
   onThumbnailClick: () -> Unit,
-  onRemoveClick: () -> Unit
+  onRemoveClick: () -> Unit,
+  onDumpClick: () -> Unit,
 ) {
   var expanded by remember { mutableStateOf(false) }  // To track if menu is expanded
 
@@ -109,6 +111,12 @@ fun BoxScope.ExpandableMenuButton(
       onDismissRequest = { expanded = false },
       modifier = Modifier.background(Color.Black.copy(alpha = 0.7f))
     ) {
+      DropdownMenuItem(onClick = {
+        onDumpClick()
+        expanded = false
+      }) {
+        Text("Move to .dump", color = Color.White)
+      }
       DropdownMenuItem(onClick = {
         onThumbnailClick()
         expanded = false

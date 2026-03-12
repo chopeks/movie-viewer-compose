@@ -41,4 +41,10 @@ class DirectoriesLocalDataSource(
 			}
 		}
 	}
+
+	fun getDumpPath(file: File): File? {
+		return getPaths().map { File(it.path) }
+			.firstOrNull { root -> file.toPath().startsWith(root.toPath()) }
+			?.resolve(".dump")
+	}
 }

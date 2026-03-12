@@ -164,6 +164,14 @@ class VideosScreenModel(
 		}
 	}
 
+	fun dump(video: Video) {
+		screenModelScope.launch(bestConcurrencyDispatcher()) {
+			videoRepository.moveToDump(video)
+			videos.clear()
+			getVideos()
+		}
+	}
+
 	override fun onDispose() {
 		super.onDispose()
 		videoPlayer.close()
@@ -171,4 +179,5 @@ class VideosScreenModel(
 		categoryRepository.close()
 		videoRepository.close()
 	}
+
 }

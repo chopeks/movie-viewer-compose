@@ -38,6 +38,9 @@ class VideoLookupTask(
 		val paths = directoryDataSource.getPaths()
 		paths.forEach { path ->
 			val directory = File(path.path)
+
+			ensureDumpExists(directory)
+
 			if (shouldCheckFiles(path)) {
 				onEvent("File count different, checking which files were removed or added. (${path.path})")
 				withContext(Dispatchers.Default) {
@@ -91,5 +94,11 @@ class VideoLookupTask(
 		val fileCount = getFiles(dir).size.toLong()
 		val dbCount = videoDataSource.countVideosInPath(dir.absolutePath)
 		return dbCount != fileCount
+	}
+
+	fun ensureDumpExists(dir: File) {
+		val dump = File(dir, ".dump")
+		dump.parentFile.mkdirs()
+		dump.mkdirs()
 	}
 }

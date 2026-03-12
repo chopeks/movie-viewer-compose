@@ -488,6 +488,7 @@ fun getDirectories(dir: File) = dir
 	.listFiles { file -> file.isDirectory }?.toList() ?: emptyList()
 
 fun getFiles(dir: File) = dir.walkTopDown()
+	.onEnter { it.name != ".dump" }
 	.filter { it.isFile }
 	.filter { it.extension in videoExtensions }
 	.toCollection(mutableListOf())

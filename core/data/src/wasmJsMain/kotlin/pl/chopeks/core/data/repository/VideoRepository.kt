@@ -55,6 +55,10 @@ class VideoRepository(
 		delete("movie/${video.id}").body<Any>()
 	}
 
+	override suspend fun moveToDump(video: Video) {
+		// todo, make it work when migrated to rcp
+	}
+
 	override fun close() {
 		httpClient.close()
 	}

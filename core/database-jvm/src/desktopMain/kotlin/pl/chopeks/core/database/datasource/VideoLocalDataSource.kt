@@ -9,9 +9,11 @@ import pl.chopeks.core.database.*
 import pl.chopeks.core.database.cache.Cache
 import pl.chopeks.core.model.*
 import java.io.File
+import java.nio.file.Files
 
 class VideoLocalDataSource(
-	private val db: Database
+	private val db: Database,
+	private val directories: DirectoriesLocalDataSource,
 ) {
 	data class NewVideo(
 		val name: String,
@@ -141,7 +143,9 @@ class VideoLocalDataSource(
 			AudioToBeCheckedTable.deleteWhere { AudioToBeCheckedTable.videoId eq video.id }
 			ret
 		}
-		File(path).delete()
+		val file = File(path)
+		if (file.exists())
+			file.delete()
 	}
 
 	suspend fun setImage(video: Video, img: String?): String? = withContext(Dispatchers.IO) {
@@ -204,5 +208,15 @@ class VideoLocalDataSource(
 				.where { MovieTable.duration.isNull() or MovieTable.duration.eq(0) }
 				.map { it[MovieTable.id].value to it[MovieTable.path] }
 		}
+	}
+
+	suspend fun moveToDump(video: Video) = withContext(Dispatchers.IO) {
+		val file = getVideoPath(video.id)?.let { File(it) }
+			?: return@withContext
+		val dump = directories.getDumpPath(file)
+			?: return@withContext
+		val target = File(dump, file.name)
+		Files.move(file.toPath(), target.toPath())
+		remove(video)
 	}
 }

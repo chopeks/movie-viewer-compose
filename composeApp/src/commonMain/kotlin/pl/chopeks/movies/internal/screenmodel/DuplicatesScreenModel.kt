@@ -68,6 +68,14 @@ class DuplicatesScreenModel(
 		}
 	}
 
+	fun dump(video: Video) {
+		screenModelScope.launch(bestConcurrencyDispatcher()) {
+			videoRepository.moveToDump(video)
+			duplicates.clear()
+			getDuplicates()
+		}
+	}
+
 	fun play(video: Video) {
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
 			videoPlayer.play(video)

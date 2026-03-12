@@ -35,6 +35,10 @@ class VideoRepository(
 		dataSource.remove(video)
 	}
 
+	override suspend fun moveToDump(video: Video) {
+		dataSource.moveToDump(video)
+	}
+
 	override fun close() {
 	}
 }
