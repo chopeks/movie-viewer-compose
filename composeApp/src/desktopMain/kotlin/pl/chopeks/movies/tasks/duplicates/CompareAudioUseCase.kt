@@ -27,7 +27,7 @@ class CompareAudioUseCase(
 		val offsetSeconds: Double
 	)
 
-	private val dbSemaphore = Semaphore(32)
+	private val dbSemaphore = Semaphore(128)
 
 	/**
 	 * @param threshold - will skip vids shorter than this, as these usually are just false positives
@@ -59,11 +59,11 @@ class CompareAudioUseCase(
 			return@withContext true
 		}
 
-		val actors = actorDataSource.findActorsByVideo(video.id)
-		val candidates = dataSource.getCandidates(actors, threshold, video)
+		val videos = actorDataSource.findVideosWithSharedActors(video.id)
+		val candidates = dataSource.getCandidates(videos, threshold, video)
 
-		val shorterVideos = candidates.filter { it.duration < video.duration }
-		val longerVideos = candidates.filter { it.duration >= video.duration }
+		val (shorterVideos, longerVideos) = candidates
+			.partition { it.duration < video.duration }
 
 		val result = searchThisInOther(needle, longerVideos) +
 			searchOtherInThis(haystack, shorterVideos)

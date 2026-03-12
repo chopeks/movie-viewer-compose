@@ -13,7 +13,7 @@ object FpcalcUtils {
 		ffmpegCmd += listOf("-i", video.absolutePath)
 
 		if (duration != null)
-			ffmpegCmd += listOf("-t", duration.toString())
+			ffmpegCmd += listOf("-t", (duration / 1000.0).toString())
 
 		ffmpegCmd += listOf(
 			"-vn",

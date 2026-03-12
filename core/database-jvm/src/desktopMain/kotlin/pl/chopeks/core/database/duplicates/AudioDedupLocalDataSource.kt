@@ -34,7 +34,7 @@ class AudioDedupLocalDataSource(
 				.join(MovieTable, JoinType.INNER, onColumn = AudioToBeCheckedTable.videoId, otherColumn = MovieTable.id) { AudioToBeCheckedTable.videoId eq MovieTable.id }
 				.select(AudioToBeCheckedTable.videoId, MovieTable.duration, MovieTable.path)
 				.where { MovieTable.duration.isNotNull() }
-				.orderBy(MovieTable.duration, SortOrder.ASC)
+				.orderBy(MovieTable.id, SortOrder.DESC)
 				.limit(1)
 				.singleOrNull()
 				?.let { PossibleDuplicate(it[AudioToBeCheckedTable.videoId], it[MovieTable.duration]!!, File(it[MovieTable.path])) }
@@ -66,11 +66,11 @@ class AudioDedupLocalDataSource(
 		}
 	}
 
-	suspend fun getCandidates(actors: List<Int>, threshold: Int, video: PossibleDuplicate): List<Candidate> = withContext(Dispatchers.IO) {
+	suspend fun getCandidates(videos: List<Int>, threshold: Int, video: PossibleDuplicate): List<Candidate> = withContext(Dispatchers.IO) {
 		transaction(db) {
 			MovieTable.select(MovieTable.id, MovieTable.path, MovieTable.duration)
 				.where {
-					((MovieTable.path like "${video.path.parentFile.absolutePath}%") or (MovieTable.id inList actors)) and
+					((MovieTable.path like "${video.path.parentFile.absolutePath}%") or (MovieTable.id inList videos)) and
 						(MovieTable.duration greaterEq threshold) and
 						(MovieTable.id neq video.id)
 				}

@@ -76,10 +76,15 @@ class ActorLocalDataSource(
 		}.firstOrNull()
 	}
 
-	suspend fun findActorsByVideo(videoId: Int) = withContext(Dispatchers.IO) {
+	suspend fun findVideosWithSharedActors(videoId: Int) = withContext(Dispatchers.IO) {
 		transaction(db) {
-			val actors = MovieActors.selectAll().where { MovieActors.movie eq videoId }.map { it[MovieActors.actor] }
-			MovieActors.selectAll().where { MovieActors.actor inList actors }.distinct().map { it[MovieActors.id].value }
+			val actors = MovieActors.selectAll()
+				.where { MovieActors.movie eq videoId }
+				.map { it[MovieActors.actor] }
+			MovieActors.selectAll()
+				.where { MovieActors.actor inList actors }
+				.withDistinct(true)
+				.map { it[MovieActors.movie] }
 		}
 	}
 }
