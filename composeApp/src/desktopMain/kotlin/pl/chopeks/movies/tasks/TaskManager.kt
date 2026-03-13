@@ -33,7 +33,7 @@ class TaskManager(
 		}
 	}
 
-	override suspend fun cancel() {
+	fun cancel() {
 		job.cancel()
 		scope.cancel()
 	}
