@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinxRpc)
 }
 
 val versionString = "1.0.0"
@@ -16,7 +17,7 @@ kotlin {
     
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        moduleName = "composeApp"
+        outputModuleName = "composeApp"
         browser {
             val rootDirPath = project.rootDir.path
             val projectDirPath = project.projectDir.path
@@ -43,12 +44,14 @@ kotlin {
             implementation(projects.core.core)
             implementation(projects.core.data)
 
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material)
-            implementation(compose.ui)
-            implementation(compose.components.uiToolingPreview)
-            implementation(compose.components.resources)
+            implementation("org.jetbrains.compose.runtime:runtime:1.10.2")
+            implementation("org.jetbrains.compose.foundation:foundation:1.10.2")
+            implementation("org.jetbrains.compose.material:material:1.10.2")
+            implementation("org.jetbrains.compose.material:material-icons-core:1.7.3")
+            implementation("org.jetbrains.compose.ui:ui:1.10.2")
+            implementation("org.jetbrains.compose.ui:ui-tooling-preview:1.10.2")
+            implementation("org.jetbrains.compose.components:components-resources:1.10.2")
+
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.voyager.navigator)
@@ -62,6 +65,7 @@ kotlin {
             implementation(libs.ktor.client.contentnegotiation)
             implementation(libs.ktor.client.json)
             implementation(libs.ktor.client.logging)
+            implementation(libs.kotlinx.rpc.core)
 
             implementation(libs.coil.compose.core)
             implementation(libs.coil.compose)
@@ -85,6 +89,10 @@ kotlin {
             implementation(libs.ktor.server.contentnegotiation)
             implementation(libs.ktor.server.gson)
 
+            implementation(libs.kotlinx.rpc.server)
+            implementation(libs.kotlinx.rpc.ktor.server)
+            implementation(libs.kotlinx.rpc.serialization)
+
             implementation("org.imgscalr:imgscalr-lib:4.2")
             implementation("org.xerial:sqlite-jdbc:3.48.0.0")
             implementation("org.apache.jdbm:jdbm:3.0-alpha5")
@@ -92,6 +100,9 @@ kotlin {
 
         wasmJsMain.dependencies {
             implementation(libs.ktor.client.js)
+            implementation(libs.kotlinx.rpc.client)
+            implementation(libs.kotlinx.rpc.ktor.client)
+            implementation(libs.kotlinx.rpc.serialization)
         }
 
     }

@@ -26,8 +26,4 @@ class DuplicateRepository(
 	override suspend fun deduplicateAll() {
 		return dataSource.deduplicateAll()
 	}
-
-	override fun close() {
-		/* no-op */
-	}
 }

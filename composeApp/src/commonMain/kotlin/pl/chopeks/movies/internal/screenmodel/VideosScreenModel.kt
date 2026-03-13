@@ -5,8 +5,6 @@ import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import pl.chopeks.core.ITaskManager
-import pl.chopeks.core.IVideoPlayer
 import pl.chopeks.core.data.repository.IActorRepository
 import pl.chopeks.core.data.repository.ICategoryRepository
 import pl.chopeks.core.data.repository.IVideoRepository
@@ -14,6 +12,8 @@ import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Category
 import pl.chopeks.core.model.Video
 import pl.chopeks.core.model.VideoChips
+import pl.chopeks.movies.ITaskManager
+import pl.chopeks.movies.IVideoPlayer
 import pl.chopeks.movies.bestConcurrencyDispatcher
 import kotlin.math.max
 import kotlin.math.min
@@ -171,13 +171,4 @@ class VideosScreenModel(
 			getVideos()
 		}
 	}
-
-	override fun onDispose() {
-		super.onDispose()
-		videoPlayer.close()
-		actorRepository.close()
-		categoryRepository.close()
-		videoRepository.close()
-	}
-
 }

@@ -8,9 +8,9 @@ import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.launch
 import pl.chopeks.core.data.repository.ISettingsRepository
-import pl.chopeks.movies.bestConcurrencyDispatcher
 import pl.chopeks.core.model.Path
 import pl.chopeks.core.model.Settings
+import pl.chopeks.movies.bestConcurrencyDispatcher
 
 class SettingsScreenModel(
   private val repository: ISettingsRepository,
@@ -43,10 +43,4 @@ class SettingsScreenModel(
       repository.addPath(path)
     }
   }
-
-  override fun onDispose() {
-    super.onDispose()
-    repository.close()
-  }
-
 }

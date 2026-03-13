@@ -84,9 +84,4 @@ class ActorsScreenModel(
 			}
 		}
 	}
-
-	override fun onDispose() {
-		repository.close()
-		super.onDispose()
-	}
 }

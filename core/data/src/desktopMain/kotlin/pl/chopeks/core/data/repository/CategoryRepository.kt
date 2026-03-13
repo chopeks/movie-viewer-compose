@@ -34,8 +34,4 @@ class CategoryRepository(
 	override suspend fun delete(category: Category) {
 		dataSource.delete(category)
 	}
-
-	override fun close() {
-		/* no-op */
-	}
 }

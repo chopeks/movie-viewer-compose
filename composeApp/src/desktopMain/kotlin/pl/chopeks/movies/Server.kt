@@ -5,16 +5,22 @@ import io.ktor.serialization.gson.*
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.plugins.cors.*
+import io.ktor.server.plugins.cors.maxAgeDuration
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.rpc.krpc.ktor.server.Krpc
+import kotlinx.rpc.krpc.ktor.server.rpc
+import kotlinx.rpc.krpc.serialization.json.json
 import org.kodein.di.DI
-import pl.chopeks.movies.server.services.*
+import org.kodein.di.direct
+import org.kodein.di.instance
+import pl.chopeks.core.data.repository.*
 import java.text.DateFormat
 import kotlin.time.Duration.Companion.days
 
 fun Application.module(di: DI) {
+	install(Krpc)
 	install(CORS) {
 		allowMethod(HttpMethod.Options)
 		allowMethod(HttpMethod.Get)
@@ -44,12 +50,18 @@ fun Application.module(di: DI) {
 			call.respondRedirect("/index.html", true)
 		}
 
-		actorService(di)
-		categoryService(di)
-		imageService(di)
-		directoryService(di)
-		movieService(di)
-		duplicatesService(di)
-		settingsService(di)
+		rpc("/rpc") {
+			rpcConfig {
+				serialization {
+					json()
+				}
+			}
+			registerService<IActorRepository> { di.direct.instance<IActorRepository>() }
+			registerService<ISettingsRepository> { di.direct.instance<ISettingsRepository>() }
+			registerService<ICategoryRepository> { di.direct.instance<ICategoryRepository>() }
+			registerService<IVideoRepository> { di.direct.instance<IVideoRepository>() }
+			registerService<IVideoPlayer> { di.direct.instance<IVideoPlayer>() }
+			registerService<IDuplicateRepository> { di.direct.instance<IDuplicateRepository>() }
+		}
 	}
 }

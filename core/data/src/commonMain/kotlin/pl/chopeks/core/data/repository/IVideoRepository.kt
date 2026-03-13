@@ -1,8 +1,10 @@
 package pl.chopeks.core.data.repository
 
+import kotlinx.rpc.annotations.Rpc
 import pl.chopeks.core.model.*
 
-interface IVideoRepository: AutoCloseable {
+@Rpc
+interface IVideoRepository {
 	suspend fun getVideos(from: Long, actors: List<Actor>, categories: List<Category>, filter: Int, count: Int): VideoContainer
 	suspend fun getVideoPath(video: Video): String?
 	suspend fun getImage(video: Video): String?

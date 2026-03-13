@@ -38,7 +38,4 @@ class ActorRepository(
 	override suspend fun delete(actor: Actor) {
 		dataSource.delete(actor)
 	}
-
-	override fun close() {
-	}
 }

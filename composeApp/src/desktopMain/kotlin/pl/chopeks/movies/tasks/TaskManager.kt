@@ -1,7 +1,7 @@
 package pl.chopeks.movies.tasks
 
 import kotlinx.coroutines.*
-import pl.chopeks.core.ITaskManager
+import pl.chopeks.movies.ITaskManager
 import pl.chopeks.movies.utils.AppLogger
 
 class TaskManager(
@@ -21,19 +21,19 @@ class TaskManager(
 		startDedupTask()
 	}
 
-	override fun startDedupTask() {
+	override suspend fun startDedupTask() {
 		scope.launch(Dispatchers.Default) {
 			duplicatesSearchTask.run()
 		}
 	}
 
-	override fun startRefreshTask() {
+	override suspend fun startRefreshTask() {
 		scope.launch(Dispatchers.Default) {
 			videoLookupTask.run()
 		}
 	}
 
-	override fun cancel() {
+	override suspend fun cancel() {
 		job.cancel()
 		scope.cancel()
 	}

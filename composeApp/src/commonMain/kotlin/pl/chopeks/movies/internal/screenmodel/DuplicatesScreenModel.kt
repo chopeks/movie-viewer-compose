@@ -9,11 +9,11 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import pl.chopeks.core.IVideoPlayer
 import pl.chopeks.core.data.repository.IDuplicateRepository
 import pl.chopeks.core.data.repository.IVideoRepository
 import pl.chopeks.core.model.Duplicates
 import pl.chopeks.core.model.Video
+import pl.chopeks.movies.IVideoPlayer
 import pl.chopeks.movies.bestConcurrencyDispatcher
 
 class DuplicatesScreenModel(
@@ -86,12 +86,5 @@ class DuplicatesScreenModel(
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
 			duplicatesRepository.deduplicateAll()
 		}
-	}
-
-	override fun onDispose() {
-		super.onDispose()
-		videoPlayer.close()
-		videoRepository.close()
-		duplicatesRepository.close()
 	}
 }

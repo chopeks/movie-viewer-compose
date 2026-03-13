@@ -28,9 +28,4 @@ class SettingsRepository(
 	override suspend fun addPath(path: String) {
 		directoriesDataSource.add(path)
 	}
-
-	override fun close() {
-		/* no-op */
-	}
-
 }

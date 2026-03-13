@@ -1,9 +1,11 @@
 package pl.chopeks.core.data.repository
 
+import kotlinx.rpc.annotations.Rpc
 import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Video
 
-interface IActorRepository: AutoCloseable {
+@Rpc
+interface IActorRepository {
 	suspend fun getActors(): List<Actor>
 	suspend fun getActor(id: Int): Actor?
 	suspend fun getImage(actor: Actor): String?

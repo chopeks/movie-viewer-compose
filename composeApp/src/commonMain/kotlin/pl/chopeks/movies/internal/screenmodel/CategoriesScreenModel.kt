@@ -1,7 +1,6 @@
 package pl.chopeks.movies.internal.screenmodel
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -9,18 +8,12 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import pl.chopeks.core.IImageConverter
 import pl.chopeks.core.data.repository.ICategoryRepository
-import pl.chopeks.core.model.Actor
-import pl.chopeks.movies.bestConcurrencyDispatcher
 import pl.chopeks.core.model.Category
+import pl.chopeks.movies.bestConcurrencyDispatcher
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -82,10 +75,5 @@ class CategoriesScreenModel(
         if (category.id == id) category.copy(image = image, imageBytes = decoded) else category
       }
     }
-  }
-
-  override fun onDispose() {
-    repository.close()
-    super.onDispose()
   }
 }
