@@ -5,17 +5,17 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 
-object CategoryTable : IntIdTable("category") {
+internal object CategoryTable : IntIdTable("category") {
   val name = text("name")
   val image = text("image").nullable()
 }
 
-object ActorTable : IntIdTable("actor") {
+internal object ActorTable : IntIdTable("actor") {
   val name = text("name")
   val image = text("image").nullable()
 }
 
-object MovieTable : IntIdTable("movie") {
+internal object MovieTable : IntIdTable("movie") {
   val name = text("name")
   val path = text("path")
   val thumbnail = text("thumbnail").nullable()
@@ -24,35 +24,35 @@ object MovieTable : IntIdTable("movie") {
   val needle = binary("needle").nullable()
 }
 
-object MovieCategories : IntIdTable("movie_category") {
+internal object MovieCategories : IntIdTable("movie_category") {
   val movie = integer("movie").index("idx_movie_categories_movie")
   val category = integer("category").index("idx_movie_categories_cat")
 }
 
-object MovieActors : IntIdTable("movie_actor") {
+internal object MovieActors : IntIdTable("movie_actor") {
   val movie = integer("movie").index("idx_movie_actors_movie")
   val actor = integer("actor").index("idx_movie_actors_actor")
 }
 
-object PathsTable : Table("paths") {
+internal object PathsTable : Table("paths") {
   val path = text("path")
   val count = integer("files").default(0)
 }
 
-object MoviesToBeCheckedTable : IntIdTable("tbc")
+internal object MoviesToBeCheckedTable : IntIdTable("tbc")
 
-object AudioToBeCheckedTable : IntIdTable("atbc") {
+internal object AudioToBeCheckedTable : IntIdTable("atbc") {
   val videoId = integer("vid").default(0)
 }
 
-object DetectedDuplicatesTable: Table("dup") {
+internal object DetectedDuplicatesTable: Table("dup") {
   val movie = integer("movie")
   val otherMovie = integer("other")
   val timestamp = integer("t").default(0)
   val otherTimestamp = integer("ot").default(0)
 }
 
-object SchemaVerionsTable : Table("schemasVer") {
+internal object SchemaVerionsTable : Table("schemasVer") {
   val version = integer("version")
 
   fun inc() {
