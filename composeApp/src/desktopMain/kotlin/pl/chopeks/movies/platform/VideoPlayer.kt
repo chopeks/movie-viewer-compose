@@ -17,6 +17,7 @@ class VideoPlayer(
 		val path = repository.getVideoPath(video)
 			?: return@withContext
 		val settings = settingsRepository.getSettings()
-		arrayOf(settings.moviePlayer, "\"$path\"").runCommand(File(path).parentFile)
+		arrayOf(settings.moviePlayer, "\"$path\"")
+			.runCommand(File(path).parentFile, ProcessBuilder.Redirect.DISCARD)
 	}
 }

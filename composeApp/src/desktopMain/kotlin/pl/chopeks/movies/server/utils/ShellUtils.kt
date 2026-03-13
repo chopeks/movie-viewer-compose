@@ -23,11 +23,11 @@ fun Array<String>.executeCommand(workingDir: File): String? {
   }
 }
 
-fun Array<String>.runCommand(workingDir: File) {
+fun Array<String>.runCommand(workingDir: File, errorRedirect: ProcessBuilder.Redirect = ProcessBuilder.Redirect.INHERIT) {
   ProcessBuilder(*this)
     .directory(workingDir)
     .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-    .redirectError(ProcessBuilder.Redirect.INHERIT)
+    .redirectError(errorRedirect)
     .start()
     .waitFor(1, TimeUnit.SECONDS)
 }

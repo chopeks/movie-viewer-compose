@@ -21,14 +21,14 @@ class CollectFingerprintsUseCase(
 		private val SILENCE_BYTES = byteArrayOf(0x25.toByte(), 0x6D.toByte(), 0xF9.toByte(), 0x77.toByte())
 	}
 
-	private val diskSemaphore = Semaphore(16)
+	private val diskSemaphore = Semaphore(8)
 
 	/**
 	 * @return false if there are no more movies to be checked
 	 * @return true if a movie was checked and is ready to check next
 	 */
 	suspend fun run(): Boolean = withContext(Dispatchers.Default) {
-		var entries = dataSource.getVideosWithoutFingerprints(64)
+		var entries = dataSource.getVideosWithoutFingerprints(16)
 		if (entries.isEmpty()) {
 			AppLogger.log("No entries without fingerprint found, aborting...")
 			return@withContext false
