@@ -65,6 +65,11 @@ kotlinx-rpc-serialization = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-s
 kotlinx-rpc-ktor-client = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-client", version.ref = "kotlinx-rpc" }
 kotlinx-rpc-ktor-server = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-server", version.ref = "kotlinx-rpc" }
 
+# Dependencies of the included build-logic
+bl-multiplatform-plugin = { group = "org.jetbrains.kotlin.multiplatform", name = "org.jetbrains.kotlin.multiplatform.gradle.plugin", version.ref = "kotlin" }
+bl-serialization-plugin = { group = "org.jetbrains.kotlin.plugin.serialization", name = "org.jetbrains.kotlin.plugin.serialization.gradle.plugin", version.ref = "kotlin" }
+bl-kotest-plugin = { group = "io.kotest", name = "io.kotest.gradle.plugin", version.ref = "kotest" }
+
 [bundles]
 kotest = ["kotest-engine", "kotest-core", "kotest-property", "mockk"]
 kotest-desktop = ["kotest-engine", "kotest-core", "kotest-property", "kotest-jvm-runner", "mockk"]
@@ -76,3 +81,6 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlinxRpc = { id = "org.jetbrains.kotlinx.rpc.plugin", version.ref = "kotlinx-rpc" }
 kotest = { id = "io.kotest", version.ref = "kotest" }
+
+# Convention plugins
+mv-desktop-library = { id = "mv.desktop.library" }

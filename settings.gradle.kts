@@ -28,9 +28,12 @@ dependencyResolutionManagement {
 	}
 }
 
+includeBuild("build-logic")
+
 include(":composeApp")
 include("core:core")
 include("core:database-jvm")
 include("core:data")
 include("core:fpcalc-jvm")
 include("core:ffmpeg-jvm")
+
