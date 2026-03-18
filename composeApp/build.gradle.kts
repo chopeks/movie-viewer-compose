@@ -40,6 +40,10 @@ kotlin {
 			implementation(libs.coil.mp)
 		}
 
+		commonTest.dependencies {
+			implementation("org.jetbrains.compose.ui:ui-test:1.10.2")
+		}
+
 		desktopMain.dependencies {
 			implementation(projects.core.databaseJvm)
 			implementation(projects.core.fpcalcJvm)

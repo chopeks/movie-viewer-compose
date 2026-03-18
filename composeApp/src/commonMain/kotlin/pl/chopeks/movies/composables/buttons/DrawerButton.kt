@@ -10,6 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -18,18 +20,26 @@ fun DrawerButton(text: String, shortcut: String? = null, onClick: () -> Unit) {
 	Row (modifier = Modifier
 		.fillMaxWidth()
 		.clickable(onClick = onClick)
+		.testTag("drawerButton_container")
 		.padding(16.dp)) {
 		Text(
 			text = text,
-			modifier = Modifier.width(200.dp).align(Alignment.CenterVertically),
-			color = Color.White
+			modifier = Modifier.width(200.dp)
+				.align(Alignment.CenterVertically)
+				.testTag("drawerButton_title"),
+			color = Color.White,
+			maxLines = 1,
+			overflow = TextOverflow.Ellipsis
 		)
 		if (shortcut != null) {
 			Text(
 				text = shortcut,
 				fontSize = 10.sp,
-				modifier = Modifier.align(Alignment.CenterVertically),
-				color = Color.Gray
+				modifier = Modifier.align(Alignment.CenterVertically)
+					.testTag("drawerButton_shortcut"),
+				color = Color.Gray,
+				maxLines = 1,
+				overflow = TextOverflow.Ellipsis
 			)
 		}
 	}
