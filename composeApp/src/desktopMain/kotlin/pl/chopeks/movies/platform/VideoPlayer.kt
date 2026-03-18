@@ -7,11 +7,13 @@ import pl.chopeks.core.data.repository.IVideoRepository
 import pl.chopeks.core.model.Video
 import pl.chopeks.movies.IVideoPlayer
 import java.io.File
-import java.util.concurrent.TimeUnit
 
 class VideoPlayer(
 	private val repository: IVideoRepository,
 	private val settingsRepository: ISettingsRepository,
+	private val processFactory: (List<String>, ProcessBuilder.() -> ProcessBuilder) -> Process = { list, builder ->
+		builder(ProcessBuilder(list)).start()
+	}
 ) : IVideoPlayer {
 	override suspend fun play(video: Video) = withContext(Dispatchers.IO) {
 		val path = repository.getVideoPath(video)
@@ -22,11 +24,10 @@ class VideoPlayer(
 	}
 
 	private fun Array<String>.runCommand(workingDir: File, errorRedirect: ProcessBuilder.Redirect = ProcessBuilder.Redirect.INHERIT) {
-		ProcessBuilder(*this)
-			.directory(workingDir)
-			.redirectOutput(ProcessBuilder.Redirect.INHERIT)
-			.redirectError(errorRedirect)
-			.start()
-			.waitFor(1, TimeUnit.SECONDS)
+		processFactory(toList()) {
+			directory(workingDir)
+				.redirectOutput(ProcessBuilder.Redirect.INHERIT)
+				.redirectError(errorRedirect)
+		}.waitFor()
 	}
 }

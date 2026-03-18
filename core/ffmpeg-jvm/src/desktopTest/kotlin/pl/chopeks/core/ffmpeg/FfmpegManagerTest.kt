@@ -58,6 +58,6 @@ class FfmpegManagerTest : FunSpec({
         every { process.inputStream } returns ByteArrayInputStream(expectedOutput.toByteArray())
         every { process.waitFor() } returns 0
 
-        ffmpegManager.getAudioDuration(File("dummy.mp4")) shouldBe 123000L
+        ffmpegManager.getAudioDuration(File("dummy.mp4")) shouldBe 123.45
     }
 })

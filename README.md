@@ -21,3 +21,7 @@ Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-mu
 [Kotlin/Wasm](https://kotl.in/wasm/)…
 
 You can open the web application by running the `:composeApp:wasmJsBrowserDevelopmentRun` Gradle task.
+
+### Tests
+
+`./gradlew allTests` - unit tests from all modules
