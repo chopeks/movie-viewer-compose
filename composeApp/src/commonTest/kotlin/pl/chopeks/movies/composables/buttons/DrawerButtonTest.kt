@@ -106,7 +106,7 @@ class DrawerButtonTest : StringSpec({
 				DrawerButton(text = "Click Me", onClick = { clicked = true })
 			}
 
-			onNodeWithTag("drawerButton_container").performClick()
+			onRoot().performClick()
 
 			clicked shouldBe true
 		}

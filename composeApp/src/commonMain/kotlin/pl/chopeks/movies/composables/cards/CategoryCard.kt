@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
@@ -51,7 +52,7 @@ fun CategoryCard(
           .background(Color.Black.copy(alpha = 0.6f)),
         verticalAlignment = Alignment.CenterVertically
       ) {
-        IconButton({ onEditClick(category) }, modifier = Modifier.size(32.dp)) {
+        IconButton({ onEditClick(category) }, modifier = Modifier.size(32.dp).testTag("editButton")) {
           Icon(Icons.Filled.Edit, "edit", tint = Color.White)
         }
         Spacer(Modifier.width(16.dp))

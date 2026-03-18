@@ -20,7 +20,6 @@ fun DrawerButton(text: String, shortcut: String? = null, onClick: () -> Unit) {
 	Row (modifier = Modifier
 		.fillMaxWidth()
 		.clickable(onClick = onClick)
-		.testTag("drawerButton_container")
 		.padding(16.dp)) {
 		Text(
 			text = text,
