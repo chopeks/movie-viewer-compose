@@ -12,8 +12,8 @@ kotlin {
 			implementation(libs.exposed.dao)
 			implementation(libs.exposed.jdbc)
 
-			implementation("org.xerial:sqlite-jdbc:3.48.0.0")
-			implementation("org.apache.jdbm:jdbm:3.0-alpha5")
+			implementation(libs.sqlite.jdbc)
+			implementation(libs.sqlite.jdbm)
 		}
 	}
 }

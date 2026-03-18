@@ -1,6 +1,7 @@
 plugins {
 	alias(libs.plugins.mv.desktop.library)
 }
+
 kotlin {
 	sourceSets {
 		desktopMain.dependencies {
