@@ -7,4 +7,5 @@ plugins {
     alias(libs.plugins.kotlinxRpc) apply false
     alias(libs.plugins.kotlinSerialization) apply false
     alias(libs.plugins.kotest) apply false
+    alias(libs.plugins.ksp) apply false
 }

@@ -5,6 +5,7 @@ kotlin = "2.3.10"
 kotlinx-coroutines = "1.10.2"
 kotlinxSerialization = "1.7.3"
 kodeinDiFrameworkCompose = "7.31.0"
+ksp = "2.3.6"
 napier = "2.7.1"
 voyagerNavigator = "1.1.0-beta03"
 ktor = "3.0.3"
@@ -70,11 +71,15 @@ kotlinx-rpc-ktor-server = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-kto
 
 # Dependencies of the included build-logic
 bl-multiplatform-plugin = { group = "org.jetbrains.kotlin.multiplatform", name = "org.jetbrains.kotlin.multiplatform.gradle.plugin", version.ref = "kotlin" }
+bl-compose-plugin = { group = "org.jetbrains.compose", name = "org.jetbrains.compose.gradle.plugin", version.ref = "compose-multiplatform" }
+bl-compose-compiler-plugin = { group = "org.jetbrains.kotlin.plugin.compose", name = "org.jetbrains.kotlin.plugin.compose.gradle.plugin", version.ref = "kotlin" }
 bl-serialization-plugin = { group = "org.jetbrains.kotlin.plugin.serialization", name = "org.jetbrains.kotlin.plugin.serialization.gradle.plugin", version.ref = "kotlin" }
+bl-rpc-plugin = { group = "org.jetbrains.kotlinx.rpc.plugin", name = "org.jetbrains.kotlinx.rpc.plugin.gradle.plugin", version.ref = "kotlinx-rpc" }
 bl-kotest-plugin = { group = "io.kotest", name = "io.kotest.gradle.plugin", version.ref = "kotest" }
+bl-ksp-plugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 
 [bundles]
-kotest = ["kotest-engine", "kotest-core", "kotest-property", "mockk"]
+kotest = ["kotest-engine", "kotest-core", "kotest-property"]
 kotest-desktop = ["kotest-engine", "kotest-core", "kotest-property", "kotest-jvm-runner", "mockk"]
 
 [plugins]
@@ -84,6 +89,9 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlinxRpc = { id = "org.jetbrains.kotlinx.rpc.plugin", version.ref = "kotlinx-rpc" }
 kotest = { id = "io.kotest", version.ref = "kotest" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 
 # Convention plugins
 mv-desktop-library = { id = "mv.desktop.library" }
+mv-wasm-library = { id = "mv.wasm.library" }
+mv-app-compose = { id = "mv.app" }
