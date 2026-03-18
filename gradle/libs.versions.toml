@@ -14,6 +14,8 @@ exposed = "0.58.0"
 kotlinx-rpc = "0.10.2"
 mockk = "1.13.12"
 kotest = "6.1.7"
+materialIcons = "1.7.3"
+imgscalr = "4.2"
 
 [libraries]
 kotest-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
@@ -35,6 +37,16 @@ voyager-navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.
 voyager-screenmodel = { module = "cafe.adriel.voyager:voyager-screenmodel", version.ref = "voyagerNavigator" }
 voyager-kodein = { module = "cafe.adriel.voyager:voyager-kodein", version.ref = "voyagerNavigator" }
 
+jetbrains-compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
+jetbrains-compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
+jetbrains-compose-material = { module = "org.jetbrains.compose.material:material", version.ref = "compose-multiplatform" }
+jetbrains-compose-material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "materialIcons" }
+jetbrains-compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
+jetbrains-compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose-multiplatform" }
+jetbrains-compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-multiplatform" }
+jetbrains-compose-ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "compose-multiplatform" }
+
+imgscalr = { module = "org.imgscalr:imgscalr-lib", version.ref = "imgscalr" }
 
 ktor-client-core =  { module = "io.ktor:ktor-client-core" , version.ref = "ktor" }
 ktor-client-contentnegotiation =  { module = "io.ktor:ktor-client-content-negotiation" , version.ref = "ktor" }
@@ -81,6 +93,15 @@ bl-ksp-plugin = { group = "com.google.devtools.ksp", name = "com.google.devtools
 [bundles]
 kotest = ["kotest-engine", "kotest-core", "kotest-property"]
 kotest-desktop = ["kotest-engine", "kotest-core", "kotest-property", "kotest-jvm-runner", "mockk"]
+jetbrains-compose-common = [
+    "jetbrains-compose-runtime",
+    "jetbrains-compose-foundation",
+    "jetbrains-compose-material",
+    "jetbrains-compose-material-icons-core",
+    "jetbrains-compose-ui",
+    "jetbrains-compose-ui-tooling-preview",
+    "jetbrains-compose-components-resources"
+]
 
 [plugins]
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }

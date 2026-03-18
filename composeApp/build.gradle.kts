@@ -12,13 +12,7 @@ kotlin {
 			implementation(projects.core.core)
 			implementation(projects.core.data)
 
-			implementation("org.jetbrains.compose.runtime:runtime:1.10.2")
-			implementation("org.jetbrains.compose.foundation:foundation:1.10.2")
-			implementation("org.jetbrains.compose.material:material:1.10.2")
-			implementation("org.jetbrains.compose.material:material-icons-core:1.7.3")
-			implementation("org.jetbrains.compose.ui:ui:1.10.2")
-			implementation("org.jetbrains.compose.ui:ui-tooling-preview:1.10.2")
-			implementation("org.jetbrains.compose.components:components-resources:1.10.2")
+			implementation(libs.bundles.jetbrains.compose.common)
 
 			implementation(libs.androidx.lifecycle.viewmodel)
 			implementation(libs.androidx.lifecycle.runtime.compose)
@@ -41,7 +35,7 @@ kotlin {
 		}
 
 		commonTest.dependencies {
-			implementation("org.jetbrains.compose.ui:ui-test:1.10.2")
+			implementation(libs.jetbrains.compose.ui.test)
 		}
 
 		desktopMain.dependencies {
@@ -66,7 +60,7 @@ kotlin {
 			implementation(libs.kotlinx.rpc.ktor.server)
 			implementation(libs.kotlinx.rpc.serialization)
 
-			implementation("org.imgscalr:imgscalr-lib:4.2")
+			implementation(libs.imgscalr)
 		}
 
 		wasmJsMain.dependencies {
