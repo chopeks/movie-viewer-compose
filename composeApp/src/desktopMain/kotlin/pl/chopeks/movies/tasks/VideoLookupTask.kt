@@ -1,6 +1,5 @@
 package pl.chopeks.movies.tasks
 
-import com.chopeks.pl.chopeks.core.ffmpeg.FfmpegManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -9,6 +8,7 @@ import pl.chopeks.core.IImageConverter
 import pl.chopeks.core.database.datasource.DirectoriesLocalDataSource
 import pl.chopeks.core.database.datasource.VideoLocalDataSource
 import pl.chopeks.core.database.datasource.VideoLocalDataSource.NewVideo
+import pl.chopeks.core.ffmpeg.FfmpegManager
 import pl.chopeks.core.model.Path
 import pl.chopeks.core.model.Video
 import pl.chopeks.core.utils.getDirectories

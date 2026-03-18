@@ -1,4 +1,4 @@
-package com.chopeks.pl.chopeks.core.fpcalc
+package pl.chopeks.core.fpcalc
 
 import org.kodein.di.DI
 import org.kodein.di.bindSingleton

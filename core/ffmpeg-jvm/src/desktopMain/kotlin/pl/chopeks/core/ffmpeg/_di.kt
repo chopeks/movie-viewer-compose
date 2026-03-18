@@ -1,4 +1,4 @@
-package com.chopeks.pl.chopeks.core.ffmpeg
+package pl.chopeks.core.ffmpeg
 
 import org.kodein.di.DI
 import org.kodein.di.bindSingleton

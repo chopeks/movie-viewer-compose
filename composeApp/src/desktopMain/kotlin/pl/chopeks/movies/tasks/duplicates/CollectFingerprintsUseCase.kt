@@ -1,6 +1,5 @@
 package pl.chopeks.movies.tasks.duplicates
 
-import com.chopeks.pl.chopeks.core.fpcalc.FpcalcManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -8,6 +7,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import pl.chopeks.core.database.duplicates.FingerprintLocalDataSource
+import pl.chopeks.core.fpcalc.FpcalcManager
 import pl.chopeks.movies.server.utils.toByteArray
 import pl.chopeks.movies.utils.AppLogger
 import java.io.File

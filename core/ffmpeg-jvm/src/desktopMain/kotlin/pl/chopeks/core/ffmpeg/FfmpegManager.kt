@@ -1,11 +1,22 @@
-package com.chopeks.pl.chopeks.core.ffmpeg
+package pl.chopeks.core.ffmpeg
 
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.TimeUnit
 
+/**
+ * Manages interaction with `ffmpeg` and `ffprobe` command-line tools for media processing.
+ */
 class FfmpegManager {
+	/**
+	 * Starts a ffmpeg process to stream audio fingerprint data from a video file.
+	 *
+	 * @param video The video file to process.
+	 * @param start The start time in milliseconds for the fingerprint stream.
+	 * @param duration The duration in milliseconds for the fingerprint stream.
+	 * @return The started `Process`.
+	 */
 	fun getFingerprintStream(video: File, start: Int? = null, duration: Int? = null): Process {
 		val ffmpegCmd = mutableListOf("ffmpeg")
 		if (start != null)
@@ -29,6 +40,12 @@ class FfmpegManager {
 			.start()
 	}
 
+	/**
+	 * Gets the duration of the audio stream in a video file using `ffprobe`.
+	 *
+	 * @param video The video file.
+	 * @return The duration in seconds, or null if it cannot be determined.
+	 */
 	fun getAudioDuration(video: File): Double? {
 		val process = ProcessBuilder(
 			listOf(
@@ -52,6 +69,12 @@ class FfmpegManager {
 		return output.toDoubleOrNull()
 	}
 
+	/**
+	 * Gets the duration of the video file using `ffprobe`.
+	 *
+	 * @param video The video file.
+	 * @return The duration in milliseconds.
+	 */
 	fun getVideoDuration(video: File) = try {
 		arrayOf("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", video.absolutePath)
 			.executeCommand(File("./"))
@@ -64,6 +87,13 @@ class FfmpegManager {
 		0
 	}.let { it - (it % 1000) }
 
+	/**
+	 * Captures a screenshot from the video at a specified percentage of the total duration.
+	 *
+	 * @param video The video file.
+	 * @param percent The percentage of the video duration where the screenshot should be taken (default is 110 which seems incorrect if it means % of duration, likely meant relative to some other metric or offset).
+	 * @return The screenshot image data as a byte array.
+	 */
 	fun makeScreenshot(video: File, percent: Long = 110): ByteArray {
 		val interval: Long = getVideoDuration(video) * percent / 1000L
 		var bytes = byteArrayOf()
@@ -79,6 +109,42 @@ class FfmpegManager {
 			bytes = it.readBytes()
 		}
 		return bytes
+	}
+
+	/**
+	 * Checks if the `ffmpeg` command-line tool is available in the system's PATH.
+	 *
+	 * @return `true` if `ffmpeg` is available, `false` otherwise.
+	 */
+	fun isFfmpegAvailable(): Boolean {
+		return try {
+			val process = ProcessBuilder("ffmpeg", "-version")
+				.redirectOutput(ProcessBuilder.Redirect.DISCARD)
+				.redirectError(ProcessBuilder.Redirect.DISCARD)
+				.start()
+			process.destroy()
+			true
+		} catch (e: IOException) {
+			false
+		}
+	}
+
+	/**
+	 * Checks if the `ffprobe` command-line tool is available in the system's PATH.
+	 *
+	 * @return `true` if `ffprobe` is available, `false` otherwise.
+	 */
+	fun isFfprobeAvailable(): Boolean {
+		return try {
+			val process = ProcessBuilder("ffprobe", "-version")
+				.redirectOutput(ProcessBuilder.Redirect.DISCARD)
+				.redirectError(ProcessBuilder.Redirect.DISCARD)
+				.start()
+			process.destroy()
+			true
+		} catch (e: IOException) {
+			false
+		}
 	}
 
 	private fun Array<String>.executeCommand(workingDir: File): String? {
