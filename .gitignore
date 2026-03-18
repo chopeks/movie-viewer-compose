@@ -17,6 +17,7 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 *.sqlite
+kotlin-js-store/wasm/yarn.lock
 
 composeApp/scripts/
 settings.json

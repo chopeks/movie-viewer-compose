@@ -8,7 +8,11 @@ import java.util.concurrent.TimeUnit
 /**
  * Manages interaction with `ffmpeg` and `ffprobe` command-line tools for media processing.
  */
-class FfmpegManager {
+class FfmpegManager(
+	private val processFactory: (List<String>, ProcessBuilder.() -> ProcessBuilder) -> Process = { list, builder ->
+		builder(ProcessBuilder(list)).start()
+	}
+) {
 	/**
 	 * Starts a ffmpeg process to stream audio fingerprint data from a video file.
 	 *
@@ -35,9 +39,9 @@ class FfmpegManager {
 			"-"
 		)
 
-		return ProcessBuilder(ffmpegCmd)
-			.redirectError(ProcessBuilder.Redirect.DISCARD)
-			.start()
+		return processFactory(ffmpegCmd) {
+			redirectError(ProcessBuilder.Redirect.DISCARD)
+		}
 	}
 
 	/**
@@ -47,18 +51,18 @@ class FfmpegManager {
 	 * @return The duration in seconds, or null if it cannot be determined.
 	 */
 	fun getAudioDuration(video: File): Double? {
-		val process = ProcessBuilder(
-			listOf(
-				"ffprobe",
-				"-v", "error",
-				"-select_streams", "a",
-				"-show_entries", "stream=duration",
-				"-of", "default=noprint_wrappers=1:nokey=1",
-				video.absolutePath
-			)
+		val ffmpegCmd = listOf(
+			"ffprobe",
+			"-v", "error",
+			"-select_streams", "a",
+			"-show_entries", "stream=duration",
+			"-of", "default=noprint_wrappers=1:nokey=1",
+			video.absolutePath
 		)
-			.redirectError(ProcessBuilder.Redirect.DISCARD)
-			.start()
+
+		val process = processFactory(ffmpegCmd) {
+			redirectError(ProcessBuilder.Redirect.DISCARD)
+		}
 
 		val output = process.inputStream.bufferedReader().readText().trim()
 		process.waitFor()
@@ -118,12 +122,11 @@ class FfmpegManager {
 	 */
 	fun isFfmpegAvailable(): Boolean {
 		return try {
-			val process = ProcessBuilder("ffmpeg", "-version")
-				.redirectOutput(ProcessBuilder.Redirect.DISCARD)
-				.redirectError(ProcessBuilder.Redirect.DISCARD)
-				.start()
-			process.destroy()
-			true
+			val process = processFactory(listOf("ffmpeg", "-version")) {
+				redirectOutput(ProcessBuilder.Redirect.DISCARD)
+					.redirectError(ProcessBuilder.Redirect.DISCARD)
+			}
+			process.waitFor() == 0
 		} catch (e: IOException) {
 			false
 		}
@@ -136,12 +139,11 @@ class FfmpegManager {
 	 */
 	fun isFfprobeAvailable(): Boolean {
 		return try {
-			val process = ProcessBuilder("ffprobe", "-version")
-				.redirectOutput(ProcessBuilder.Redirect.DISCARD)
-				.redirectError(ProcessBuilder.Redirect.DISCARD)
-				.start()
-			process.destroy()
-			true
+			val process = processFactory(listOf("ffprobe", "-version")) {
+				redirectOutput(ProcessBuilder.Redirect.DISCARD)
+					.redirectError(ProcessBuilder.Redirect.DISCARD)
+			}
+			process.waitFor() == 0
 		} catch (e: IOException) {
 			false
 		}
@@ -149,12 +151,11 @@ class FfmpegManager {
 
 	private fun Array<String>.executeCommand(workingDir: File): String? {
 		return try {
-			val proc = ProcessBuilder(*this)
-				.directory(workingDir)
-				.redirectOutput(ProcessBuilder.Redirect.PIPE)
-				.redirectError(ProcessBuilder.Redirect.PIPE)
-				.start()
-
+			val proc = processFactory(toList()) {
+				directory(workingDir)
+					.redirectOutput(ProcessBuilder.Redirect.PIPE)
+					.redirectError(ProcessBuilder.Redirect.PIPE)
+			}
 			proc.waitFor(5, TimeUnit.SECONDS)
 			proc.inputStream.bufferedReader().readText()
 		} catch (e: IOException) {
@@ -164,9 +165,9 @@ class FfmpegManager {
 	}
 
 	private fun Array<String>.runPipeCommand(errorRedirect: ProcessBuilder.Redirect = ProcessBuilder.Redirect.INHERIT, callback: (InputStream) -> Unit) {
-		val process = ProcessBuilder(*this)
-			.redirectError(errorRedirect)
-			.start()
+		val process = processFactory(toList()) {
+			redirectError(errorRedirect)
+		}
 		process.inputStream.use(callback)
 		process.waitFor()
 	}

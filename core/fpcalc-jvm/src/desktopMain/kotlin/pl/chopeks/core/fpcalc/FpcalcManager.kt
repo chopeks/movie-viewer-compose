@@ -11,7 +11,10 @@ import kotlin.concurrent.thread
  * Manages interaction with the `fpcalc` command-line tool to generate audio fingerprints.
  */
 class FpcalcManager(
-	private val ffmpegManager: FfmpegManager
+	private val ffmpegManager: FfmpegManager,
+	private val processFactory: (List<String>, ProcessBuilder.() -> ProcessBuilder) -> Process = { list, builder ->
+		builder(ProcessBuilder(list)).start()
+	}
 ) {
 	/**
 	 * Generates an audio fingerprint for the given video file.
@@ -34,9 +37,9 @@ class FpcalcManager(
 
 		val ffmpeg = ffmpegManager.getFingerprintStream(video, start, duration)
 
-		val fpcalc = ProcessBuilder(fpcalcCmd)
-			.redirectError(ProcessBuilder.Redirect.DISCARD)
-			.start()
+		val fpcalc = processFactory(fpcalcCmd) {
+			redirectError(ProcessBuilder.Redirect.DISCARD)
+		}
 
 		ffmpeg.inputStream.pipe(fpcalc.outputStream)
 
@@ -68,6 +71,22 @@ class FpcalcManager(
 			fingerprint[it].toUInt()
 		}
 	}
+	/**
+	 * Checks if the `fpcalc` command-line tool is available in the system's PATH.
+	 *
+	 * @return `true` if `fpcalc` is available, `false` otherwise.
+	 */
+	fun isFpcalcAvailable(): Boolean {
+		return try {
+			val process = processFactory(listOf("fpcalc", "-version")) {
+				redirectOutput(ProcessBuilder.Redirect.DISCARD)
+					.redirectError(ProcessBuilder.Redirect.DISCARD)
+			}
+			process.waitFor() == 0
+		} catch (e: IOException) {
+			false
+		}
+	}
 
 	private fun InputStream.pipe(output: OutputStream) {
 		thread {
@@ -76,24 +95,6 @@ class FpcalcManager(
 					inp.copyTo(out)
 				}
 			}
-		}
-	}
-
-	/**
-	 * Checks if the `fpcalc` command-line tool is available in the system's PATH.
-	 *
-	 * @return `true` if `fpcalc` is available, `false` otherwise.
-	 */
-	fun isFpcalcAvailable(): Boolean {
-		return try {
-			val process = ProcessBuilder("fpcalc", "-version")
-				.redirectOutput(ProcessBuilder.Redirect.DISCARD)
-				.redirectError(ProcessBuilder.Redirect.DISCARD)
-				.start()
-			process.destroy()
-			true
-		} catch (e: IOException) {
-			false
 		}
 	}
 }
