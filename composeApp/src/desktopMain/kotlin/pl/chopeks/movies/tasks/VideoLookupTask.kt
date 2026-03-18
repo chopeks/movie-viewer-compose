@@ -1,5 +1,6 @@
 package pl.chopeks.movies.tasks
 
+import com.chopeks.pl.chopeks.core.ffmpeg.FfmpegManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -8,12 +9,10 @@ import pl.chopeks.core.IImageConverter
 import pl.chopeks.core.database.datasource.DirectoriesLocalDataSource
 import pl.chopeks.core.database.datasource.VideoLocalDataSource
 import pl.chopeks.core.database.datasource.VideoLocalDataSource.NewVideo
-import pl.chopeks.core.database.duplicates.AudioDedupLocalDataSource
 import pl.chopeks.core.model.Path
 import pl.chopeks.core.model.Video
 import pl.chopeks.core.utils.getDirectories
 import pl.chopeks.core.utils.getFiles
-import pl.chopeks.movies.server.utils.getVideoDuration
 import pl.chopeks.movies.utils.AppLogger
 import java.io.File
 import kotlin.system.measureTimeMillis
@@ -21,8 +20,8 @@ import kotlin.system.measureTimeMillis
 class VideoLookupTask(
 	private val directoryDataSource: DirectoriesLocalDataSource,
 	private val videoDataSource: VideoLocalDataSource,
-	private val audioDedupLocalDataSource: AudioDedupLocalDataSource,
 	private val imageConverter: IImageConverter,
+	private val ffmpegManager: FfmpegManager
 ) {
 	private var isRunning = false
 
@@ -77,7 +76,7 @@ class VideoLookupTask(
 
 				videoDataSource.getVideosWithoutDuration().map { video ->
 					async {
-						getVideoDuration(File(video.second)).also { dur ->
+						ffmpegManager.getVideoDuration(File(video.second)).also { dur ->
 							videoDataSource.setDuration(video.first, dur.toInt())
 						}
 						onEvent("Added duration of ${video.second}.")

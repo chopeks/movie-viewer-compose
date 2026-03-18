@@ -72,7 +72,7 @@ fun main() = application {
 		import(dataModule)
 		import(taskModule)
 		import(platformScreenModule)
-		bindProvider<IImageConverter> { ImageConverter() }
+		bindProvider<IImageConverter> { ImageConverter(instance()) }
 		bindProvider<IVideoPlayer> { VideoPlayer(instance(), instance()) }
 		bindSingleton { KeyEventManager() }
 		bindProvider {

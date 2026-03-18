@@ -1,5 +1,6 @@
 package pl.chopeks.movies.tasks.duplicates
 
+import com.chopeks.pl.chopeks.core.fpcalc.FpcalcManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -7,7 +8,6 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import pl.chopeks.core.database.duplicates.FingerprintLocalDataSource
-import pl.chopeks.movies.server.utils.FpcalcUtils
 import pl.chopeks.movies.server.utils.toByteArray
 import pl.chopeks.movies.utils.AppLogger
 import java.io.File
@@ -15,7 +15,8 @@ import kotlin.math.min
 import kotlin.system.measureTimeMillis
 
 class CollectFingerprintsUseCase(
-	val dataSource: FingerprintLocalDataSource
+	private val dataSource: FingerprintLocalDataSource,
+	private val fpcalc: FpcalcManager
 ) {
 	companion object {
 		private val SILENCE_BYTES = byteArrayOf(0x25.toByte(), 0x6D.toByte(), 0xF9.toByte(), 0x77.toByte())
@@ -42,7 +43,7 @@ class CollectFingerprintsUseCase(
 
 					if (it.fingerprint == null) {
 						val fingerprint = diskSemaphore.withPermit {
-							FpcalcUtils.getFingerprint(file)
+							fpcalc.getFingerprint(file)
 						}?.toByteArray() ?: byteArrayOf()
 
 						entry = if (isSilent(fingerprint)) {
@@ -59,7 +60,7 @@ class CollectFingerprintsUseCase(
 						val fragmentStart = (middle - sampleLen / 2).toDouble()
 
 						val needle = diskSemaphore.withPermit {
-							FpcalcUtils.getFingerprint(file, fragmentStart.toInt(), sampleLen)
+							fpcalc.getFingerprint(file, fragmentStart.toInt(), sampleLen)
 						}?.toByteArray() ?: byteArrayOf()
 						entry = if (isSilent(needle)) {
 							it.copy(needle = byteArrayOf())

@@ -73,6 +73,8 @@ kotlin {
         }
         desktopMain.dependencies {
             implementation(projects.core.databaseJvm)
+            implementation(projects.core.fpcalcJvm)
+            implementation(projects.core.ffmpegJvm)
 
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
