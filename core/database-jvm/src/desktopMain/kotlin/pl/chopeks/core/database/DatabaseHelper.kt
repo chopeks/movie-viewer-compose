@@ -11,6 +11,10 @@ import java.io.File
 import java.sql.Connection
 
 object DatabaseHelper {
+	internal val defaultUrl: String
+		get() = "jdbc:sqlite:${findDatabase().absolutePath}"
+	internal const val defaultDriver: String = "org.sqlite.JDBC"
+
 	fun clean(db: Database) {
 		transaction(db) {
 			MovieTable.selectAll().forEach {
@@ -27,8 +31,8 @@ object DatabaseHelper {
 		}
 	}
 
-	internal fun connect(): Database {
-		val db = Database.connect("jdbc:sqlite:${findDatabase().absolutePath}", driver = "org.sqlite.JDBC")
+	internal fun connect(url: String = defaultUrl, driver: String = defaultDriver): Database {
+		val db = Database.connect(url, driver = driver)
 		TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED
 
 		transaction(db) {
