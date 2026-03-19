@@ -42,7 +42,8 @@ class ActorsScreenModel(
 			with(repository.getActors().sortedBy { it.name.toLowerCase(Locale.current) }) {
 				actors.value = this
 				forEach { actor ->
-					launch { updateActorImage(actor.id, repository.getImage(actor)) }
+					println(actor.image)
+					launch(bestConcurrencyDispatcher()) { updateActorImage(actor.id, repository.getImage(actor)) }
 				}
 			}
 		}
@@ -77,7 +78,9 @@ class ActorsScreenModel(
 
 	@OptIn(ExperimentalEncodingApi::class)
 	private fun updateActorImage(id: Int, image: String?) {
-		val decoded = image?.let { Base64.Mime.decode(it) }
+		if (image == null)
+			return
+		val decoded = image.let { Base64.Mime.decode(it) }
 		actors.update { currentList ->
 			currentList.map { actor ->
 				if (actor.id == id) actor.copy(image = image, imageBytes = decoded) else actor

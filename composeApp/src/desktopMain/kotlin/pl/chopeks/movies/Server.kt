@@ -16,12 +16,15 @@ import org.kodein.di.DI
 import org.kodein.di.direct
 import org.kodein.di.instance
 import pl.chopeks.core.data.repository.*
+import pl.chopeks.core.model.Actor
 import java.text.DateFormat
 import kotlin.time.Duration.Companion.days
 
 fun Application.module(di: DI) {
 	install(Krpc)
 	install(CORS) {
+		anyHost()
+		allowNonSimpleContentTypes = true
 		allowMethod(HttpMethod.Options)
 		allowMethod(HttpMethod.Get)
 		allowMethod(HttpMethod.Post)
@@ -29,7 +32,6 @@ fun Application.module(di: DI) {
 		allowMethod(HttpMethod.Put)
 		allowMethod(HttpMethod.Head)
 		allowMethod(HttpMethod.Patch)
-		anyHost()
 		maxAgeDuration = 365.days
 	}
 	install(ContentNegotiation) {
@@ -62,6 +64,16 @@ fun Application.module(di: DI) {
 			registerService<IVideoRepository> { di.direct.instance<IVideoRepository>() }
 			registerService<IVideoPlayer> { di.direct.instance<IVideoPlayer>() }
 			registerService<IDuplicateRepository> { di.direct.instance<IDuplicateRepository>() }
+		}
+
+		get("/api/image/{id}/actor") { // for some reason, this works better with browsers rather than streaming bytes over rpc
+			val id = call.parameters["id"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest)
+			val bytes = di.direct.instance<IActorRepository>().getImageBytes(Actor(id))
+			if (bytes != null) {
+				call.respondBytes(bytes, contentType = ContentType.Image.Any)
+			} else {
+				call.respond(HttpStatusCode.NotFound)
+			}
 		}
 	}
 }

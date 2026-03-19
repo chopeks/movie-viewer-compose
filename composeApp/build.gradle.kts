@@ -44,6 +44,7 @@ kotlin {
 			implementation(projects.core.ffmpegJvm)
 
 			implementation(compose.desktop.currentOs)
+			implementation(libs.jetbrains.compose.ui.tooling)
 			implementation(libs.kotlinx.coroutines.swing)
 			implementation(libs.ktor.client.okhttp)
 			implementation(libs.coil.okhttp)
@@ -65,6 +66,8 @@ kotlin {
 
 		wasmJsMain.dependencies {
 			implementation(libs.ktor.client.js)
+			implementation(libs.coil.ktor)
+
 			implementation(libs.kotlinx.rpc.client)
 			implementation(libs.kotlinx.rpc.ktor.client)
 			implementation(libs.kotlinx.rpc.serialization)

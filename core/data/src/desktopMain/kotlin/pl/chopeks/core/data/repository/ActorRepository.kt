@@ -3,6 +3,7 @@ package pl.chopeks.core.data.repository
 import pl.chopeks.core.database.datasource.ActorLocalDataSource
 import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Video
+import kotlin.io.encoding.Base64
 
 class ActorRepository(
 	private val dataSource: ActorLocalDataSource
@@ -11,12 +12,12 @@ class ActorRepository(
 		return dataSource.getActors()
 	}
 
-	override suspend fun getActor(id: Int): Actor? {
-		return dataSource.getActor(id)
-	}
-
 	override suspend fun getImage(actor: Actor): String? {
 		return dataSource.getImage(actor)
+	}
+
+	override suspend fun getImageBytes(actor: Actor): ByteArray? {
+		return getImage(actor)?.let { Base64.Mime.decode(it) }
 	}
 
 	override suspend fun bind(actor: Actor, video: Video) {

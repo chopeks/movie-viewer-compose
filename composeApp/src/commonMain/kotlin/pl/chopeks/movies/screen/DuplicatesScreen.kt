@@ -31,7 +31,7 @@ class DuplicatesScreen : Screen {
 
 		ScreenSkeleton(
 			title = "Duplicates",
-			actions = {
+			rightActions = {
 				TextButton({
 					screenModel.deduplicate()
 				}) {

@@ -20,6 +20,7 @@ captures
 kotlin-js-store/wasm/yarn.lock
 
 composeApp/scripts/
+composeApp/src/desktopMain/kotlin/pl/chopeks/movies/preview.kt
 settings.json
 *.jar
 /scripts

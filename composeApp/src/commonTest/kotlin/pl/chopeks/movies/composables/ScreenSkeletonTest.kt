@@ -43,7 +43,7 @@ class ScreenSkeletonTest : StringSpec({
 			setScreenContent {
 				ScreenSkeleton(
 					title = "My Screen",
-					textActions = { Text("My Text Action") }
+					leftActions = { Text("My Text Action") }
 				) {}
 			}
 			onNodeWithText("My Text Action").assertExists()
@@ -55,7 +55,7 @@ class ScreenSkeletonTest : StringSpec({
 			setScreenContent {
 				ScreenSkeleton(
 					title = "My Screen",
-					actions = { Text("My Action") }
+					rightActions = { Text("My Action") }
 				) {}
 			}
 			onNodeWithText("My Action").assertExists()

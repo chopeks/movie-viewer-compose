@@ -8,7 +8,9 @@ import org.kodein.di.instance
 import pl.chopeks.core.data.repository.*
 
 val dataModule = DI.Module("data-di") {
-	bindProvider<IActorRepository> { instance<RpcClient>().withService<IActorRepository>() }
+	bindProvider<IActorRepository> {
+		ActorRepository(instance<RpcClient>().withService<IActorRepository>())
+	}
 	bindProvider<ISettingsRepository> { instance<RpcClient>().withService<ISettingsRepository>() }
 	bindProvider<ICategoryRepository> { instance<RpcClient>().withService<ICategoryRepository>() }
 	bindProvider<IVideoRepository> { instance<RpcClient>().withService<IVideoRepository>() }

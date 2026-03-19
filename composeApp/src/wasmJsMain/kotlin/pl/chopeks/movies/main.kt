@@ -11,6 +11,7 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.memory.MemoryCache
+import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.CachePolicy
 import coil3.request.crossfade
 import io.ktor.client.*
@@ -37,6 +38,9 @@ fun getAsyncImageLoader(context: PlatformContext) =
 		.crossfade(true)
 		.memoryCachePolicy(CachePolicy.ENABLED).memoryCache {
 			MemoryCache.Builder().maxSizeBytes(2147483648).strongReferencesEnabled(true).build()
+		}
+		.components {
+			add(KtorNetworkFetcherFactory())
 		}
 		.build()
 

@@ -5,9 +5,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,6 +21,7 @@ import org.kodein.di.compose.localDI
 import org.kodein.di.direct
 import org.kodein.di.instance
 import pl.chopeks.core.model.Actor
+import pl.chopeks.movies.composables.FilterBar
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.cards.ActorCard
 import pl.chopeks.movies.internal.screenmodel.ActorsScreenModel
@@ -42,22 +40,13 @@ class ActorsScreen : Screen {
 
 		ScreenSkeleton(
 			title = "Actors",
-			textActions = {
+			leftActions = {
 				TextButton({ addDialog.value = true }) { Text("Add Actors".uppercase(), color = Color.Green.copy(alpha = 0.5f)) }
 			},
-			actions = {
-				TextField(
-					screenModel.searchFilter, { screenModel.searchFilter = it },
-					trailingIcon = {
-						if (screenModel.searchFilter.isEmpty())
-							Icon(Icons.Default.Search, contentDescription = "Search")
-						else
-							IconButton(onClick = { screenModel.searchFilter = "" }) {
-								Icon(Icons.Default.Delete, contentDescription = "Delete")
-							}
-					},
-					label = { Text("Filter") },
-					colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Black)
+			rightActions = {
+				FilterBar(
+					query = screenModel.searchFilter,
+					onQueryChange = { screenModel.searchFilter = it }
 				)
 			}
 		) { scope ->

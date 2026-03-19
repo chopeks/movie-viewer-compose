@@ -48,7 +48,7 @@ class VideosScreen(
     keyEventManager.setListener { onKeyEvent(it, navigator, screenModel) }
     val scope = rememberCoroutineScope()
 
-    ScreenSkeleton(title = "", textActions = {
+    ScreenSkeleton(title = "", leftActions = {
       TextButton({
         screenModel.changePage(Int.MIN_VALUE)
       }) { Text("Start".uppercase(), color = Color.Green.copy(alpha = 0.5f)) }
@@ -74,7 +74,7 @@ class VideosScreen(
         screenModel.filter = (screenModel.filter + 1) % 2
         screenModel.changePage(Int.MIN_VALUE)
       }) { Text(listOf("Sorted by Date", "Sorted by Duration")[screenModel.filter], color = Color.Gray) }
-    }, actions = {
+    }, rightActions = {
       Text("Page ${screenModel.currentPage + 1} of ${screenModel.count + 1}", color = Color.Green.copy(alpha = 0.6f))
     }) { scope ->
       Column(
