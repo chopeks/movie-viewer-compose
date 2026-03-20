@@ -17,12 +17,15 @@ import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.size.Size
 import kotlinx.coroutines.launch
+import movieviewer.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import org.kodein.di.compose.localDI
 import org.kodein.di.direct
 import org.kodein.di.instance
 import pl.chopeks.core.model.Category
 import pl.chopeks.movies.composables.FilterBar
 import pl.chopeks.movies.composables.ScreenSkeleton
+import pl.chopeks.movies.composables.buttons.GreenTextButton
 import pl.chopeks.movies.composables.cards.CategoryCard
 import pl.chopeks.movies.internal.screenmodel.CategoriesScreenModel
 import pl.chopeks.movies.utils.KeyEventManager
@@ -39,11 +42,9 @@ class CategoriesScreen : Screen {
 		keyEventManager.setListener { KeyEventNavigation.onKeyEvent(it, navigator) }
 
 		ScreenSkeleton(
-			title = "Categories",
+			title = stringResource(Res.string.screen_categories),
 			leftActions = {
-				TextButton({
-					addDialog.value = true
-				}) { Text("Add category".uppercase(), color = Color.Green.copy(alpha = 0.5f)) }
+				GreenTextButton(stringResource(Res.string.button_add_category), onClick = { addDialog.value = true })
 			},
 			rightActions = {
 				FilterBar(
@@ -89,28 +90,34 @@ class CategoriesScreen : Screen {
 			val context = LocalPlatformContext.current
 			var name by remember { mutableStateOf("") }
 			var url by remember { mutableStateOf("") }
-			AlertDialog(onDismissRequest = { show.value = false }, title = { Text("Add category") }, text = {
-				Column(Modifier.fillMaxWidth()) {
-					TextField(name, { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
-					TextField(url, { url = it }, label = { Text("Image url") }, modifier = Modifier.fillMaxWidth())
-					AsyncImage(
-						ImageRequest.Builder(context).data(url).size(Size.ORIGINAL).build(), null, Modifier.fillMaxWidth().aspectRatio(1.77f)
-					)
-				}
-			}, confirmButton = {
-				Button(onClick = {
-					if (name.isNotBlank()) {
-						screenModel.add(name, url)
-						show.value = false
+			AlertDialog(
+				onDismissRequest = { show.value = false },
+				title = { Text(stringResource(Res.string.button_add_category)) },
+				text = {
+					Column(Modifier.fillMaxWidth()) {
+						TextField(name, { name = it }, label = { Text(stringResource(Res.string.label_name)) }, modifier = Modifier.fillMaxWidth())
+						TextField(url, { url = it }, label = { Text(stringResource(Res.string.label_image_url)) }, modifier = Modifier.fillMaxWidth())
+						AsyncImage(
+							ImageRequest.Builder(context)
+								.data(url)
+								.size(Size.ORIGINAL)
+								.build(), null, Modifier.fillMaxWidth().aspectRatio(1.77f)
+						)
 					}
-				}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-					Text("Add", color = Color.White)
-				}
-			}, dismissButton = {
-				Button(onClick = { show.value = false }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-					Text("Cancel", color = Color.LightGray)
-				}
-			})
+				}, confirmButton = {
+					Button(onClick = {
+						if (name.isNotBlank()) {
+							screenModel.add(name, url)
+							show.value = false
+						}
+					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+						Text(stringResource(Res.string.button_add), color = Color.White)
+					}
+				}, dismissButton = {
+					Button(onClick = { show.value = false }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+						Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
+					}
+				})
 		}
 	}
 
@@ -120,10 +127,10 @@ class CategoriesScreen : Screen {
 			val context = LocalPlatformContext.current
 			var name by remember { mutableStateOf(category.value!!.name) }
 			var url by remember { mutableStateOf(if ((category.value!!.image ?: "").startsWith("http:")) category.value!!.image ?: "" else "") }
-			AlertDialog(onDismissRequest = { category.value = null }, title = { Text("Edit category") }, text = {
+			AlertDialog(onDismissRequest = { category.value = null }, title = { Text(stringResource(Res.string.label_edit_category)) }, text = {
 				Column(Modifier.fillMaxWidth()) {
-					TextField(name, { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
-					TextField(url, { url = it }, label = { Text("Image url") }, modifier = Modifier.fillMaxWidth())
+					TextField(name, { name = it }, label = { Text(stringResource(Res.string.label_name)) }, modifier = Modifier.fillMaxWidth())
+					TextField(url, { url = it }, label = { Text(stringResource(Res.string.label_image_url)) }, modifier = Modifier.fillMaxWidth())
 					AsyncImage(
 						ImageRequest.Builder(context).data(url).size(Size.ORIGINAL).build(), null, Modifier.fillMaxWidth().aspectRatio(1.77f)
 					)
@@ -134,11 +141,11 @@ class CategoriesScreen : Screen {
 						screenModel.remove(category.value!!)
 						category.value = null
 					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-						Text("Remove", color = Color.Red)
+						Text(stringResource(Res.string.button_remove), color = Color.Red)
 					}
 
 					Button(onClick = { category.value = null }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-						Text("Cancel", color = Color.LightGray)
+						Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
 					}
 
 					Button(onClick = {
@@ -147,7 +154,7 @@ class CategoriesScreen : Screen {
 							category.value = null
 						}
 					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-						Text("Confirm", color = Color.White)
+						Text(stringResource(Res.string.button_confirm), color = Color.White)
 					}
 				}
 

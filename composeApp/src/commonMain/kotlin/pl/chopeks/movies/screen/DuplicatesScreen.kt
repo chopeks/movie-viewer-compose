@@ -2,7 +2,6 @@ package pl.chopeks.movies.screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Text
-import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -12,10 +11,16 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.kodein.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import kotlinx.coroutines.delay
+import movieviewer.composeapp.generated.resources.Res
+import movieviewer.composeapp.generated.resources.button_deduplicate_all
+import movieviewer.composeapp.generated.resources.label_left_to_check
+import movieviewer.composeapp.generated.resources.screen_duplicates
+import org.jetbrains.compose.resources.stringResource
 import org.kodein.di.compose.localDI
 import org.kodein.di.direct
 import org.kodein.di.instance
 import pl.chopeks.movies.composables.ScreenSkeleton
+import pl.chopeks.movies.composables.buttons.GreenTextButton
 import pl.chopeks.movies.composables.cards.DuplicateCard
 import pl.chopeks.movies.internal.screenmodel.DuplicatesScreenModel
 import pl.chopeks.movies.utils.KeyEventManager
@@ -30,15 +35,13 @@ class DuplicatesScreen : Screen {
 		keyEventManager.setListener { KeyEventNavigation.onKeyEvent(it, navigator) }
 
 		ScreenSkeleton(
-			title = "Duplicates",
+			title = stringResource(Res.string.screen_duplicates),
 			rightActions = {
-				TextButton({
+				GreenTextButton(text = stringResource(Res.string.button_deduplicate_all), onClick = {
 					screenModel.deduplicate()
-				}) {
-					Text("Deduplicate all".uppercase(), color = Color.Green.copy(alpha = 0.5f))
-				}
+				})
 				Spacer(Modifier.width(32.dp))
-				Text("Left to check ${screenModel.count}", color = Color.LightGray)
+				Text(stringResource(Res.string.label_left_to_check, screenModel.count), color = Color.LightGray)
 			}
 		) { scope ->
 			Column(modifier = Modifier.fillMaxSize().padding(4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

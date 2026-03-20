@@ -12,6 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import movieviewer.composeapp.generated.resources.Res
+import movieviewer.composeapp.generated.resources.button_desc_open_drawer
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AppsTopBar(
@@ -37,7 +40,7 @@ fun AppsTopBar(
           if (drawerState.isOpen) drawerState.close() else drawerState.open()
         }
       }) {
-        Icon(Icons.Filled.Menu, contentDescription = "Open Drawer", tint = Color.Gray)
+        Icon(Icons.Filled.Menu, contentDescription = stringResource(Res.string.button_desc_open_drawer), tint = Color.Gray)
       }
     },
     actions = actions

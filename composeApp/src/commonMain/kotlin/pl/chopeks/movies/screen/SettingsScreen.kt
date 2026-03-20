@@ -12,75 +12,77 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.kodein.rememberScreenModel
+import movieviewer.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.SettingsDirectory
 import pl.chopeks.movies.composables.SettingsHeaderText
 import pl.chopeks.movies.internal.screenmodel.SettingsScreenModel
 
 class SettingsScreen : Screen {
-  @Composable
-  override fun Content() {
-    val screenModel = rememberScreenModel<SettingsScreenModel>()
-    val addDialog = remember { mutableStateOf(false) }
+	@Composable
+	override fun Content() {
+		val screenModel = rememberScreenModel<SettingsScreenModel>()
+		val addDialog = remember { mutableStateOf(false) }
 
-    ScreenSkeleton(
-      title = "Settings"
-    ) { scope ->
-      Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        SettingsHeaderText("Directories")
-        Column {
-          screenModel.pathes.forEach { path ->
-            SettingsDirectory(path) {
-              screenModel.removePath(it)
-            }
-          }
-        }
-        Button({ addDialog.value = true }) { Text("Add") }
-        SettingsHeaderText("Settings")
-        if (screenModel.settings != null) {
-          var browser by remember { mutableStateOf(screenModel.settings!!.browser) }
-          var moviePlayer by remember { mutableStateOf(screenModel.settings!!.moviePlayer) }
-          TextField(browser, { browser = it }, label = { Text("Browser path") })
-          TextField(moviePlayer, { moviePlayer = it }, label = { Text("Video player path") })
-          Button({
-            screenModel.saveSettings(browser, moviePlayer)
-          }) { Text("Save settings") }
-        }
-        AddDialog(addDialog, screenModel)
+		ScreenSkeleton(
+			title = stringResource(Res.string.screen_settings)
+		) { scope ->
+			Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+				SettingsHeaderText(stringResource(Res.string.label_directories))
+				Column {
+					screenModel.pathes.forEach { path ->
+						SettingsDirectory(path) {
+							screenModel.removePath(it)
+						}
+					}
+				}
+				Button({ addDialog.value = true }) { Text(stringResource(Res.string.button_add)) }
+				SettingsHeaderText(stringResource(Res.string.label_settings))
+				if (screenModel.settings != null) {
+					var browser by remember { mutableStateOf(screenModel.settings!!.browser) }
+					var moviePlayer by remember { mutableStateOf(screenModel.settings!!.moviePlayer) }
+					TextField(browser, { browser = it }, label = { Text(stringResource(Res.string.label_browser)) })
+					TextField(moviePlayer, { moviePlayer = it }, label = { Text(stringResource(Res.string.label_player)) })
+					Button({
+						screenModel.saveSettings(browser, moviePlayer)
+					}) { Text(stringResource(Res.string.button_save)) }
+				}
+				AddDialog(addDialog, screenModel)
 
-        LaunchedEffect(screenModel) {
-          screenModel.init()
-        }
-      }
-    }
-  }
+				LaunchedEffect(screenModel) {
+					screenModel.init()
+				}
+			}
+		}
+	}
 
-  @Composable
-  fun AddDialog(show: MutableState<Boolean>, screenModel: SettingsScreenModel) {
-    if (show.value) {
-      var path by remember { mutableStateOf("") }
-      AlertDialog(
-        onDismissRequest = { show.value = false },
-        title = { Text("Add directory") },
-        text = {
-          TextField(path, { path = it }, label = { Text("Path, paste full path") }, modifier = Modifier.fillMaxWidth())
-        },
-        confirmButton = {
-          Button(onClick = {
-            if (path.isNotBlank()) {
-              screenModel.addPath(path)
-              show.value = false
-            }
-          }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-            Text("Add", color = Color.White)
-          }
-        },
-        dismissButton = {
-          Button(onClick = { show.value = false }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-            Text("Cancel", color = Color.LightGray)
-          }
-        }
-      )
-    }
-  }
+	@Composable
+	fun AddDialog(show: MutableState<Boolean>, screenModel: SettingsScreenModel) {
+		if (show.value) {
+			var path by remember { mutableStateOf("") }
+			AlertDialog(
+				onDismissRequest = { show.value = false },
+				title = { Text(stringResource(Res.string.button_add_directory)) },
+				text = {
+					TextField(path, { path = it }, label = { Text(stringResource(Res.string.label_path)) }, modifier = Modifier.fillMaxWidth())
+				},
+				confirmButton = {
+					Button(onClick = {
+						if (path.isNotBlank()) {
+							screenModel.addPath(path)
+							show.value = false
+						}
+					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+						Text(stringResource(Res.string.button_add), color = Color.White)
+					}
+				},
+				dismissButton = {
+					Button(onClick = { show.value = false }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+						Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
+					}
+				}
+			)
+		}
+	}
 }

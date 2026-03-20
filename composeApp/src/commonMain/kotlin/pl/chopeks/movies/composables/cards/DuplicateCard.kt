@@ -22,6 +22,9 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.size.Size
+import movieviewer.composeapp.generated.resources.Res
+import movieviewer.composeapp.generated.resources.button_desc_delete
+import org.jetbrains.compose.resources.stringResource
 import pl.chopeks.core.model.Duplicates
 import pl.chopeks.core.model.Video
 import kotlin.io.encoding.Base64
@@ -102,7 +105,7 @@ fun DuplicateCard(
 							.background(Color.DarkGray.copy(alpha = 0.8f), RoundedCornerShape(32.dp))
 							.align(Alignment.BottomEnd)
 					) {
-						Icon(Icons.Filled.Delete, "Delete", tint = Color.LightGray)
+						Icon(Icons.Filled.Delete, contentDescription = stringResource(Res.string.button_desc_delete), tint = Color.LightGray)
 					}
 
 					IconButton(
@@ -112,7 +115,7 @@ fun DuplicateCard(
 							.background(Color.DarkGray.copy(alpha = 0.8f), RoundedCornerShape(32.dp))
 							.align(Alignment.BottomStart)
 					) {
-						Icon(Icons.AutoMirrored.Filled.ArrowBack, "Delete", tint = Color.LightGray)
+						Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.button_desc_delete), tint = Color.LightGray)
 					}
 				}
 			}

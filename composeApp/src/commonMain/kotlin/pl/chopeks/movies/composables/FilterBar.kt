@@ -8,6 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import movieviewer.composeapp.generated.resources.Res
+import movieviewer.composeapp.generated.resources.button_desc_delete
+import movieviewer.composeapp.generated.resources.button_desc_search
+import movieviewer.composeapp.generated.resources.label_filter
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun FilterBar(
@@ -21,13 +26,13 @@ fun FilterBar(
 		onValueChange = onQueryChange,
 		trailingIcon = {
 			if (query.isEmpty())
-				Icon(Icons.Default.Search, contentDescription = "Search")
+				Icon(Icons.Default.Search, contentDescription = stringResource(Res.string.button_desc_search))
 			else
 				IconButton(onClick = { onQueryChange("") }, modifier = Modifier.testTag("deleteButton")) {
-					Icon(Icons.Default.Delete, contentDescription = "Delete")
+					Icon(Icons.Default.Delete, contentDescription = stringResource(Res.string.button_desc_delete))
 				}
 		},
-		label = { Text("Filter") },
+		label = { Text(stringResource(Res.string.label_filter)) },
 		colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Black, textColor = Color.White)
 	)
 }

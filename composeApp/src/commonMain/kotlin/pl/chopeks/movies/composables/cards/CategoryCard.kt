@@ -20,6 +20,9 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.size.Size
+import movieviewer.composeapp.generated.resources.Res
+import movieviewer.composeapp.generated.resources.button_desc_edit
+import org.jetbrains.compose.resources.stringResource
 import pl.chopeks.core.model.Category
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -53,7 +56,7 @@ fun CategoryCard(
         verticalAlignment = Alignment.CenterVertically
       ) {
         IconButton({ onEditClick(category) }, modifier = Modifier.size(32.dp).testTag("editButton")) {
-          Icon(Icons.Filled.Edit, "edit", tint = Color.White)
+          Icon(Icons.Filled.Edit, contentDescription = stringResource(Res.string.button_desc_edit), tint = Color.White)
         }
         Spacer(Modifier.width(16.dp))
         Text(category.name, color = Color.White)

@@ -21,6 +21,9 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.size.Size
+import movieviewer.composeapp.generated.resources.Res
+import movieviewer.composeapp.generated.resources.button_desc_edit
+import org.jetbrains.compose.resources.stringResource
 import pl.chopeks.core.model.Actor
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -52,7 +55,7 @@ fun ActorCard(
 				verticalAlignment = Alignment.CenterVertically
 			) {
 				IconButton({ onEditClick(actor) }, modifier = Modifier.size(32.dp).testTag("editButton")) {
-					Icon(Icons.Filled.Edit, "edit", tint = Color.White)
+					Icon(Icons.Filled.Edit, contentDescription = stringResource(Res.string.button_desc_edit), tint = Color.White)
 				}
 				Spacer(Modifier.width(16.dp))
 				Text(actor.name, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth(1f))

@@ -17,12 +17,15 @@ import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.size.Size
 import kotlinx.coroutines.launch
+import movieviewer.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import org.kodein.di.compose.localDI
 import org.kodein.di.direct
 import org.kodein.di.instance
 import pl.chopeks.core.model.Actor
 import pl.chopeks.movies.composables.FilterBar
 import pl.chopeks.movies.composables.ScreenSkeleton
+import pl.chopeks.movies.composables.buttons.GreenTextButton
 import pl.chopeks.movies.composables.cards.ActorCard
 import pl.chopeks.movies.internal.screenmodel.ActorsScreenModel
 import pl.chopeks.movies.utils.KeyEventManager
@@ -39,9 +42,11 @@ class ActorsScreen : Screen {
 		keyEventManager.setListener { KeyEventNavigation.onKeyEvent(it, navigator) }
 
 		ScreenSkeleton(
-			title = "Actors",
+			title = stringResource(Res.string.screen_actors),
 			leftActions = {
-				TextButton({ addDialog.value = true }) { Text("Add Actors".uppercase(), color = Color.Green.copy(alpha = 0.5f)) }
+				GreenTextButton(stringResource(Res.string.button_add_actor), onClick = {
+					addDialog.value = true
+				})
 			},
 			rightActions = {
 				FilterBar(
@@ -94,11 +99,11 @@ class ActorsScreen : Screen {
 			var url by remember { mutableStateOf("") }
 			AlertDialog(
 				onDismissRequest = { show.value = false },
-				title = { Text("Add actor") },
+				title = { Text(stringResource(Res.string.button_add_actor)) },
 				text = {
 					Column(Modifier.fillMaxWidth()) {
-						TextField(name, { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
-						TextField(url, { url = it }, label = { Text("Image url") }, modifier = Modifier.fillMaxWidth())
+						TextField(name, { name = it }, label = { Text(stringResource(Res.string.label_name)) }, modifier = Modifier.fillMaxWidth())
+						TextField(url, { url = it }, label = { Text(stringResource(Res.string.label_image_url)) }, modifier = Modifier.fillMaxWidth())
 						AsyncImage(
 							ImageRequest.Builder(context)
 								.data(url)
@@ -114,12 +119,12 @@ class ActorsScreen : Screen {
 							show.value = false
 						}
 					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-						Text("Add", color = Color.White)
+						Text(stringResource(Res.string.button_add), color = Color.White)
 					}
 				},
 				dismissButton = {
 					Button(onClick = { show.value = false }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-						Text("Cancel", color = Color.LightGray)
+						Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
 					}
 				}
 			)
@@ -134,11 +139,11 @@ class ActorsScreen : Screen {
 			var url by remember { mutableStateOf(if ((actor.value!!.image ?: "").startsWith("http:")) actor.value!!.image ?: "" else "") }
 			AlertDialog(
 				onDismissRequest = { actor.value = null },
-				title = { Text("Edit actor") },
+				title = { Text(stringResource(Res.string.label_edit_actor)) },
 				text = {
 					Column(Modifier.fillMaxWidth()) {
-						TextField(name, { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
-						TextField(url, { url = it }, label = { Text("Image url") }, modifier = Modifier.fillMaxWidth())
+						TextField(name, { name = it }, label = { Text(stringResource(Res.string.label_name)) }, modifier = Modifier.fillMaxWidth())
+						TextField(url, { url = it }, label = { Text(stringResource(Res.string.label_image_url)) }, modifier = Modifier.fillMaxWidth())
 						AsyncImage(
 							ImageRequest.Builder(context)
 								.data(url)
@@ -153,17 +158,17 @@ class ActorsScreen : Screen {
 							screenModel.dedup(actor.value!!)
 							actor.value = null
 						}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-							Text("De-dup", color = Color.LightGray)
+							Text(stringResource(Res.string.button_deduplicate), color = Color.LightGray)
 						}
 						Button(onClick = {
 							screenModel.remove(actor.value!!)
 							actor.value = null
 						}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-							Text("Remove", color = Color.Red)
+							Text(stringResource(Res.string.button_remove), color = Color.Red)
 						}
 
 						Button(onClick = { actor.value = null }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-							Text("Cancel", color = Color.LightGray)
+							Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
 						}
 
 						Button(onClick = {
@@ -172,7 +177,7 @@ class ActorsScreen : Screen {
 								actor.value = null
 							}
 						}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-							Text("Confirm", color = Color.White)
+							Text(stringResource(Res.string.button_confirm), color = Color.White)
 						}
 					}
 				}
