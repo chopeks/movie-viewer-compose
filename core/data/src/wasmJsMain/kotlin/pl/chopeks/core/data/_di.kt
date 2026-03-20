@@ -11,8 +11,16 @@ val dataModule = DI.Module("data-di") {
 	bindProvider<IActorRepository> {
 		ActorRepository(instance<RpcClient>().withService<IActorRepository>())
 	}
-	bindProvider<ISettingsRepository> { instance<RpcClient>().withService<ISettingsRepository>() }
-	bindProvider<ICategoryRepository> { instance<RpcClient>().withService<ICategoryRepository>() }
-	bindProvider<IVideoRepository> { instance<RpcClient>().withService<IVideoRepository>() }
-	bindProvider<IDuplicateRepository> { instance<RpcClient>().withService<IDuplicateRepository>() }
+	bindProvider<ISettingsRepository> {
+		SettingsRepository(instance<RpcClient>().withService<ISettingsRepository>())
+	}
+	bindProvider<ICategoryRepository> {
+		CategoryRepository(instance<RpcClient>().withService<ICategoryRepository>())
+	}
+	bindProvider<IVideoRepository> {
+		VideoRepository(instance<RpcClient>().withService<IVideoRepository>())
+	}
+	bindProvider<IDuplicateRepository> {
+		DuplicateRepository(instance<RpcClient>().withService<IDuplicateRepository>())
+	}
 }
