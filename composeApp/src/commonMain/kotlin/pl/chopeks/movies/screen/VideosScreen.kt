@@ -1,10 +1,11 @@
 package pl.chopeks.movies.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,15 +16,16 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.kodein.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import movieviewer.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.kodein.di.compose.localDI
 import org.kodein.di.direct
 import org.kodein.di.instance
+import pl.chopeks.core.UiState
 import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Category
+import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.buttons.GreenTextButton
 import pl.chopeks.movies.composables.cards.VideoCard
@@ -35,272 +37,250 @@ class VideosScreen(
 	private val actor: Actor? = null,
 	private val category: Category? = null
 ) : Screen {
-	private var editedVideoChips by mutableStateOf(0)
+	enum class SheetType {
+		NONE, ACTORS_FILTER, CATEGORIES_FILTER, EDIT_ACTORS, EDIT_CATEGORIES
+	}
 
 	@Composable
 	override fun Content() {
 		val screenModel = rememberScreenModel<VideosScreenModel>()
-		val actorsBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
-		val editActorsBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
-		val categoriesBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
-		val editCategoriesBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+		val scope = rememberCoroutineScope()
+
+		var currentSheet by remember { mutableStateOf(SheetType.NONE) }
+		val actorsScrollState = rememberLazyGridState()
+		val categoriesScrollState = rememberLazyGridState()
+		val editActorsScrollState = rememberLazyGridState()
+		val editCategoriesScrollState = rememberLazyGridState()
+		val sheetState = rememberModalBottomSheetState(
+			initialValue = ModalBottomSheetValue.Hidden,
+			skipHalfExpanded = true,
+			confirmValueChange = {
+				if (it == ModalBottomSheetValue.Hidden)
+					screenModel.setEditing(null)
+				true
+			})
+		val openSheet: (SheetType) -> Unit = { type ->
+			currentSheet = type
+			scope.launch { sheetState.show() }
+		}
+
 		var removeConfirmDialog = remember { mutableStateOf(false) }
 
 		val keyEventManager = localDI().direct.instance<KeyEventManager>()
 		val navigator = LocalNavigator.current
 		keyEventManager.setListener { onKeyEvent(it, navigator, screenModel) }
-		val scope = rememberCoroutineScope()
 
-		ScreenSkeleton(title = "", leftActions = {
-			GreenTextButton(stringResource(Res.string.button_start).uppercase()) { screenModel.changePage(Int.MIN_VALUE) }
-			GreenTextButton("-10".uppercase()) { screenModel.changePage(-10) }
-			GreenTextButton("-1".uppercase()) { screenModel.changePage(-1) }
-			GreenTextButton("+1".uppercase()) { screenModel.changePage(1) }
-			GreenTextButton("+10".uppercase()) { screenModel.changePage(10) }
+		val state by screenModel.uiState.collectAsState()
+		val filterState by screenModel.filterState.collectAsState()
 
-			TextButton({
-				scope.launch { actorsBottomSheetState.show() }
-			}) { Text(stringResource(Res.string.button_actors), color = Color.Gray) }
-			TextButton({
-				scope.launch { categoriesBottomSheetState.show() }
-			}) { Text(stringResource(Res.string.button_categories), color = Color.Gray) }
-
-			TextButton({
-				screenModel.filter = (screenModel.filter + 1) % 2
-				screenModel.changePage(Int.MIN_VALUE)
-			}) { Text(listOf(stringResource(Res.string.label_sort_by_date), stringResource(Res.string.label_sort_by_duration))[screenModel.filter], color = Color.Gray) }
-		}, rightActions = {
-			Text(stringResource(Res.string.label_video_pager, screenModel.currentPage + 1, screenModel.count + 1), color = Color.Green.copy(alpha = 0.6f))
-		}) { scope ->
-			Column(
-				modifier = Modifier.fillMaxSize(),
-				verticalArrangement = Arrangement.spacedBy(2.dp)
-			) {
-				for (rowIndex in 0 until 3) {
-					Row(
-						modifier = Modifier.weight(1f).fillMaxWidth(),
-						horizontalArrangement = Arrangement.spacedBy(2.dp)
-					) {
-						for (columnIndex in 0 until 5) {
-							val itemIndex = rowIndex * 5 + columnIndex
-							val video = screenModel.videos.getOrNull(itemIndex)
-
-							Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-								if (video != null) {
-									VideoCard(
-										video = video,
-										onClick = { screenModel.play(it) },
-										onActorChipClick = {
-											scope.launch {
-												editedVideoChips = screenModel.videos.indexOf(video)
-												editActorsBottomSheetState.show()
-											}
-										},
-										onCategoryChipClick = {
-											scope.launch {
-												editedVideoChips = screenModel.videos.indexOf(video)
-												editCategoriesBottomSheetState.show()
-											}
-										},
-										onThumbnailClick = { screenModel.generateThumbnail(video) },
-										onRemoveClick = {
-											editedVideoChips = screenModel.videos.indexOf(video)
-											removeConfirmDialog.value = true
-										},
-										onDumpClick = {
-											screenModel.dump(video)
-										}
-									)
-								} else {
-									Box(Modifier.fillMaxSize())
-								}
-							}
+		ModalBottomSheetLayout(
+			sheetState = sheetState,
+			sheetGesturesEnabled = false,
+			sheetContent = {
+				Column {
+					Row(Modifier.background(Color.Black).fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+						IconButton(onClick = { scope.launch { sheetState.hide() } }) {
+							Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.button_close))
 						}
+					}
+					when (currentSheet) {
+						SheetType.ACTORS_FILTER -> ActorsSheet(screenModel, actorsScrollState)
+						SheetType.CATEGORIES_FILTER -> CategoriesSheet(screenModel, categoriesScrollState)
+						SheetType.EDIT_ACTORS -> EditActorsSheet(screenModel, editActorsScrollState)
+						SheetType.EDIT_CATEGORIES -> EditCategoriesSheet(screenModel, editCategoriesScrollState)
+						SheetType.NONE -> Box(Modifier.size(0.dp))
 					}
 				}
 			}
+		) {
+			ScreenSkeleton(title = "", leftActions = {
+				GreenTextButton(stringResource(Res.string.button_start).uppercase()) { screenModel.changePage(Int.MIN_VALUE) }
+				GreenTextButton("-10".uppercase()) { screenModel.changePage(-10) }
+				GreenTextButton("-1".uppercase()) { screenModel.changePage(-1) }
+				GreenTextButton("+1".uppercase()) { screenModel.changePage(1) }
+				GreenTextButton("+10".uppercase()) { screenModel.changePage(10) }
 
-			ActorsBottomSheet(screenModel, scope, actorsBottomSheetState)
-			CategoriesBottomSheet(screenModel, scope, categoriesBottomSheetState)
-			EditActorsBottomSheet(screenModel, editActorsBottomSheetState)
-			EditCategoriesBottomSheet(screenModel, editCategoriesBottomSheetState)
-			RemoveVideoDialog(removeConfirmDialog, screenModel)
-		}
+				TextButton({
+					scope.launch { openSheet(SheetType.ACTORS_FILTER) }
+				}) { Text(stringResource(Res.string.button_actors), color = Color.Gray) }
+				TextButton({
+					scope.launch { openSheet(SheetType.CATEGORIES_FILTER) }
+				}) { Text(stringResource(Res.string.button_categories), color = Color.Gray) }
 
-		LaunchedEffect(screenModel) {
-			actor?.also { screenModel.selectedActors.add(it) }
-			category?.also { screenModel.selectedCategories.add(it) }
-			screenModel.init()
-		}
-	}
-
-	@Composable
-	fun ActorsBottomSheet(screenModel: VideosScreenModel, scope: CoroutineScope, modalBottomSheetState: ModalBottomSheetState) {
-		ModalBottomSheetLayout(
-			sheetState = modalBottomSheetState,
-			sheetContent = {
-				LazyVerticalGrid(
-					GridCells.Fixed(3)
-				) {
-					item {
-						val actor = Actor(0, stringResource(Res.string.checkbox_none))
-						Row(verticalAlignment = Alignment.CenterVertically) {
-							Checkbox(screenModel.selectedActors.firstOrNull { it.id == actor.id } != null, {
-								val currentActor = screenModel.selectedActors.firstOrNull { it.id == actor.id }
-								if (currentActor == null)
-									screenModel.selectedActors.add(actor)
-								else
-									screenModel.selectedActors.remove(currentActor)
-								screenModel.changePage(Int.MIN_VALUE)
-							})
-							Text(actor.name)
-						}
-					}
-
-					items(screenModel.actors.toList()) { actor ->
-						Row(verticalAlignment = Alignment.CenterVertically) {
-							Checkbox(screenModel.selectedActors.firstOrNull { it.id == actor.id } != null, {
-								val currentActor = screenModel.selectedActors.firstOrNull { it.id == actor.id }
-								if (currentActor == null)
-									screenModel.selectedActors.add(actor)
-								else
-									screenModel.selectedActors.remove(currentActor)
-								screenModel.changePage(Int.MIN_VALUE)
-							})
-							Text(actor.name)
-						}
-					}
+				TextButton(onClick = screenModel::toggleSortFilter) {
+					Text(listOf(stringResource(Res.string.label_sort_by_date), stringResource(Res.string.label_sort_by_duration))[filterState.filterType], color = Color.Gray)
 				}
-			},
-			content = {}
-		)
-	}
-
-	@Composable
-	fun CategoriesBottomSheet(screenModel: VideosScreenModel, scope: CoroutineScope, modalBottomSheetState: ModalBottomSheetState) {
-		ModalBottomSheetLayout(
-			sheetState = modalBottomSheetState,
-			sheetContent = {
-				LazyVerticalGrid(
-					GridCells.Fixed(3)
-				) {
-					item {
-						val category = Category(0, stringResource(Res.string.checkbox_none))
-						Row(verticalAlignment = Alignment.CenterVertically) {
-							Checkbox(screenModel.selectedCategories.firstOrNull { it.id == category.id } != null, {
-								val currentCategory = screenModel.selectedCategories.firstOrNull { it.id == category.id }
-								if (currentCategory == null)
-									screenModel.selectedCategories.add(category)
-								else
-									screenModel.selectedCategories.remove(currentCategory)
-								scope.launch { screenModel.getVideos() }
-							})
-							Text(category.name)
-						}
-					}
-					items(screenModel.categories.toList()) { category ->
-						Row(verticalAlignment = Alignment.CenterVertically) {
-							Checkbox(screenModel.selectedCategories.firstOrNull { it.id == category.id } != null, {
-								val currentCategory = screenModel.selectedCategories.firstOrNull { it.id == category.id }
-								if (currentCategory == null)
-									screenModel.selectedCategories.add(category)
-								else
-									screenModel.selectedCategories.remove(currentCategory)
-								scope.launch { screenModel.getVideos() }
-							})
-							Text(category.name)
-						}
-					}
+			}, rightActions = {
+				when (val current = state) {
+					is UiState.Success -> Text(stringResource(Res.string.label_video_pager, current.data.currentPage + 1, current.data.pageCount + 1), color = Color.Green.copy(alpha = 0.6f))
+					else -> ProgressIndicator(modifier = Modifier)
 				}
-			},
-			content = {}
-		)
-	}
-
-	@Composable
-	fun EditActorsBottomSheet(screenModel: VideosScreenModel, modalBottomSheetState: ModalBottomSheetState) {
-		if (editedVideoChips < screenModel.videos.size) {
-			ModalBottomSheetLayout(
-				sheetState = modalBottomSheetState,
-				sheetContent = {
-					LazyVerticalGrid(
-						GridCells.Fixed(3)
+			}) { scope ->
+				when (val current = state) {
+					is UiState.Success -> Column(
+						modifier = Modifier.fillMaxSize(),
+						verticalArrangement = Arrangement.spacedBy(2.dp)
 					) {
-						items(screenModel.actors) { actor ->
-							if (screenModel.videos.isNotEmpty()) {
-								val video = screenModel.videos[editedVideoChips]
-								Row(verticalAlignment = Alignment.CenterVertically) {
-									Checkbox(video.chips?.actors?.firstOrNull { it.id == actor.id } != null, {
-										screenModel.toggle(video, actor)
-									})
-									Text(actor.name)
+						for (rowIndex in 0 until 3) {
+							Row(
+								modifier = Modifier.weight(1f).fillMaxWidth(),
+								horizontalArrangement = Arrangement.spacedBy(2.dp)
+							) {
+								for (columnIndex in 0 until 5) {
+									val itemIndex = rowIndex * 5 + columnIndex
+
+									val video = current.data.items.getOrNull(itemIndex)
+									Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+										if (video != null) {
+											VideoCard(
+												video = video,
+												onClick = { screenModel.play(it) },
+												onActorChipClick = {
+													scope.launch {
+														screenModel.setEditing(video)
+														openSheet(SheetType.EDIT_ACTORS)
+													}
+												},
+												onCategoryChipClick = {
+													scope.launch {
+														screenModel.setEditing(video)
+														openSheet(SheetType.EDIT_CATEGORIES)
+													}
+												},
+												onThumbnailClick = {
+													screenModel.generateThumbnail(video)
+												},
+												onRemoveClick = {
+													screenModel.setEditing(video)
+													removeConfirmDialog.value = true
+												},
+												onDumpClick = {
+													screenModel.dump(video)
+												}
+											)
+										} else {
+											Box(Modifier.fillMaxSize())
+										}
+									}
 								}
 							}
 						}
 					}
-				},
-				content = {}
-			)
+
+					is UiState.Loading -> ProgressIndicator()
+					is UiState.Error -> Text("Error: ${current.message}")
+				}
+
+				RemoveVideoDialog(removeConfirmDialog, screenModel)
+			}
+
+			LaunchedEffect(screenModel) {
+				screenModel.init(actor, category)
+			}
 		}
 	}
 
 	@Composable
-	fun EditCategoriesBottomSheet(screenModel: VideosScreenModel, modalBottomSheetState: ModalBottomSheetState) {
-		if (editedVideoChips < screenModel.videos.size) {
-			ModalBottomSheetLayout(
-				sheetState = modalBottomSheetState,
-				sheetContent = {
-					LazyVerticalGrid(
-						GridCells.Fixed(3)
-					) {
-						items(screenModel.categories) { category ->
-							if (screenModel.videos.isNotEmpty()) {
-								val video = screenModel.videos[editedVideoChips]
-								Row(verticalAlignment = Alignment.CenterVertically) {
-									Checkbox(video.chips?.categories?.firstOrNull { it.id == category.id } != null, {
-										screenModel.toggle(video, category)
-									})
-									Text(category.name)
-								}
-							}
-						}
-					}
-				},
-				content = {}
-			)
+	fun ActorsSheet(screenModel: VideosScreenModel, scrollState: LazyGridState) {
+		val filterParams by screenModel.filterState.collectAsState()
+		val actors = listOf(Actor(0, stringResource(Res.string.checkbox_none))) + screenModel.actors
+
+		LazyVerticalGrid(
+			columns = GridCells.Fixed(3),
+			state = scrollState
+		) {
+			items(actors) { actor ->
+				val isSelected = filterParams.selectedActors.any { it.id == actor.id }
+				Row(verticalAlignment = Alignment.CenterVertically) {
+					Checkbox(isSelected, onCheckedChange = { screenModel.toggleSelection(actor) })
+					Text(actor.name)
+				}
+			}
+		}
+	}
+
+	@Composable
+	fun CategoriesSheet(screenModel: VideosScreenModel, scrollState: LazyGridState) {
+		val filterParams by screenModel.filterState.collectAsState()
+		val categories = listOf(Category(0, stringResource(Res.string.checkbox_none))) + screenModel.categories
+
+		LazyVerticalGrid(
+			columns = GridCells.Fixed(3),
+			state = scrollState
+		) {
+			items(categories) { category ->
+				val isSelected = filterParams.selectedCategories.any { it.id == category.id }
+				Row(verticalAlignment = Alignment.CenterVertically) {
+					Checkbox(isSelected, onCheckedChange = { screenModel.toggleSelection(category) })
+					Text(category.name)
+				}
+			}
+		}
+	}
+
+	@Composable
+	fun EditActorsSheet(screenModel: VideosScreenModel, scrollState: LazyGridState) {
+		val video = screenModel.editingVideo ?: return
+		LazyVerticalGrid(
+			columns = GridCells.Fixed(3),
+			state = scrollState
+		) {
+			items(screenModel.actors) { actor ->
+				Row(verticalAlignment = Alignment.CenterVertically) {
+					Checkbox(video.chips?.actors?.firstOrNull { it.id == actor.id } != null, {
+						screenModel.toggleBinding(video, actor)
+					})
+					Text(actor.name)
+				}
+			}
+		}
+	}
+
+	@Composable
+	fun EditCategoriesSheet(screenModel: VideosScreenModel, scrollState: LazyGridState) {
+		val video = screenModel.editingVideo ?: return
+		LazyVerticalGrid(
+			columns = GridCells.Fixed(3),
+			state = scrollState
+		) {
+			items(screenModel.categories) { category ->
+				Row(verticalAlignment = Alignment.CenterVertically) {
+					Checkbox(video.chips?.categories?.firstOrNull { it.id == category.id } != null, {
+						screenModel.toggleBinding(video, category)
+					})
+					Text(category.name)
+				}
+			}
 		}
 	}
 
 	@Composable
 	fun RemoveVideoDialog(show: MutableState<Boolean>, screenModel: VideosScreenModel) {
 		if (show.value) {
-			if (editedVideoChips < screenModel.videos.size) {
-				val video = screenModel.videos[editedVideoChips]
-				AlertDialog(
-					onDismissRequest = { show.value = false },
-					title = { Text(stringResource(Res.string.confirmation_remove_title)) },
-					text = { Text(stringResource(Res.string.confirmation_remove_desc, video.name)) },
-					confirmButton = {
-						Button(onClick = {
-							show.value = false
-							screenModel.remove(video)
-						}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)) {
-							Text(stringResource(Res.string.button_remove), color = Color.White)
-						}
-					},
-					dismissButton = {
-						Button(onClick = { show.value = false }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-							Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
-						}
+			val video = screenModel.editingVideo ?: return
+			AlertDialog(
+				onDismissRequest = { show.value = false },
+				title = { Text(stringResource(Res.string.confirmation_remove_title)) },
+				text = { Text(stringResource(Res.string.confirmation_remove_desc, video.name)) },
+				confirmButton = {
+					Button(onClick = {
+						show.value = false
+						screenModel.remove(video)
+					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)) {
+						Text(stringResource(Res.string.button_remove), color = Color.White)
 					}
-				)
-			}
+				},
+				dismissButton = {
+					Button(onClick = { show.value = false }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+						Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
+					}
+				}
+			)
 		}
 	}
 
 	private fun shortCutPlayVideo(index: Int, screenModel: VideosScreenModel): Boolean {
-		if (screenModel.videos.size > index)
-			screenModel.play(screenModel.videos[index])
+		screenModel.playVideoAtIndex(index)
 		return true
 	}
 

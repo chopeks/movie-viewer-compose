@@ -119,7 +119,7 @@ class VideoCardTest : StringSpec({
 				)
 			}
 
-			onNodeWithContentDescription("Click to Expand").performClick()
+			onNodeWithContentDescription("Expand button").performClick()
 
 			onNodeWithText("Move to .dump").assertIsDisplayed()
 			onNodeWithText("Generate Thumbnail").assertIsDisplayed()
@@ -146,17 +146,17 @@ class VideoCardTest : StringSpec({
 			}
 
 			// Test Dump
-			onNodeWithContentDescription("Click to Expand").performClick()
+			onNodeWithContentDescription("Expand button").performClick()
 			onNodeWithText("Move to .dump").performClick()
 			dumpClicked shouldBe true
 
 			// Test Thumbnail
-			onNodeWithContentDescription("Click to Expand").performClick()
+			onNodeWithContentDescription("Expand button").performClick()
 			onNodeWithText("Generate Thumbnail").performClick()
 			thumbnailClicked shouldBe true
 
 			// Test Remove
-			onNodeWithContentDescription("Click to Expand").performClick()
+			onNodeWithContentDescription("Expand button").performClick()
 			onNodeWithText("Delete video").performClick()
 			removeClicked shouldBe true
 		}

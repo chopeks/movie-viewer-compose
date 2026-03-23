@@ -36,6 +36,7 @@
     <string name="button_actors">Actors</string>
     <string name="button_categories">Categories</string>
     <string name="button_start">Start</string>
+    <string name="button_close">Close</string>
 
     <string name="label_edit_actor">Edit actor</string>
     <string name="label_edit_category">Edit category</string>

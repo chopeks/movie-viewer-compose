@@ -58,13 +58,16 @@ fun VideoCard(
 		Column(Modifier.fillMaxWidth()) {
 			Box(Modifier.fillMaxWidth().aspectRatio(1.77f)) {
 				val context = LocalPlatformContext.current
-				AsyncImage(
-					model = video.image.let {
+				val image = remember(video.image) {
+					video.image.let {
 						ImageRequest.Builder(context)
 							.data(it?.let(Base64.Mime::decode))
 							.size(Size.ORIGINAL)
 							.build()
-					},
+					}
+				}
+				AsyncImage(
+					model = image,
 					contentDescription = null,
 					contentScale = ContentScale.Crop,
 					modifier = Modifier.fillMaxWidth().clickable { onClick(video) }

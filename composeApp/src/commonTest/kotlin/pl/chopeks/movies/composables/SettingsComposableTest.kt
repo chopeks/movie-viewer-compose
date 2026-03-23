@@ -35,7 +35,7 @@ class SettingsComposableTest : StringSpec({
 				SettingsDirectory(path, onRemove = { removedPath = it })
 			}
 
-			onNodeWithContentDescription("remove").performClick()
+			onNodeWithContentDescription("Delete").performClick()
 
 			removedPath shouldBe path
 		}
