@@ -42,7 +42,6 @@ class ActorsScreenModel(
 			with(repository.getActors().sortedBy { it.name.toLowerCase(Locale.current) }) {
 				actors.value = this
 				forEach { actor ->
-					println(actor.image)
 					launch(bestConcurrencyDispatcher()) { updateActorImage(actor.id, repository.getImage(actor)) }
 				}
 			}

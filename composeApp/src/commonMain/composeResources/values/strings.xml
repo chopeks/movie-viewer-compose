@@ -40,7 +40,7 @@
     <string name="label_edit_actor">Edit actor</string>
     <string name="label_edit_category">Edit category</string>
     <string name="label_filter">Filter</string>
-    <string name="label_left_to_check">Left to check: %d</string>
+    <string name="label_left_to_check">Left to check: %1$d</string>
     <string name="label_name">Name</string>
     <string name="label_image_url">Image URL</string>
     <string name="label_directories">Directories</string>

@@ -52,7 +52,7 @@ fun DuplicateCard(
 	onClick: (Video) -> Unit,
 	onRemoveClick: (Video) -> Unit,
 	onDumpClick: (Video) -> Unit,
-	onCancelClick: () -> Unit
+	onCancelClick: (Duplicates) -> Unit
 ) {
 	val context = LocalPlatformContext.current
 	Card(Modifier.fillMaxSize(), backgroundColor = Color.DarkGray.copy(alpha = 0.5f), elevation = 0.dp) {
@@ -122,7 +122,7 @@ fun DuplicateCard(
 			Box(Modifier.fillMaxSize().weight(0.5f).padding(8.dp)) {
 				Column(Modifier.fillMaxSize().align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
 					TextButton({
-						onCancelClick()
+						onCancelClick(videos)
 					}, colors = buttonColors(backgroundColor = Color.Black)) {
 						Text("Not duplicate", color = Color.White)
 					}
