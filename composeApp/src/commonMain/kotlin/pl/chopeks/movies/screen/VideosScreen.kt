@@ -29,6 +29,8 @@ import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.buttons.GreenTextButton
 import pl.chopeks.movies.composables.cards.VideoCard
+import pl.chopeks.movies.composables.state.AlertDialogState
+import pl.chopeks.movies.composables.state.rememberAlertDialogState
 import pl.chopeks.movies.internal.screenmodel.VideosScreenModel
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
@@ -64,7 +66,7 @@ class VideosScreen(
 			scope.launch { sheetState.show() }
 		}
 
-		var removeConfirmDialog = remember { mutableStateOf(false) }
+		val removeConfirmDialog = rememberAlertDialogState()
 
 		val keyEventManager = localDI().direct.instance<KeyEventManager>()
 		val navigator = LocalNavigator.current
@@ -151,8 +153,10 @@ class VideosScreen(
 													screenModel.generateThumbnail(video)
 												},
 												onRemoveClick = {
-													screenModel.setEditing(video)
-													removeConfirmDialog.value = true
+													scope.launch {
+														screenModel.setEditing(video)
+														removeConfirmDialog.show()
+													}
 												},
 												onDumpClick = {
 													screenModel.dump(video)
@@ -255,23 +259,26 @@ class VideosScreen(
 	}
 
 	@Composable
-	fun RemoveVideoDialog(show: MutableState<Boolean>, screenModel: VideosScreenModel) {
-		if (show.value) {
+	fun RemoveVideoDialog(dialogState: AlertDialogState, screenModel: VideosScreenModel) {
+		val scope = rememberCoroutineScope()
+		if (dialogState.isVisible) {
 			val video = screenModel.editingVideo ?: return
 			AlertDialog(
-				onDismissRequest = { show.value = false },
+				onDismissRequest = { scope.launch { dialogState.hide() } },
 				title = { Text(stringResource(Res.string.confirmation_remove_title)) },
 				text = { Text(stringResource(Res.string.confirmation_remove_desc, video.name)) },
 				confirmButton = {
 					Button(onClick = {
-						show.value = false
-						screenModel.remove(video)
+						scope.launch {
+							dialogState.hide()
+							screenModel.remove(video)
+						}
 					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)) {
 						Text(stringResource(Res.string.button_remove), color = Color.White)
 					}
 				},
 				dismissButton = {
-					Button(onClick = { show.value = false }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+					Button(onClick = { scope.launch { dialogState.hide() } }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
 						Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
 					}
 				}

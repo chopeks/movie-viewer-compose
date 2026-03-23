@@ -27,6 +27,8 @@ import pl.chopeks.movies.composables.FilterBar
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.buttons.GreenTextButton
 import pl.chopeks.movies.composables.cards.ActorCard
+import pl.chopeks.movies.composables.state.AlertDialogState
+import pl.chopeks.movies.composables.state.rememberAlertDialogState
 import pl.chopeks.movies.internal.screenmodel.ActorsScreenModel
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
@@ -34,7 +36,8 @@ import pl.chopeks.movies.utils.KeyEventNavigation
 class ActorsScreen : Screen {
 	@Composable
 	override fun Content() {
-		val addDialog = remember { mutableStateOf(false) }
+		val scope = rememberCoroutineScope()
+		val addDialog = rememberAlertDialogState()
 		val editDialog = remember { mutableStateOf<Actor?>(null) }
 		val screenModel = rememberScreenModel<ActorsScreenModel>()
 		val keyEventManager = localDI().direct.instance<KeyEventManager>()
@@ -45,7 +48,7 @@ class ActorsScreen : Screen {
 			title = stringResource(Res.string.screen_actors),
 			leftActions = {
 				GreenTextButton(stringResource(Res.string.button_add_actor), onClick = {
-					addDialog.value = true
+					scope.launch { addDialog.show() }
 				})
 			},
 			rightActions = {
@@ -92,13 +95,14 @@ class ActorsScreen : Screen {
 	}
 
 	@Composable
-	fun AddActorDialog(show: MutableState<Boolean>, screenModel: ActorsScreenModel) {
-		if (show.value) {
+	fun AddActorDialog(dialogState: AlertDialogState, screenModel: ActorsScreenModel) {
+		if (dialogState.isVisible) {
+			val scope = rememberCoroutineScope()
 			val context = LocalPlatformContext.current
 			var name by remember { mutableStateOf("") }
 			var url by remember { mutableStateOf("") }
 			AlertDialog(
-				onDismissRequest = { show.value = false },
+				onDismissRequest = { scope.launch { dialogState.hide() } },
 				title = { Text(stringResource(Res.string.button_add_actor)) },
 				text = {
 					Column(Modifier.fillMaxWidth()) {
@@ -116,14 +120,14 @@ class ActorsScreen : Screen {
 					Button(onClick = {
 						if (name.isNotBlank()) {
 							screenModel.add(name, url)
-							show.value = false
+							scope.launch { dialogState.hide() }
 						}
 					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
 						Text(stringResource(Res.string.button_add), color = Color.White)
 					}
 				},
 				dismissButton = {
-					Button(onClick = { show.value = false }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+					Button(onClick = { scope.launch { dialogState.hide() } }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
 						Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
 					}
 				}

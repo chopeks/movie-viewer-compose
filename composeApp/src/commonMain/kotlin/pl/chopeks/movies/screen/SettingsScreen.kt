@@ -12,18 +12,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.kodein.rememberScreenModel
+import kotlinx.coroutines.launch
 import movieviewer.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.SettingsDirectory
 import pl.chopeks.movies.composables.SettingsHeaderText
+import pl.chopeks.movies.composables.state.AlertDialogState
+import pl.chopeks.movies.composables.state.rememberAlertDialogState
 import pl.chopeks.movies.internal.screenmodel.SettingsScreenModel
 
 class SettingsScreen : Screen {
 	@Composable
 	override fun Content() {
+		val scope = rememberCoroutineScope()
 		val screenModel = rememberScreenModel<SettingsScreenModel>()
-		val addDialog = remember { mutableStateOf(false) }
+		val addDialog = rememberAlertDialogState()
 
 		ScreenSkeleton(
 			title = stringResource(Res.string.screen_settings)
@@ -37,7 +41,7 @@ class SettingsScreen : Screen {
 						}
 					}
 				}
-				Button({ addDialog.value = true }) { Text(stringResource(Res.string.button_add)) }
+				Button({ scope.launch { addDialog.show() } }) { Text(stringResource(Res.string.button_add)) }
 				SettingsHeaderText(stringResource(Res.string.label_settings))
 				if (screenModel.settings != null) {
 					var browser by remember { mutableStateOf(screenModel.settings!!.browser) }
@@ -58,11 +62,12 @@ class SettingsScreen : Screen {
 	}
 
 	@Composable
-	fun AddDialog(show: MutableState<Boolean>, screenModel: SettingsScreenModel) {
-		if (show.value) {
+	fun AddDialog(dialogState: AlertDialogState, screenModel: SettingsScreenModel) {
+		if (dialogState.isVisible) {
+			val scope = rememberCoroutineScope()
 			var path by remember { mutableStateOf("") }
 			AlertDialog(
-				onDismissRequest = { show.value = false },
+				onDismissRequest = { scope.launch { dialogState.hide() } },
 				title = { Text(stringResource(Res.string.button_add_directory)) },
 				text = {
 					TextField(path, { path = it }, label = { Text(stringResource(Res.string.label_path)) }, modifier = Modifier.fillMaxWidth())
@@ -71,14 +76,14 @@ class SettingsScreen : Screen {
 					Button(onClick = {
 						if (path.isNotBlank()) {
 							screenModel.addPath(path)
-							show.value = false
+							scope.launch { dialogState.hide() }
 						}
 					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
 						Text(stringResource(Res.string.button_add), color = Color.White)
 					}
 				},
 				dismissButton = {
-					Button(onClick = { show.value = false }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+					Button(onClick = { scope.launch { dialogState.hide() } }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
 						Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
 					}
 				}

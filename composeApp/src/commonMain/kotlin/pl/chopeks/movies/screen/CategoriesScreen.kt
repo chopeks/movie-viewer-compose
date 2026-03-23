@@ -27,6 +27,8 @@ import pl.chopeks.movies.composables.FilterBar
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.buttons.GreenTextButton
 import pl.chopeks.movies.composables.cards.CategoryCard
+import pl.chopeks.movies.composables.state.AlertDialogState
+import pl.chopeks.movies.composables.state.rememberAlertDialogState
 import pl.chopeks.movies.internal.screenmodel.CategoriesScreenModel
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
@@ -34,7 +36,8 @@ import pl.chopeks.movies.utils.KeyEventNavigation
 class CategoriesScreen : Screen {
 	@Composable
 	override fun Content() {
-		val addDialog = remember { mutableStateOf(false) }
+		val scope = rememberCoroutineScope()
+		val addDialog = rememberAlertDialogState()
 		val editDialog = remember { mutableStateOf<Category?>(null) }
 		val screenModel = rememberScreenModel<CategoriesScreenModel>()
 		val keyEventManager = localDI().direct.instance<KeyEventManager>()
@@ -44,7 +47,7 @@ class CategoriesScreen : Screen {
 		ScreenSkeleton(
 			title = stringResource(Res.string.screen_categories),
 			leftActions = {
-				GreenTextButton(stringResource(Res.string.button_add_category), onClick = { addDialog.value = true })
+				GreenTextButton(stringResource(Res.string.button_add_category), onClick = { scope.launch { addDialog.show() } })
 			},
 			rightActions = {
 				FilterBar(
@@ -85,13 +88,14 @@ class CategoriesScreen : Screen {
 	}
 
 	@Composable
-	fun AddCategoryDialog(show: MutableState<Boolean>, screenModel: CategoriesScreenModel) {
-		if (show.value) {
+	fun AddCategoryDialog(dialogState: AlertDialogState, screenModel: CategoriesScreenModel) {
+		if (dialogState.isVisible) {
+			val scope = rememberCoroutineScope()
 			val context = LocalPlatformContext.current
 			var name by remember { mutableStateOf("") }
 			var url by remember { mutableStateOf("") }
 			AlertDialog(
-				onDismissRequest = { show.value = false },
+				onDismissRequest = { scope.launch { dialogState.hide() } },
 				title = { Text(stringResource(Res.string.button_add_category)) },
 				text = {
 					Column(Modifier.fillMaxWidth()) {
@@ -108,13 +112,13 @@ class CategoriesScreen : Screen {
 					Button(onClick = {
 						if (name.isNotBlank()) {
 							screenModel.add(name, url)
-							show.value = false
+							scope.launch { dialogState.hide() }
 						}
 					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
 						Text(stringResource(Res.string.button_add), color = Color.White)
 					}
 				}, dismissButton = {
-					Button(onClick = { show.value = false }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+					Button(onClick = { scope.launch { dialogState.hide() } }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
 						Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
 					}
 				})
