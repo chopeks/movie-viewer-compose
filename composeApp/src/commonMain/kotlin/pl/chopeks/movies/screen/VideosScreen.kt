@@ -187,7 +187,7 @@ class VideosScreen(
 	@Composable
 	fun ActorsSheet(screenModel: VideosScreenModel, scrollState: LazyGridState) {
 		val filterParams by screenModel.filterState.collectAsState()
-		val actors = listOf(Actor(0, stringResource(Res.string.checkbox_none))) + screenModel.actors
+		val actors = listOf(Actor(0, stringResource(Res.string.checkbox_none))) + screenModel.actors.value
 
 		LazyVerticalGrid(
 			columns = GridCells.Fixed(3),
@@ -206,7 +206,7 @@ class VideosScreen(
 	@Composable
 	fun CategoriesSheet(screenModel: VideosScreenModel, scrollState: LazyGridState) {
 		val filterParams by screenModel.filterState.collectAsState()
-		val categories = listOf(Category(0, stringResource(Res.string.checkbox_none))) + screenModel.categories
+		val categories = listOf(Category(0, stringResource(Res.string.checkbox_none))) + screenModel.categories.value
 
 		LazyVerticalGrid(
 			columns = GridCells.Fixed(3),
@@ -224,12 +224,12 @@ class VideosScreen(
 
 	@Composable
 	fun EditActorsSheet(screenModel: VideosScreenModel, scrollState: LazyGridState) {
-		val video = screenModel.editingVideo ?: return
+		val video = screenModel.editingVideo.value ?: return
 		LazyVerticalGrid(
 			columns = GridCells.Fixed(3),
 			state = scrollState
 		) {
-			items(screenModel.actors) { actor ->
+			items(screenModel.actors.value) { actor ->
 				Row(verticalAlignment = Alignment.CenterVertically) {
 					Checkbox(video.chips?.actors?.firstOrNull { it.id == actor.id } != null, {
 						screenModel.toggleBinding(video, actor)
@@ -242,12 +242,12 @@ class VideosScreen(
 
 	@Composable
 	fun EditCategoriesSheet(screenModel: VideosScreenModel, scrollState: LazyGridState) {
-		val video = screenModel.editingVideo ?: return
+		val video = screenModel.editingVideo.value ?: return
 		LazyVerticalGrid(
 			columns = GridCells.Fixed(3),
 			state = scrollState
 		) {
-			items(screenModel.categories) { category ->
+			items(screenModel.categories.value) { category ->
 				Row(verticalAlignment = Alignment.CenterVertically) {
 					Checkbox(video.chips?.categories?.firstOrNull { it.id == category.id } != null, {
 						screenModel.toggleBinding(video, category)
@@ -262,7 +262,7 @@ class VideosScreen(
 	fun RemoveVideoDialog(dialogState: AlertDialogState, screenModel: VideosScreenModel) {
 		val scope = rememberCoroutineScope()
 		if (dialogState.isVisible) {
-			val video = screenModel.editingVideo ?: return
+			val video = screenModel.editingVideo.value ?: return
 			AlertDialog(
 				onDismissRequest = { scope.launch { dialogState.hide() } },
 				title = { Text(stringResource(Res.string.confirmation_remove_title)) },

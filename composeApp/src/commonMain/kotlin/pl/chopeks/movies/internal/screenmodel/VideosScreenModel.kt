@@ -1,9 +1,5 @@
 package pl.chopeks.movies.internal.screenmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.async
@@ -95,21 +91,27 @@ class VideosScreenModel(
 			initialValue = UiState.Loading
 		)
 
-	val actors = mutableStateListOf<Actor>()
-	val categories = mutableStateListOf<Category>()
+	private val _actors = MutableStateFlow<List<Actor>>(emptyList())
+	val actors = _actors.asStateFlow()
 
-	var editingVideo by mutableStateOf<Video?>(null)
-		private set
+
+	private val _categories = MutableStateFlow<List<Category>>(emptyList())
+	val categories = _categories.asStateFlow()
+
+	private val _editingVideo = MutableStateFlow<Video?>(null)
+	val editingVideo = _editingVideo.asStateFlow()
 
 	fun init(actor: Actor?, category: Category?) {
 		if (filterState.value.initialized)
 			return
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
-			actors.addAll(actorRepository.getActors())
+			val actors = actorRepository.getActors()
 			actorLookup = actors.associateBy { it.id }
+			_actors.emit(actors)
 
-			categories.addAll(categoryRepository.getCategories())
+			val categories = categoryRepository.getCategories()
 			categoryLookup = categories.associateBy { it.id }
+			_categories.emit(categories)
 
 			filterState.update { current ->
 				current.copy(
@@ -163,7 +165,7 @@ class VideosScreenModel(
 	}
 
 	fun setEditing(video: Video?) {
-		editingVideo = video
+		_editingVideo.value = video
 	}
 
 	fun toggleBinding(video: Video, actor: Actor) {
@@ -240,14 +242,14 @@ class VideosScreenModel(
 
 	private suspend fun updateEditingVideo(video: Video) {
 		with(videoRepository.getInfo(video)) {
-			editingVideo = video.copy(
+			_editingVideo.value = video.copy(
 				chips = VideoChips(
 					actors.mapNotNull(actorLookup::get),
 					categories.mapNotNull(categoryLookup::get)
 				)
 			)
-			if (editingVideo != null) {
-				localVideoUpdate.update { it + (editingVideo!!.id to editingVideo!!) }
+			if (editingVideo.value != null) {
+				localVideoUpdate.update { it + (editingVideo.value!!.id to editingVideo.value!!) }
 			}
 		}
 	}

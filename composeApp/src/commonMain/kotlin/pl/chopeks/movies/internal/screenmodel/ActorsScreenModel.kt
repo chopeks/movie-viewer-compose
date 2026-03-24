@@ -1,11 +1,5 @@
 package pl.chopeks.movies.internal.screenmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.toLowerCase
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.flow.*
@@ -23,9 +17,11 @@ class ActorsScreenModel(
 	private val duplicatesRepository: IDuplicateRepository,
 	private val imageConverter: IImageConverter
 ) : ScreenModel {
-	var searchFilter by mutableStateOf("")
+	private val _searchFilter = MutableStateFlow("")
+	val searchFilter = _searchFilter.asStateFlow()
+
 	val actors = MutableStateFlow<List<Actor>>(emptyList())
-	val filteredActors: StateFlow<List<Actor>> = snapshotFlow { searchFilter }
+	val filteredActors: StateFlow<List<Actor>> = searchFilter
 		.combine(actors) { filter, list ->
 			if (filter.isBlank())
 				return@combine list
@@ -39,7 +35,7 @@ class ActorsScreenModel(
 
 	fun getActors() {
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
-			with(repository.getActors().sortedBy { it.name.toLowerCase(Locale.current) }) {
+			with(repository.getActors().sortedBy { it.name.lowercase() }) {
 				actors.value = this
 				forEach { actor ->
 					launch(bestConcurrencyDispatcher()) { updateActorImage(actor.id, repository.getImage(actor)) }
@@ -73,6 +69,10 @@ class ActorsScreenModel(
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
 			duplicatesRepository.deduplicate(actor)
 		}
+	}
+
+	fun updateSearchFilter(filter: String) {
+		_searchFilter.value = filter
 	}
 
 	@OptIn(ExperimentalEncodingApi::class)

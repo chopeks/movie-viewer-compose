@@ -1,8 +1,5 @@
 package pl.chopeks.movies.internal.screenmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.*
@@ -23,7 +20,9 @@ class DuplicatesScreenModel(
 ) : ScreenModel {
 	private val updateTrigger = MutableStateFlow(0)
 
-	var count by mutableStateOf(0)
+	private val _count = MutableStateFlow(0)
+	val count = _count.asStateFlow()
+
 	val duplicates = updateTrigger
 		.buffer(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 		.transform {
@@ -54,7 +53,7 @@ class DuplicatesScreenModel(
 	init {
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
 			while (isActive) {
-				count = duplicatesRepository.count()
+				_count.value = duplicatesRepository.count()
 				if ((duplicates.value !is UiState.Success) || (duplicates.value as UiState.Success).data.isEmpty()) {
 					updateTrigger.value++
 				}

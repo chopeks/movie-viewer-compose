@@ -53,8 +53,8 @@ class ActorsScreen : Screen {
 			},
 			rightActions = {
 				FilterBar(
-					query = screenModel.searchFilter,
-					onQueryChange = { screenModel.searchFilter = it }
+					query = screenModel.searchFilter.value,
+					onQueryChange = { screenModel.updateSearchFilter(it) }
 				)
 			}
 		) { scope ->

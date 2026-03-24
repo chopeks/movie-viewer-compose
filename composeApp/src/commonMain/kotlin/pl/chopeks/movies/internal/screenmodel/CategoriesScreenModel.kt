@@ -1,11 +1,5 @@
 package pl.chopeks.movies.internal.screenmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.toLowerCase
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.flow.*
@@ -21,9 +15,11 @@ class CategoriesScreenModel(
   private val repository: ICategoryRepository,
   private val imageConverter: IImageConverter
 ): ScreenModel {
-  var searchFilter by mutableStateOf("")
+  private val _searchFilter = MutableStateFlow("")
+  var searchFilter = _searchFilter.asStateFlow()
+
   val categories = MutableStateFlow<List<Category>>(emptyList())
-  val filteredCategories: StateFlow<List<Category>> = snapshotFlow { searchFilter }
+  val filteredCategories: StateFlow<List<Category>> = searchFilter
     .combine(categories) { filter, list ->
       if (filter.isBlank())
         return@combine list
@@ -37,7 +33,7 @@ class CategoriesScreenModel(
 
   fun getCategories() {
     screenModelScope.launch(bestConcurrencyDispatcher()) {
-      with(repository.getCategories().sortedBy { it.name.toLowerCase(Locale.current) }) {
+      with(repository.getCategories().sortedBy { it.name.lowercase() }) {
         categories.value = this
         forEach { actor ->
           launch { updateCategoryImage(actor.id, repository.getImage(actor)) }
@@ -65,6 +61,10 @@ class CategoriesScreenModel(
       repository.delete(category)
       getCategories()
     }
+  }
+
+  fun updateSearchFilter(filter: String) {
+    _searchFilter.value = filter
   }
 
   @OptIn(ExperimentalEncodingApi::class)

@@ -29,41 +29,41 @@ expect fun ColumnScope.ExternalAppsContainer(screen: Screen)
 class SettingsScreen : Screen {
 	@Composable
 	override fun Content() {
-		val scope = rememberCoroutineScope()
 		val screenModel = rememberScreenModel<SettingsScreenModel>()
 		val addDialog = rememberAlertDialogState()
 
 		ScreenSkeleton(
 			title = stringResource(Res.string.screen_settings)
 		) { scope ->
-			 Column(
-					modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
-					verticalArrangement = Arrangement.spacedBy(2.dp)
-				) {
-					SettingsHeaderText(stringResource(Res.string.label_directories))
-					Column {
-						screenModel.pathes.forEach { path ->
-							SettingsDirectory(path) {
-								screenModel.removePath(it)
-							}
+			Column(
+				modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+				verticalArrangement = Arrangement.spacedBy(2.dp)
+			) {
+				SettingsHeaderText(stringResource(Res.string.label_directories))
+				Column {
+					screenModel.paths.value.forEach { path ->
+						SettingsDirectory(path) {
+							screenModel.removePath(it)
 						}
 					}
-					Button({ scope.launch { addDialog.show() } }) { Text(stringResource(Res.string.button_add)) }
-					SettingsHeaderText(stringResource(Res.string.label_settings))
-					if (screenModel.settings != null) {
-						var browser by remember { mutableStateOf(screenModel.settings!!.browser) }
-						var moviePlayer by remember { mutableStateOf(screenModel.settings!!.moviePlayer) }
-						TextField(browser, { browser = it }, label = { Text(stringResource(Res.string.label_browser)) })
-						TextField(moviePlayer, { moviePlayer = it }, label = { Text(stringResource(Res.string.label_player)) })
-						Button({
-							screenModel.saveSettings(browser, moviePlayer)
-						}) { Text(stringResource(Res.string.button_save)) }
-					}
-
-					ExternalAppsContainer(this@SettingsScreen)
-
-					AddDialog(addDialog, screenModel)
 				}
+				Button({ scope.launch { addDialog.show() } }) { Text(stringResource(Res.string.button_add)) }
+				SettingsHeaderText(stringResource(Res.string.label_settings))
+				val settings by screenModel.settings.collectAsState()
+				if (settings != null) {
+					var browser by remember { mutableStateOf(settings!!.browser) }
+					var moviePlayer by remember { mutableStateOf(settings!!.moviePlayer) }
+					TextField(browser, { browser = it }, label = { Text(stringResource(Res.string.label_browser)) })
+					TextField(moviePlayer, { moviePlayer = it }, label = { Text(stringResource(Res.string.label_player)) })
+					Button({
+						screenModel.saveSettings(browser, moviePlayer)
+					}) { Text(stringResource(Res.string.button_save)) }
+				}
+
+				ExternalAppsContainer(this@SettingsScreen)
+
+				AddDialog(addDialog, screenModel)
+			}
 
 			LaunchedEffect(screenModel) {
 				screenModel.init()
