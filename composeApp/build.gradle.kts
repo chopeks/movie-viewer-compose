@@ -4,7 +4,7 @@ plugins {
 	alias(libs.plugins.mv.app.compose)
 }
 
-val versionString = "1.0.0"
+val versionString = "1.1.0"
 
 kotlin {
 	sourceSets {

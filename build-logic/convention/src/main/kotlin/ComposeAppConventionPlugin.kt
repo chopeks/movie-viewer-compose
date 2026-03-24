@@ -52,7 +52,7 @@ abstract class ComposeAppConventionPlugin : Plugin<Project> {
 				}
 
 				sourceSets.apply {
-					commonMain.dependencies {
+					commonTest.dependencies {
 						implementation(libs.findBundle("kotest").get())
 					}
 					desktopTest.dependencies {

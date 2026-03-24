@@ -32,10 +32,10 @@ abstract class WasmLibraryConventionPlugin : Plugin<Project> {
 				}
 
 				sourceSets.apply {
-					commonMain.dependencies {
+					commonTest.dependencies {
 						implementation(libs.findBundle("kotest").get())
 					}
-					wasmJsMain.dependencies {
+					wasmJsTest.dependencies {
 						implementation(libs.findBundle("kotest").get())
 					}
 				}
