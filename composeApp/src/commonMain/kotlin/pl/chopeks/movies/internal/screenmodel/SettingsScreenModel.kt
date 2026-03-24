@@ -13,34 +13,35 @@ import pl.chopeks.core.model.Settings
 import pl.chopeks.movies.bestConcurrencyDispatcher
 
 class SettingsScreenModel(
-  private val repository: ISettingsRepository,
+	private val repository: ISettingsRepository,
 ) : ScreenModel {
-  var settings by mutableStateOf<Settings?>(null)
-  val pathes = mutableStateListOf<Path>()
+	var settings by mutableStateOf<Settings?>(null)
+	val pathes = mutableStateListOf<Path>()
 
-  fun init() {
-    screenModelScope.launch(bestConcurrencyDispatcher()) {
-      settings = repository.getSettings()
-      pathes.clear()
-      pathes.addAll(repository.getPaths())
-    }
-  }
 
-  fun saveSettings(browser: String, moviePlayer: String) {
-    screenModelScope.launch(bestConcurrencyDispatcher()) {
-      repository.setSettings(Settings(browser, moviePlayer))
-    }
-  }
+	fun init() {
+		screenModelScope.launch(bestConcurrencyDispatcher()) {
+			settings = repository.getSettings()
+			pathes.clear()
+			pathes.addAll(repository.getPaths())
+		}
+	}
 
-  fun removePath(path: Path) {
-    screenModelScope.launch(bestConcurrencyDispatcher()) {
-      repository.removePath(path)
-    }
-  }
+	fun saveSettings(browser: String, moviePlayer: String) {
+		screenModelScope.launch(bestConcurrencyDispatcher()) {
+			repository.setSettings(Settings(browser, moviePlayer))
+		}
+	}
 
-  fun addPath(path: String) {
-    screenModelScope.launch(bestConcurrencyDispatcher()) {
-      repository.addPath(path)
-    }
-  }
+	fun removePath(path: Path) {
+		screenModelScope.launch(bestConcurrencyDispatcher()) {
+			repository.removePath(path)
+		}
+	}
+
+	fun addPath(path: String) {
+		screenModelScope.launch(bestConcurrencyDispatcher()) {
+			repository.addPath(path)
+		}
+	}
 }

@@ -47,7 +47,9 @@ class CategoriesScreen : Screen {
 		ScreenSkeleton(
 			title = stringResource(Res.string.screen_categories),
 			leftActions = {
-				GreenTextButton(stringResource(Res.string.button_add_category), onClick = { scope.launch { addDialog.show() } })
+				GreenTextButton(stringResource(Res.string.button_add_category), onClick = {
+					scope.launch { addDialog.show() }
+				})
 			},
 			rightActions = {
 				FilterBar(

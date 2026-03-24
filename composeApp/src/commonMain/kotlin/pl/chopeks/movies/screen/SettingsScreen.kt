@@ -2,6 +2,7 @@ package pl.chopeks.movies.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -22,6 +23,9 @@ import pl.chopeks.movies.composables.state.AlertDialogState
 import pl.chopeks.movies.composables.state.rememberAlertDialogState
 import pl.chopeks.movies.internal.screenmodel.SettingsScreenModel
 
+@Composable
+expect fun ColumnScope.ExternalAppsContainer(screen: Screen)
+
 class SettingsScreen : Screen {
 	@Composable
 	override fun Content() {
@@ -32,31 +36,37 @@ class SettingsScreen : Screen {
 		ScreenSkeleton(
 			title = stringResource(Res.string.screen_settings)
 		) { scope ->
-			Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-				SettingsHeaderText(stringResource(Res.string.label_directories))
-				Column {
-					screenModel.pathes.forEach { path ->
-						SettingsDirectory(path) {
-							screenModel.removePath(it)
+			 Column(
+					modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+					verticalArrangement = Arrangement.spacedBy(2.dp)
+				) {
+					SettingsHeaderText(stringResource(Res.string.label_directories))
+					Column {
+						screenModel.pathes.forEach { path ->
+							SettingsDirectory(path) {
+								screenModel.removePath(it)
+							}
 						}
 					}
-				}
-				Button({ scope.launch { addDialog.show() } }) { Text(stringResource(Res.string.button_add)) }
-				SettingsHeaderText(stringResource(Res.string.label_settings))
-				if (screenModel.settings != null) {
-					var browser by remember { mutableStateOf(screenModel.settings!!.browser) }
-					var moviePlayer by remember { mutableStateOf(screenModel.settings!!.moviePlayer) }
-					TextField(browser, { browser = it }, label = { Text(stringResource(Res.string.label_browser)) })
-					TextField(moviePlayer, { moviePlayer = it }, label = { Text(stringResource(Res.string.label_player)) })
-					Button({
-						screenModel.saveSettings(browser, moviePlayer)
-					}) { Text(stringResource(Res.string.button_save)) }
-				}
-				AddDialog(addDialog, screenModel)
+					Button({ scope.launch { addDialog.show() } }) { Text(stringResource(Res.string.button_add)) }
+					SettingsHeaderText(stringResource(Res.string.label_settings))
+					if (screenModel.settings != null) {
+						var browser by remember { mutableStateOf(screenModel.settings!!.browser) }
+						var moviePlayer by remember { mutableStateOf(screenModel.settings!!.moviePlayer) }
+						TextField(browser, { browser = it }, label = { Text(stringResource(Res.string.label_browser)) })
+						TextField(moviePlayer, { moviePlayer = it }, label = { Text(stringResource(Res.string.label_player)) })
+						Button({
+							screenModel.saveSettings(browser, moviePlayer)
+						}) { Text(stringResource(Res.string.button_save)) }
+					}
 
-				LaunchedEffect(screenModel) {
-					screenModel.init()
+					ExternalAppsContainer(this@SettingsScreen)
+
+					AddDialog(addDialog, screenModel)
 				}
+
+			LaunchedEffect(screenModel) {
+				screenModel.init()
 			}
 		}
 	}
