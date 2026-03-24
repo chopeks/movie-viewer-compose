@@ -2,10 +2,10 @@ package pl.chopeks.movies.platform
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import pl.chopeks.core.data.IVideoPlayer
 import pl.chopeks.core.data.repository.ISettingsRepository
 import pl.chopeks.core.data.repository.IVideoRepository
 import pl.chopeks.core.model.Video
-import pl.chopeks.movies.IVideoPlayer
 import java.io.File
 
 class VideoPlayer(

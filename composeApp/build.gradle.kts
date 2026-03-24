@@ -11,6 +11,7 @@ kotlin {
 		commonMain.dependencies {
 			implementation(projects.core.core)
 			implementation(projects.core.data)
+			implementation(projects.core.screenmodel)
 
 			implementation(libs.bundles.jetbrains.compose.common)
 

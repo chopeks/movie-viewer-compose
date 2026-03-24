@@ -1,6 +1,6 @@
 package pl.chopeks.movies
 
-import pl.chopeks.core.IImageConverter
+import pl.chopeks.core.data.IImageConverter
 
 class ImageConverter : IImageConverter {
 	override fun urlToBase64(url: String, targetWidth: Int, targetHeight: Int): String? {

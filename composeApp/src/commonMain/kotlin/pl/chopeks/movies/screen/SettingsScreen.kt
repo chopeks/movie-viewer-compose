@@ -21,7 +21,7 @@ import pl.chopeks.movies.composables.SettingsDirectory
 import pl.chopeks.movies.composables.SettingsHeaderText
 import pl.chopeks.movies.composables.state.AlertDialogState
 import pl.chopeks.movies.composables.state.rememberAlertDialogState
-import pl.chopeks.movies.internal.screenmodel.SettingsScreenModel
+import pl.chopeks.screenmodel.SettingsScreenModel
 
 @Composable
 expect fun ColumnScope.ExternalAppsContainer(screen: Screen)

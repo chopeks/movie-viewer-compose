@@ -4,7 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
-import pl.chopeks.core.IImageConverter
+import pl.chopeks.core.data.IImageConverter
 import pl.chopeks.core.database.datasource.DirectoriesLocalDataSource
 import pl.chopeks.core.database.datasource.VideoLocalDataSource
 import pl.chopeks.core.database.datasource.VideoLocalDataSource.NewVideo

@@ -1,14 +1,14 @@
-package pl.chopeks.movies.internal.screenmodel
+package pl.chopeks.screenmodel
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import pl.chopeks.core.data.bestConcurrencyDispatcher
 import pl.chopeks.core.data.repository.ISettingsRepository
 import pl.chopeks.core.model.Path
 import pl.chopeks.core.model.Settings
-import pl.chopeks.movies.bestConcurrencyDispatcher
 
 class SettingsScreenModel(
 	private val repository: ISettingsRepository,

@@ -29,7 +29,8 @@ import io.ktor.server.netty.*
 import kotlinx.coroutines.*
 import okhttp3.OkHttpClient
 import org.kodein.di.*
-import pl.chopeks.core.IImageConverter
+import pl.chopeks.core.data.IImageConverter
+import pl.chopeks.core.data.IVideoPlayer
 import pl.chopeks.core.data.dataModule
 import pl.chopeks.movies.platform.ImageConverter
 import pl.chopeks.movies.platform.VideoPlayer

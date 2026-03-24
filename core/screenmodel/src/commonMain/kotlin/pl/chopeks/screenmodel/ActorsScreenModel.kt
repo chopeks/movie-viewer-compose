@@ -1,14 +1,14 @@
-package pl.chopeks.movies.internal.screenmodel
+package pl.chopeks.screenmodel
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import pl.chopeks.core.IImageConverter
+import pl.chopeks.core.data.IImageConverter
+import pl.chopeks.core.data.bestConcurrencyDispatcher
 import pl.chopeks.core.data.repository.IActorRepository
 import pl.chopeks.core.data.repository.IDuplicateRepository
 import pl.chopeks.core.model.Actor
-import pl.chopeks.movies.bestConcurrencyDispatcher
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 

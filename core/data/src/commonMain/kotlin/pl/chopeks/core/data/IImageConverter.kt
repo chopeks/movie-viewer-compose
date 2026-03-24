@@ -1,4 +1,4 @@
-package pl.chopeks.core
+package pl.chopeks.core.data
 
 interface IImageConverter {
 	fun urlToBase64(url: String, targetWidth: Int, targetHeight: Int): String?

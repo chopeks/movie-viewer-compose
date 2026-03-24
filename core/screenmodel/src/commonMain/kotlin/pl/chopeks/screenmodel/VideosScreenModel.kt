@@ -1,4 +1,4 @@
-package pl.chopeks.movies.internal.screenmodel
+package pl.chopeks.screenmodel
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
@@ -8,6 +8,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import pl.chopeks.core.UiState
+import pl.chopeks.core.data.ITaskManager
+import pl.chopeks.core.data.IVideoPlayer
+import pl.chopeks.core.data.bestConcurrencyDispatcher
 import pl.chopeks.core.data.repository.IActorRepository
 import pl.chopeks.core.data.repository.ICategoryRepository
 import pl.chopeks.core.data.repository.IVideoRepository
@@ -15,9 +18,6 @@ import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Category
 import pl.chopeks.core.model.Video
 import pl.chopeks.core.model.VideoChips
-import pl.chopeks.movies.ITaskManager
-import pl.chopeks.movies.IVideoPlayer
-import pl.chopeks.movies.bestConcurrencyDispatcher
 
 class VideosScreenModel(
 	private val videoPlayer: IVideoPlayer,

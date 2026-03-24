@@ -1,4 +1,4 @@
-package pl.chopeks.movies.internal.screenmodel
+package pl.chopeks.screenmodel
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
@@ -6,12 +6,12 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import pl.chopeks.core.UiState
+import pl.chopeks.core.data.IVideoPlayer
+import pl.chopeks.core.data.bestConcurrencyDispatcher
 import pl.chopeks.core.data.repository.IDuplicateRepository
 import pl.chopeks.core.data.repository.IVideoRepository
 import pl.chopeks.core.model.Duplicates
 import pl.chopeks.core.model.Video
-import pl.chopeks.movies.IVideoPlayer
-import pl.chopeks.movies.bestConcurrencyDispatcher
 
 class DuplicatesScreenModel(
 	private val videoPlayer: IVideoPlayer,

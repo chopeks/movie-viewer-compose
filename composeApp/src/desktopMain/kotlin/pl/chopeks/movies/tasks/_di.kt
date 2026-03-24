@@ -4,9 +4,9 @@ import org.kodein.di.DI
 import org.kodein.di.bindProvider
 import org.kodein.di.bindSingleton
 import org.kodein.di.instance
+import pl.chopeks.core.data.ITaskManager
 import pl.chopeks.core.ffmpeg.ffmpegModule
 import pl.chopeks.core.fpcalc.fpcalcModule
-import pl.chopeks.movies.ITaskManager
 import pl.chopeks.movies.tasks.duplicates.CollectFingerprintsUseCase
 import pl.chopeks.movies.tasks.duplicates.CompareAudioUseCase
 

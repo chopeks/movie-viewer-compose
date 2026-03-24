@@ -15,6 +15,7 @@ import kotlinx.rpc.krpc.serialization.json.json
 import org.kodein.di.DI
 import org.kodein.di.direct
 import org.kodein.di.instance
+import pl.chopeks.core.data.IVideoPlayer
 import pl.chopeks.core.data.repository.*
 import pl.chopeks.core.model.Actor
 import java.text.DateFormat

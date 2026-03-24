@@ -1,6 +1,6 @@
 package pl.chopeks.movies.platform
 
-import pl.chopeks.core.IImageConverter
+import pl.chopeks.core.data.IImageConverter
 import pl.chopeks.core.ffmpeg.FfmpegManager
 import pl.chopeks.movies.server.utils.normalizeImage
 import pl.chopeks.movies.server.utils.urlImageToBase64

@@ -1,7 +1,8 @@
-package pl.chopeks.movies
+package pl.chopeks.core.data
 
 import kotlinx.rpc.annotations.Rpc
 import pl.chopeks.core.model.Video
+
 
 @Rpc
 interface IVideoPlayer {

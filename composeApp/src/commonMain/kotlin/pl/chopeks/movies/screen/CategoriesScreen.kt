@@ -29,9 +29,9 @@ import pl.chopeks.movies.composables.buttons.GreenTextButton
 import pl.chopeks.movies.composables.cards.CategoryCard
 import pl.chopeks.movies.composables.state.AlertDialogState
 import pl.chopeks.movies.composables.state.rememberAlertDialogState
-import pl.chopeks.movies.internal.screenmodel.CategoriesScreenModel
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
+import pl.chopeks.screenmodel.CategoriesScreenModel
 
 class CategoriesScreen : Screen {
 	@Composable

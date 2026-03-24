@@ -10,8 +10,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.sql.Database
+import pl.chopeks.core.data.ITaskManager
 import pl.chopeks.core.database.DatabaseHelper
-import pl.chopeks.movies.ITaskManager
 import pl.chopeks.movies.server.utils.Python
 
 class PreloadScreenModel(

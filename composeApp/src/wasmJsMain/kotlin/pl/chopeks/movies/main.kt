@@ -28,7 +28,9 @@ import kotlinx.rpc.krpc.serialization.json.json
 import kotlinx.rpc.withService
 import org.kodein.di.*
 import org.w3c.dom.events.Event
-import pl.chopeks.core.IImageConverter
+import pl.chopeks.core.data.IImageConverter
+import pl.chopeks.core.data.ITaskManager
+import pl.chopeks.core.data.IVideoPlayer
 import pl.chopeks.core.data.dataModule
 import pl.chopeks.movies.screen.HomeScreen
 import pl.chopeks.movies.utils.KeyEventManager

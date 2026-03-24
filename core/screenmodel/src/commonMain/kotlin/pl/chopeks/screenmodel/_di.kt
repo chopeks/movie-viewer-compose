@@ -1,4 +1,4 @@
-package pl.chopeks.movies.internal.screenmodel
+package pl.chopeks.screenmodel
 
 import org.kodein.di.DI
 import org.kodein.di.bindProvider

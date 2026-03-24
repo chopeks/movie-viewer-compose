@@ -1,7 +1,7 @@
 package pl.chopeks.movies.tasks
 
 import kotlinx.coroutines.*
-import pl.chopeks.movies.ITaskManager
+import pl.chopeks.core.data.ITaskManager
 import pl.chopeks.movies.utils.AppLogger
 
 class TaskManager(

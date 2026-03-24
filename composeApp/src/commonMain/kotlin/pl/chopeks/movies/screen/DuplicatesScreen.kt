@@ -24,9 +24,9 @@ import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.buttons.GreenTextButton
 import pl.chopeks.movies.composables.cards.DuplicateCard
-import pl.chopeks.movies.internal.screenmodel.DuplicatesScreenModel
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
+import pl.chopeks.screenmodel.DuplicatesScreenModel
 
 class DuplicatesScreen : Screen {
 	@Composable

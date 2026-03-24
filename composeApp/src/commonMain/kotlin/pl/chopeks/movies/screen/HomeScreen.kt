@@ -7,19 +7,18 @@ import org.kodein.di.DI
 import org.kodein.di.DIAware
 import org.kodein.di.compose.withDI
 import pl.chopeks.movies.getStartingScreen
-import pl.chopeks.movies.internal.internalModule
+import pl.chopeks.screenmodel.screenModelModule
 
 class HomeScreen(platformDI: DI) : Screen, DIAware {
+	override val di = DI.lazy {
+		extend(platformDI)
+		import(screenModelModule)
+	}
 
-  override val di = DI.lazy {
-    extend(platformDI)
-    import(internalModule)
-  }
-
-  @Composable
-  override fun Content() {
-    withDI(di) {
-      Navigator(getStartingScreen())
-    }
-  }
+	@Composable
+	override fun Content() {
+		withDI(di) {
+			Navigator(getStartingScreen())
+		}
+	}
 }

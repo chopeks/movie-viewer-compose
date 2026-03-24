@@ -1,6 +1,6 @@
 package pl.chopeks.core.data.repository
 
-import pl.chopeks.core.IImageConverter
+import pl.chopeks.core.data.IImageConverter
 import pl.chopeks.core.database.datasource.VideoLocalDataSource
 import pl.chopeks.core.model.*
 
