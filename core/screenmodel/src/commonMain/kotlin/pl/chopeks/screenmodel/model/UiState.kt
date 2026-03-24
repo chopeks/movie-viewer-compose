@@ -1,4 +1,4 @@
-package pl.chopeks.core
+package pl.chopeks.screenmodel.model
 
 sealed class UiState<out T> {
 	object Loading : UiState<Nothing>()

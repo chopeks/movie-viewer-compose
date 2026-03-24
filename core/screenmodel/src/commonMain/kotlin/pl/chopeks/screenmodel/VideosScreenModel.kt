@@ -7,7 +7,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import pl.chopeks.core.UiState
 import pl.chopeks.core.data.ITaskManager
 import pl.chopeks.core.data.IVideoPlayer
 import pl.chopeks.core.data.bestConcurrencyDispatcher
@@ -18,6 +17,7 @@ import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Category
 import pl.chopeks.core.model.Video
 import pl.chopeks.core.model.VideoChips
+import pl.chopeks.screenmodel.model.UiState
 
 class VideosScreenModel(
 	private val videoPlayer: IVideoPlayer,

@@ -1,23 +1,27 @@
 package pl.chopeks.screenmodel
 
-import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
-import pl.chopeks.core.UiState
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import pl.chopeks.core.data.IVideoPlayer
 import pl.chopeks.core.data.bestConcurrencyDispatcher
 import pl.chopeks.core.data.repository.IDuplicateRepository
 import pl.chopeks.core.data.repository.IVideoRepository
 import pl.chopeks.core.model.Duplicates
 import pl.chopeks.core.model.Video
+import pl.chopeks.screenmodel.model.UiEffect
+import pl.chopeks.screenmodel.model.UiState
+import pl.chopeks.usecase.video.GetDuplicatesUseCase
 
 class DuplicatesScreenModel(
 	private val videoPlayer: IVideoPlayer,
 	private val videoRepository: IVideoRepository,
 	private val duplicatesRepository: IDuplicateRepository,
-) : ScreenModel {
+	private val getDuplicatesUseCase: GetDuplicatesUseCase,
+) : BaseScreenModel() {
 	private val updateTrigger = MutableStateFlow(0)
 
 	private val _count = MutableStateFlow(0)
@@ -27,23 +31,10 @@ class DuplicatesScreenModel(
 		.buffer(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 		.transform {
 			emit(UiState.Loading)
-			val result = withContext(bestConcurrencyDispatcher()) {
-				duplicatesRepository.getCertainDuplicates().map { duplicate ->
-					async {
-						val videos = duplicate.list
-						duplicate.copy(
-							list = listOf(
-								videos.first().copy(image = videoRepository.getImage(videos.first())),
-								videos.last().copy(image = videoRepository.getImage(videos.last()))
-							)
-						)
-					}
-				}.awaitAll()
-			}
-			emit(UiState.Success(result))
+			emit(UiState.Success(getDuplicatesUseCase()))
 		}
-		.flowOn(bestConcurrencyDispatcher())
 		.catch { e -> emit(UiState.Error(e.message ?: "Unknown Error")) }
+		.flowOn(bestConcurrencyDispatcher())
 		.stateIn(
 			scope = screenModelScope,
 			started = SharingStarted.WhileSubscribed(5000),
@@ -63,37 +54,40 @@ class DuplicatesScreenModel(
 	}
 
 	fun cancel(model: Duplicates) {
-		screenModelScope.launchAndUpdate {
+		launchAndUpdate {
 			duplicatesRepository.cancel(model)
 		}
 	}
 
 	fun remove(model: Video) {
-		screenModelScope.launchAndUpdate {
+		launchAndUpdate {
 			videoRepository.remove(model)
 		}
 	}
 
 	fun dump(video: Video) {
-		screenModelScope.launchAndUpdate {
+		launchAndUpdate {
 			videoRepository.moveToDump(video)
 		}
 	}
 
 	fun play(video: Video) {
-		screenModelScope.launch(bestConcurrencyDispatcher()) {
+		launchSafe {
 			videoPlayer.play(video)
 		}
 	}
 
 	fun deduplicate() {
-		screenModelScope.launch(bestConcurrencyDispatcher()) {
+		launchSafe {
 			duplicatesRepository.deduplicateAll()
 		}
 	}
 
-	private fun CoroutineScope.launchAndUpdate(block: suspend () -> Unit) = launch(bestConcurrencyDispatcher()) {
-		block()
-		updateTrigger.value++
+	private fun launchAndUpdate(block: suspend () -> Unit) = launchSafe {
+		block(); updateTrigger.value++
+	}
+
+	override suspend fun emitEffect(throwable: Throwable) = when (throwable) {
+		else -> emitEffect(UiEffect.Toast(throwable.message ?: "Unknown Error"))
 	}
 }

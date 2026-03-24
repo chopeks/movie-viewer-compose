@@ -32,9 +32,11 @@ includeBuild("build-logic")
 
 include(":composeApp")
 include("core:core")
+include("core:data")
+include("core:domain")
+include("core:screenmodel")
+
 include("core:database-jvm")
 include("core:fpcalc-jvm")
 include("core:ffmpeg-jvm")
 
-include("core:data")
-include("core:screenmodel")

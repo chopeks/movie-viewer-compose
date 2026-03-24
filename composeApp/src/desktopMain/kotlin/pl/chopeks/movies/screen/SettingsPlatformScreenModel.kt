@@ -6,10 +6,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import pl.chopeks.core.UiState
 import pl.chopeks.core.data.bestConcurrencyDispatcher
 import pl.chopeks.core.ffmpeg.FfmpegManager
 import pl.chopeks.core.fpcalc.FpcalcManager
+import pl.chopeks.screenmodel.model.UiState
 
 class SettingsPlatformScreenModel(
 	private val ffmpegManager: FfmpegManager,

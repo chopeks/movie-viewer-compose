@@ -19,7 +19,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.kodein.di.compose.localDI
 import org.kodein.di.direct
 import org.kodein.di.instance
-import pl.chopeks.core.UiState
 import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.buttons.GreenTextButton
@@ -27,6 +26,7 @@ import pl.chopeks.movies.composables.cards.DuplicateCard
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
 import pl.chopeks.screenmodel.DuplicatesScreenModel
+import pl.chopeks.screenmodel.model.UiState
 
 class DuplicatesScreen : Screen {
 	@Composable

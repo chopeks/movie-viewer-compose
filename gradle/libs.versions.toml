@@ -27,6 +27,7 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 androidx-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 kotlinx-coroutines-swing = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 
 kodein-di = { module = "org.kodein.di:kodein-di", version.ref = "kodeinDiFrameworkCompose" }
@@ -93,8 +94,8 @@ bl-kotest-plugin = { group = "io.kotest", name = "io.kotest.gradle.plugin", vers
 bl-ksp-plugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 
 [bundles]
-kotest = ["kotest-engine", "kotest-core", "kotest-property"]
-kotest-desktop = ["kotest-engine", "kotest-core", "kotest-property", "kotest-jvm-runner", "mockk"]
+kotest = ["kotest-engine", "kotest-core", "kotest-property", "kotlinx-coroutines-test"]
+kotest-desktop = ["kotest-engine", "kotest-core", "kotest-property", "kotest-jvm-runner", "mockk", "kotlinx-coroutines-test"]
 jetbrains-compose-common = [
     "jetbrains-compose-runtime",
     "jetbrains-compose-foundation",

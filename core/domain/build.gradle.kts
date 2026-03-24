@@ -7,7 +7,7 @@ kotlin {
 	sourceSets {
 		commonMain.dependencies {
 			api(projects.core.core)
-			api(projects.core.domain)
+			api(projects.core.data)
 			api(libs.kodein.di)
 			api(libs.voyager.screenmodel)
 		}

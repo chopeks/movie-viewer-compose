@@ -11,10 +11,10 @@ import movieviewer.composeapp.generated.resources.Res
 import movieviewer.composeapp.generated.resources.button_test
 import movieviewer.composeapp.generated.resources.label_external_apps
 import org.jetbrains.compose.resources.stringResource
-import pl.chopeks.core.UiState
 import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.SettingsHeaderText
 import pl.chopeks.movies.composables.buttons.SettingStateTestButton
+import pl.chopeks.screenmodel.model.UiState
 
 
 @Composable
