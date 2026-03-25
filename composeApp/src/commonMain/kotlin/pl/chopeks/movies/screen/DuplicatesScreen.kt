@@ -43,7 +43,8 @@ class DuplicatesScreen : Screen {
 					screenModel.deduplicate()
 				})
 				Spacer(Modifier.width(32.dp))
-				Text(stringResource(Res.string.label_left_to_check, screenModel.count), color = Color.LightGray)
+				val count by screenModel.count.collectAsState()
+				Text(stringResource(Res.string.label_left_to_check, count), color = Color.LightGray)
 			}
 		) { scope ->
 			val state by screenModel.duplicates.collectAsState()

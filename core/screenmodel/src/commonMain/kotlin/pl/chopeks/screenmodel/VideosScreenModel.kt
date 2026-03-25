@@ -49,7 +49,6 @@ class VideosScreenModel(
 	val filterState = MutableStateFlow(FilterParams())
 	var uiState: StateFlow<UiState<VideosPage>> = filterState
 		.flatMapLatest { params ->
-			localVideoUpdate.value = emptyMap()
 			flow {
 				if (!params.initialized) {
 					emit(UiState.Loading)
@@ -94,7 +93,6 @@ class VideosScreenModel(
 	private val _actors = MutableStateFlow<List<Actor>>(emptyList())
 	val actors = _actors.asStateFlow()
 
-
 	private val _categories = MutableStateFlow<List<Category>>(emptyList())
 	val categories = _categories.asStateFlow()
 
@@ -125,9 +123,10 @@ class VideosScreenModel(
 
 	fun changePage(page: Int) {
 		val state = uiState.value
+		localVideoUpdate.value = emptyMap()
 		filterState.update { current ->
 			val maxPage = if (state is UiState.Success) state.data.pageCount else 0
-			current.copy(page = (current.page + page).coerceIn(0, maxPage))
+			current.copy(page = (current.page + page).coerceIn(0, maxPage), version = current.version + 1)
 		}
 	}
 
@@ -149,7 +148,7 @@ class VideosScreenModel(
 	}
 
 	fun play(video: Video) {
-		screenModelScope.launch(bestConcurrencyDispatcher()) {
+		screenModelScope.launch {
 			videoPlayer.play(video)
 		}
 	}
@@ -169,7 +168,7 @@ class VideosScreenModel(
 	}
 
 	fun toggleBinding(video: Video, actor: Actor) {
-		screenModelScope.launch(bestConcurrencyDispatcher()) {
+		screenModelScope.launch {
 			val isBound = video.chips?.actors?.any { it.id == actor.id } == true
 			if (isBound) {
 				actorRepository.unbind(actor, video)
@@ -182,7 +181,7 @@ class VideosScreenModel(
 	}
 
 	fun toggleBinding(video: Video, category: Category) {
-		screenModelScope.launch(bestConcurrencyDispatcher()) {
+		screenModelScope.launch {
 			val isBound = video.chips?.categories?.any { it.id == category.id } == true
 			if (isBound) {
 				categoryRepository.unbind(category, video)
@@ -242,14 +241,15 @@ class VideosScreenModel(
 
 	private suspend fun updateEditingVideo(video: Video) {
 		with(videoRepository.getInfo(video)) {
-			_editingVideo.value = video.copy(
+			val updatedVideo = video.copy(
 				chips = VideoChips(
 					actors.mapNotNull(actorLookup::get),
 					categories.mapNotNull(categoryLookup::get)
 				)
 			)
+			_editingVideo.emit(updatedVideo)
 			if (editingVideo.value != null) {
-				localVideoUpdate.update { it + (editingVideo.value!!.id to editingVideo.value!!) }
+				localVideoUpdate.update { it + (updatedVideo.id to updatedVideo) }
 			}
 		}
 	}

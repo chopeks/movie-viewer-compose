@@ -24,6 +24,7 @@ import org.kodein.di.direct
 import org.kodein.di.instance
 import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Category
+import pl.chopeks.core.model.Video
 import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.buttons.GreenTextButton
@@ -138,16 +139,12 @@ class VideosScreen(
 												video = video,
 												onClick = { screenModel.play(it) },
 												onActorChipClick = {
-													scope.launch {
-														screenModel.setEditing(video)
-														openSheet(SheetType.EDIT_ACTORS)
-													}
+													screenModel.setEditing(video)
+													openSheet(SheetType.EDIT_ACTORS)
 												},
 												onCategoryChipClick = {
-													scope.launch {
-														screenModel.setEditing(video)
-														openSheet(SheetType.EDIT_CATEGORIES)
-													}
+													screenModel.setEditing(video)
+													openSheet(SheetType.EDIT_CATEGORIES)
 												},
 												onThumbnailClick = {
 													screenModel.generateThumbnail(video)
@@ -187,7 +184,8 @@ class VideosScreen(
 	@Composable
 	fun ActorsSheet(screenModel: VideosScreenModel, scrollState: LazyGridState) {
 		val filterParams by screenModel.filterState.collectAsState()
-		val actors = listOf(Actor(0, stringResource(Res.string.checkbox_none))) + screenModel.actors.value
+		val allActors by screenModel.actors.collectAsState()
+		val actors = listOf(Actor(0, stringResource(Res.string.checkbox_none))) + allActors
 
 		LazyVerticalGrid(
 			columns = GridCells.Fixed(3),
@@ -206,7 +204,8 @@ class VideosScreen(
 	@Composable
 	fun CategoriesSheet(screenModel: VideosScreenModel, scrollState: LazyGridState) {
 		val filterParams by screenModel.filterState.collectAsState()
-		val categories = listOf(Category(0, stringResource(Res.string.checkbox_none))) + screenModel.categories.value
+		val allCategories by screenModel.categories.collectAsState()
+		val categories = listOf(Category(0, stringResource(Res.string.checkbox_none))) + allCategories
 
 		LazyVerticalGrid(
 			columns = GridCells.Fixed(3),
@@ -224,36 +223,26 @@ class VideosScreen(
 
 	@Composable
 	fun EditActorsSheet(screenModel: VideosScreenModel, scrollState: LazyGridState) {
-		val video = screenModel.editingVideo.value ?: return
-		LazyVerticalGrid(
-			columns = GridCells.Fixed(3),
-			state = scrollState
-		) {
-			items(screenModel.actors.value) { actor ->
-				Row(verticalAlignment = Alignment.CenterVertically) {
-					Checkbox(video.chips?.actors?.firstOrNull { it.id == actor.id } != null, {
-						screenModel.toggleBinding(video, actor)
-					})
-					Text(actor.name)
-				}
+		val actors by screenModel.actors.collectAsState()
+		EditGridSheet(screenModel, scrollState, actors) { video, actor ->
+			Row(verticalAlignment = Alignment.CenterVertically) {
+				Checkbox(video.chips?.actors?.firstOrNull { it.id == actor.id } != null, {
+					screenModel.toggleBinding(video, actor)
+				})
+				Text(actor.name)
 			}
 		}
 	}
 
 	@Composable
 	fun EditCategoriesSheet(screenModel: VideosScreenModel, scrollState: LazyGridState) {
-		val video = screenModel.editingVideo.value ?: return
-		LazyVerticalGrid(
-			columns = GridCells.Fixed(3),
-			state = scrollState
-		) {
-			items(screenModel.categories.value) { category ->
-				Row(verticalAlignment = Alignment.CenterVertically) {
-					Checkbox(video.chips?.categories?.firstOrNull { it.id == category.id } != null, {
-						screenModel.toggleBinding(video, category)
-					})
-					Text(category.name)
-				}
+		val categories by screenModel.categories.collectAsState()
+		EditGridSheet(screenModel, scrollState, categories) { video, category ->
+			Row(verticalAlignment = Alignment.CenterVertically) {
+				Checkbox(video.chips?.categories?.firstOrNull { it.id == category.id } != null, {
+					screenModel.toggleBinding(video, category)
+				})
+				Text(category.name)
 			}
 		}
 	}
@@ -283,6 +272,19 @@ class VideosScreen(
 					}
 				}
 			)
+		}
+	}
+
+	@Composable
+	private fun <T> EditGridSheet(screenModel: VideosScreenModel, scrollState: LazyGridState, container: List<T>, item: @Composable (Video, T) -> Unit) {
+		val video by screenModel.editingVideo.collectAsState()
+		if (video != null) {
+			LazyVerticalGrid(
+				columns = GridCells.Fixed(3),
+				state = scrollState
+			) {
+				items(container) { item(video!!, it) }
+			}
 		}
 	}
 
