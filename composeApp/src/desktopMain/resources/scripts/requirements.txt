@@ -1,6 +1,0 @@
-opencv-python
-numpy
-argparse
-ffmpeg-python
-Pillow
-scikit-image

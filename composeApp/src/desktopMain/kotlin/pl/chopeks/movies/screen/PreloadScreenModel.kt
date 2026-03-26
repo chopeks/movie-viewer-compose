@@ -12,7 +12,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.sql.Database
 import pl.chopeks.core.data.ITaskManager
 import pl.chopeks.core.database.DatabaseHelper
-import pl.chopeks.movies.server.utils.Python
 
 class PreloadScreenModel(
 	private val database: Lazy<Database>,
@@ -27,8 +26,6 @@ class PreloadScreenModel(
 			withContext(Dispatchers.IO) {
 				val db = database.value
 				events.add("Database connected, schema updated.")
-				Python.init()
-
 				DatabaseHelper.clean(db)
 				events.add("Removed files purged.")
 			}

@@ -49,8 +49,8 @@ class VideoDedupLocalDataStorage(
 						(MovieTable.path like "${video.path.parentFile.absolutePath}%") and
 						(MovieTable.duration greaterEq (video.duration - threshold)) and
 						(MovieTable.duration lessEq (video.duration + threshold))
-				}
-		}.map { it[MovieTable.id].value }
+				}.map { it[MovieTable.id].value }
+		}
 	}
 
 	suspend fun addDuplicate(id: Int, candidateId: Int) = withContext(Dispatchers.IO) {

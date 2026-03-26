@@ -1,6 +1,8 @@
 package pl.chopeks.core.ffmpeg
 
+import org.bytedeco.ffmpeg.global.avutil
 import org.bytedeco.javacv.*
+import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.ShortBuffer
@@ -12,6 +14,10 @@ import javax.imageio.ImageIO
 class FfmpegManager(
 	private val converter: Java2DFrameConverter = Java2DFrameConverter()
 ) {
+	init {
+		avutil.av_log_set_level(avutil.AV_LOG_QUIET)
+	}
+
 	/**
 	 * Fetches raw audio data from a video file.
 	 *
@@ -135,21 +141,37 @@ class FfmpegManager(
 	 * @return The screenshot image data as a byte array.
 	 */
 	fun makeScreenshot(video: File, permille: Long = 110): ByteArray {
+		return getFrame(video, permille)?.let {
+			ByteArrayOutputStream().use { outputStream ->
+				ImageIO.write(it, "jpg", outputStream)
+				outputStream.toByteArray()
+			}
+		} ?: byteArrayOf()
+	}
+
+	/**
+	 * Captures a frame from the video at a specified permille of the total duration.
+	 *
+	 * @param video The video file.
+	 * @param permille The permille of the video duration where the screenshot should be taken
+	 * @return The screenshot in form of buffered image.
+	 */
+	internal fun getFrame(video: File, permille: Long, width: Int = 0, height: Int = 0): BufferedImage? {
 		return FFmpegFrameGrabber(video).use { grabber ->
 			try {
 				grabber.start()
+				if (width > 0 && height > 0) {
+					grabber.imageWidth = width
+					grabber.imageHeight = height
+				}
 				grabber.timestamp = (grabber.lengthInTime * permille) / 1000L
 				val frame = grabber.grabImage()
-					?: return@use byteArrayOf()
+					?: return@use null
 
-				val bufferedImage = converter.convert(frame)
-				ByteArrayOutputStream().use { outputStream ->
-					ImageIO.write(bufferedImage, "jpg", outputStream)
-					outputStream.toByteArray()
-				}
+				converter.convert(frame)
 			} catch (e: Exception) {
 				e.printStackTrace()
-				byteArrayOf()
+				null
 			}
 		}
 	}

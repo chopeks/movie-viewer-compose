@@ -7,6 +7,7 @@ import org.kodein.di.instance
 import pl.chopeks.core.database.datasource.*
 import pl.chopeks.core.database.duplicates.AudioDedupLocalDataSource
 import pl.chopeks.core.database.duplicates.FingerprintLocalDataSource
+import pl.chopeks.core.database.duplicates.VideoDedupLocalDataStorage
 
 val databaseModule = DI.Module("databaseModule") {
 	bindSingleton { DatabaseHelper.connect() }
@@ -20,4 +21,5 @@ val databaseModule = DI.Module("databaseModule") {
 	// for duplicate detection
 	bindProvider { AudioDedupLocalDataSource(instance()) }
 	bindProvider { FingerprintLocalDataSource(instance()) }
+	bindProvider { VideoDedupLocalDataStorage(instance()) }
 }
