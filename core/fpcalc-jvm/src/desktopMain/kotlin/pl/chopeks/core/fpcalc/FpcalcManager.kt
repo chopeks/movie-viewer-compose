@@ -26,8 +26,6 @@ class FpcalcManager(
 	 */
 	@OptIn(ExperimentalUnsignedTypes::class)
 	fun getFingerprint(video: File, start: Int? = null, duration: Int? = null): UIntArray? {
-		val audioByteArray = ffmpegManager.getFingerprintStream(video, start, duration)
-
 		val fpcalcCmd = listOf(
 			"fpcalc",
 			"-format", "s16le",
@@ -37,14 +35,17 @@ class FpcalcManager(
 			"-"
 		)
 
-		val fpcalc = ProcessBuilder(fpcalcCmd)
-			.redirectError(ProcessBuilder.Redirect.DISCARD)
-			.start()
+		val ffmpeg = ffmpegManager.getFingerprintStream(video, start, duration)
 
-		fpcalc.outputStream.use { it.write(audioByteArray) }
+		val fpcalc = processFactory(fpcalcCmd) {
+			redirectError(ProcessBuilder.Redirect.DISCARD)
+		}
+
+		ffmpeg.inputStream.pipe(fpcalc.outputStream)
 
 		val output = fpcalc.inputStream.bufferedReader().use { it.readText() }.trim()
 
+		ffmpeg.destroy()
 		fpcalc.destroy()
 
 		if (output.isBlank()) {
@@ -54,30 +55,22 @@ class FpcalcManager(
 			return UIntArray(0)
 		}
 
-		val result = parseFingerprint(output)
+		val fingerprintLine = output
+			.lineSequence()
+			.firstOrNull { it.startsWith("FINGERPRINT=") }
 
-		if (result != null && result.isNotEmpty())
-			return result
-
-		val audioDuration = ffmpegManager.getAudioDuration(video)
-			?: return null
-		println("${if (output.isBlank()) "empty output" else "failed"} - audio duration $audioDuration, file: ${video.absolutePath}")
-		return UIntArray(0)
-	}
-
-	@OptIn(ExperimentalUnsignedTypes::class)
-	internal fun parseFingerprint(output: String): UIntArray? {
-		val line = output.lineSequence().firstOrNull { it.startsWith("FINGERPRINT=") }
-			?: return null
-		val parts = line.removePrefix("FINGERPRINT=").split(",")
-		if (parts.isEmpty() || parts[0].isBlank())
+		if (fingerprintLine == null) {
+			val duration = ffmpegManager.getAudioDuration(video)
+				?: return null
+			println("failed audio duration $duration, from file: ${video.absolutePath}")
 			return UIntArray(0)
+		}
 
-		return UIntArray(parts.size) {
-			parts[it].toUInt()
+		val fingerprint = fingerprintLine.removePrefix("FINGERPRINT=").split(",")
+		return UIntArray(fingerprint.size) {
+			fingerprint[it].toUInt()
 		}
 	}
-
 
 	/**
 	 * Checks if the `fpcalc` command-line tool is available in the system's PATH.

@@ -13,8 +13,11 @@ import java.io.IOException
 class FpcalcManagerTest : FunSpec({
 	val process = mockk<Process>(relaxed = true)
 
+	val processFfmpeg = mockk<Process>(relaxed = true)
+	every { processFfmpeg.inputStream } returns ByteArrayInputStream(byteArrayOf())
+
 	val ffmpegManager = mockk<FfmpegManager>()
-	every { ffmpegManager.getFingerprintStream(any(), any(), any()) } returns byteArrayOf()
+	every { ffmpegManager.getFingerprintStream(any(), any(), any()) } returns processFfmpeg
 	every { ffmpegManager.getAudioDuration(any()) } returns 123.5
 
 	val fpcalcManager = FpcalcManager(ffmpegManager, processFactory = { _, _ -> process })
@@ -39,11 +42,14 @@ class FpcalcManagerTest : FunSpec({
 			uintArrayOf(1u, 2u, 3u, 4u, 5u, 42u)
 	}
 
-	test("getFingerprint returns empty fingerprint in case if piped stream is wrong") {
-		every { process.inputStream } returns ByteArrayInputStream(byteArrayOf())
+	test("getFingerprint returns correct fingerprint") {
+		val expectedOutput = "FINGERPRINT=1,2,3,4,5,42"
+
+		every { process.inputStream } returns ByteArrayInputStream(expectedOutput.toByteArray())
 		every { process.waitFor(any(), any()) } returns true
 
-		fpcalcManager.getFingerprint(File("dummy.mp4")) shouldBe uintArrayOf()
+		fpcalcManager.getFingerprint(File("dummy.mp4")) shouldBe
+			uintArrayOf(1u, 2u, 3u, 4u, 5u, 42u)
 	}
 
 	test("getFingerprint returns null in case if piped stream has no audio") {

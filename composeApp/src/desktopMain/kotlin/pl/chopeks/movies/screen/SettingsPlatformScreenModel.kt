@@ -16,6 +16,8 @@ class SettingsPlatformScreenModel(
 	private val fpcalcManager: FpcalcManager,
 ) : ScreenModel {
 	data class SettingsPage(
+		val ffmpegStatus: Boolean? = null,
+		val ffprobeStatus: Boolean? = null,
 		val fpcalcStatus: Boolean? = null,
 		val pythonStatus: Boolean? = null,
 	)
@@ -27,11 +29,21 @@ class SettingsPlatformScreenModel(
 			uiState.emit(
 				UiState.Success(
 					SettingsPage(
+						ffmpegStatus = ffmpegManager.isFfmpegAvailable(),
+						ffprobeStatus = ffmpegManager.isFfprobeAvailable(),
 						fpcalcStatus = fpcalcManager.isFpcalcAvailable()
 					)
 				)
 			)
 		}
+	}
+
+	fun ffmpegTest() = launchWithState {
+		uiState.emit(UiState.Success(it.copy(ffmpegStatus = ffmpegManager.isFfmpegAvailable())))
+	}
+
+	fun ffprobeTest() = launchWithState {
+		uiState.emit(UiState.Success(it.copy(ffmpegStatus = ffmpegManager.isFfprobeAvailable())))
 	}
 
 	fun ffcalcTest() = launchWithState {

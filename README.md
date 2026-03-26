@@ -1,5 +1,4 @@
 ## This app requires following apps in PATH:
-- `python3`
 - `ffmpeg` (for thumbnails, duplicate search, etc)
 - `ffprobe` (for obtaining duration)
 - `fpcalc` (for audio comparison)
