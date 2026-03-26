@@ -1,7 +1,4 @@
 ## This app requires following apps in PATH:
-- `python3`
-- `ffmpeg` (for thumbnails, duplicate search, etc)
-- `ffprobe` (for obtaining duration)
 - `fpcalc` (for audio comparison)
 
 There are also some python requirements you gotta install [requirements.txt](composeApp/src/desktopMain/resources/scripts/requirements.txt)
