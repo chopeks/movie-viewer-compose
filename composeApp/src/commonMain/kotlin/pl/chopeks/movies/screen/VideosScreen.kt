@@ -2,7 +2,11 @@ package pl.chopeks.movies.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.lazy.grid.GridCells.Fixed
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -33,6 +37,7 @@ import pl.chopeks.movies.composables.state.AlertDialogState
 import pl.chopeks.movies.composables.state.rememberAlertDialogState
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
+import pl.chopeks.movies.utils.collectAsSuccessState
 import pl.chopeks.screenmodel.VideosScreenModel
 import pl.chopeks.screenmodel.model.UiState
 
@@ -74,24 +79,30 @@ class VideosScreen(
 		keyEventManager.setListener { onKeyEvent(it, navigator, screenModel) }
 
 		val state by screenModel.uiState.collectAsState()
-		val filterState by screenModel.filterState.collectAsState()
 
 		ModalBottomSheetLayout(
 			sheetState = sheetState,
 			sheetGesturesEnabled = false,
 			sheetContent = {
-				Column {
-					Row(Modifier.background(Color.Black).fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-						IconButton(onClick = { scope.launch { sheetState.hide() } }) {
-							Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.button_close))
+				val state by screenModel.toolbarState.collectAsState()
+				when (val current = state) {
+					is UiState.Error -> Text("Error: ${current.message}")
+					UiState.Loading -> ProgressIndicator()
+					is UiState.Success -> {
+						Column {
+							Row(Modifier.background(Color.Black).fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+								IconButton(onClick = { scope.launch { sheetState.hide() } }) {
+									Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.button_close))
+								}
+							}
+							when (currentSheet) {
+								SheetType.ACTORS_FILTER -> ActorsSheet(current.data, screenModel, actorsScrollState)
+								SheetType.CATEGORIES_FILTER -> CategoriesSheet(current.data, screenModel, categoriesScrollState)
+								SheetType.EDIT_ACTORS -> EditActorsSheet(current.data, screenModel, editActorsScrollState)
+								SheetType.EDIT_CATEGORIES -> EditCategoriesSheet(current.data, screenModel, editCategoriesScrollState)
+								SheetType.NONE -> Box(Modifier.size(0.dp))
+							}
 						}
-					}
-					when (currentSheet) {
-						SheetType.ACTORS_FILTER -> ActorsSheet(screenModel, actorsScrollState)
-						SheetType.CATEGORIES_FILTER -> CategoriesSheet(screenModel, categoriesScrollState)
-						SheetType.EDIT_ACTORS -> EditActorsSheet(screenModel, editActorsScrollState)
-						SheetType.EDIT_CATEGORIES -> EditCategoriesSheet(screenModel, editCategoriesScrollState)
-						SheetType.NONE -> Box(Modifier.size(0.dp))
 					}
 				}
 			}
@@ -111,12 +122,16 @@ class VideosScreen(
 				}) { Text(stringResource(Res.string.button_categories), color = Color.Gray) }
 
 				TextButton(onClick = screenModel::toggleSortFilter) {
-					Text(listOf(stringResource(Res.string.label_sort_by_date), stringResource(Res.string.label_sort_by_duration))[filterState.filterType], color = Color.Gray)
+					val filterType = screenModel.toolbarState.collectAsSuccessState(initial = 0) { it.filters.filterType }
+					Text(
+						text = listOf(stringResource(Res.string.label_sort_by_date), stringResource(Res.string.label_sort_by_duration))[filterType],
+						color = Color.Gray
+					)
 				}
 			}, rightActions = {
-				when (val current = state) {
-					is UiState.Success -> Text(stringResource(Res.string.label_video_pager, current.data.currentPage + 1, current.data.pageCount + 1), color = Color.Green.copy(alpha = 0.6f))
-					else -> ProgressIndicator(modifier = Modifier)
+				val page = screenModel.uiState.collectAsSuccessState(initial = null) { it }
+				if (page != null) {
+					Text(stringResource(Res.string.label_video_pager, page.currentPage + 1, page.pageCount + 1), color = Color.Green.copy(alpha = 0.6f))
 				}
 			}) { scope ->
 				when (val current = state) {
@@ -182,17 +197,19 @@ class VideosScreen(
 	}
 
 	@Composable
-	fun ActorsSheet(screenModel: VideosScreenModel, scrollState: LazyGridState) {
-		val filterParams by screenModel.filterState.collectAsState()
-		val allActors by screenModel.actors.collectAsState()
-		val actors = listOf(Actor(0, stringResource(Res.string.checkbox_none))) + allActors
-
+	fun ActorsSheet(state: VideosScreenModel.ToolbarState, screenModel: VideosScreenModel, scrollState: LazyGridState) {
+		val noneText = stringResource(Res.string.checkbox_none)
+		val actors = remember(state.actors, noneText) {
+			listOf(Actor(0, noneText)) + state.actors
+		}
 		LazyVerticalGrid(
-			columns = GridCells.Fixed(3),
+			columns = Fixed(3),
 			state = scrollState
 		) {
 			items(actors) { actor ->
-				val isSelected = filterParams.selectedActors.any { it.id == actor.id }
+				val isSelected by remember(actor.id, state.filters.selectedActors) {
+					derivedStateOf { state.filters.selectedActors.any { it.id == actor.id } }
+				}
 				Row(verticalAlignment = Alignment.CenterVertically) {
 					Checkbox(isSelected, onCheckedChange = { screenModel.toggleSelection(actor) })
 					Text(actor.name)
@@ -202,17 +219,20 @@ class VideosScreen(
 	}
 
 	@Composable
-	fun CategoriesSheet(screenModel: VideosScreenModel, scrollState: LazyGridState) {
-		val filterParams by screenModel.filterState.collectAsState()
-		val allCategories by screenModel.categories.collectAsState()
-		val categories = listOf(Category(0, stringResource(Res.string.checkbox_none))) + allCategories
+	fun CategoriesSheet(state: VideosScreenModel.ToolbarState, screenModel: VideosScreenModel, scrollState: LazyGridState) {
+		val noneText = stringResource(Res.string.checkbox_none)
+		val categories = remember(state.categories, noneText) {
+			listOf(Category(0, noneText)) + state.categories
+		}
 
 		LazyVerticalGrid(
-			columns = GridCells.Fixed(3),
+			columns = Fixed(3),
 			state = scrollState
 		) {
 			items(categories) { category ->
-				val isSelected = filterParams.selectedCategories.any { it.id == category.id }
+				val isSelected by remember(category.id, state.filters.selectedCategories) {
+					derivedStateOf { state.filters.selectedCategories.any { it.id == category.id } }
+				}
 				Row(verticalAlignment = Alignment.CenterVertically) {
 					Checkbox(isSelected, onCheckedChange = { screenModel.toggleSelection(category) })
 					Text(category.name)
@@ -222,11 +242,13 @@ class VideosScreen(
 	}
 
 	@Composable
-	fun EditActorsSheet(screenModel: VideosScreenModel, scrollState: LazyGridState) {
-		val actors by screenModel.actors.collectAsState()
-		EditGridSheet(screenModel, scrollState, actors) { video, actor ->
+	fun EditActorsSheet(state: VideosScreenModel.ToolbarState, screenModel: VideosScreenModel, scrollState: LazyGridState) {
+		EditGridSheet(screenModel, scrollState, state.actors) { video, actor ->
+			val isSelected by remember(actor.id, video.chips?.actors) {
+				derivedStateOf { video.chips?.actors?.firstOrNull { it.id == actor.id } != null }
+			}
 			Row(verticalAlignment = Alignment.CenterVertically) {
-				Checkbox(video.chips?.actors?.firstOrNull { it.id == actor.id } != null, {
+				Checkbox(isSelected, {
 					screenModel.toggleBinding(video, actor)
 				})
 				Text(actor.name)
@@ -235,11 +257,13 @@ class VideosScreen(
 	}
 
 	@Composable
-	fun EditCategoriesSheet(screenModel: VideosScreenModel, scrollState: LazyGridState) {
-		val categories by screenModel.categories.collectAsState()
-		EditGridSheet(screenModel, scrollState, categories) { video, category ->
+	fun EditCategoriesSheet(state: VideosScreenModel.ToolbarState, screenModel: VideosScreenModel, scrollState: LazyGridState) {
+		EditGridSheet(screenModel, scrollState, state.categories) { video, category ->
+			val isSelected by remember(category.id, video.chips?.categories) {
+				derivedStateOf { video.chips?.categories?.firstOrNull { it.id == category.id } != null }
+			}
 			Row(verticalAlignment = Alignment.CenterVertically) {
-				Checkbox(video.chips?.categories?.firstOrNull { it.id == category.id } != null, {
+				Checkbox(isSelected, {
 					screenModel.toggleBinding(video, category)
 				})
 				Text(category.name)
@@ -278,12 +302,15 @@ class VideosScreen(
 	@Composable
 	private fun <T> EditGridSheet(screenModel: VideosScreenModel, scrollState: LazyGridState, container: List<T>, item: @Composable (Video, T) -> Unit) {
 		val video by screenModel.editingVideo.collectAsState()
-		if (video != null) {
+		val currentVideo = video
+		if (currentVideo != null) {
 			LazyVerticalGrid(
-				columns = GridCells.Fixed(3),
+				columns = Fixed(3),
 				state = scrollState
 			) {
-				items(container) { item(video!!, it) }
+				items(container) {
+					item(currentVideo, it)
+				}
 			}
 		}
 	}

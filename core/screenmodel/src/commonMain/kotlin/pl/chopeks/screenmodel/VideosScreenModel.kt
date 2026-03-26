@@ -2,9 +2,6 @@ package pl.chopeks.screenmodel
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import pl.chopeks.core.data.ITaskManager
@@ -18,22 +15,29 @@ import pl.chopeks.core.model.Category
 import pl.chopeks.core.model.Video
 import pl.chopeks.core.model.VideoChips
 import pl.chopeks.screenmodel.model.UiState
+import pl.chopeks.usecase.video.GetVideosUseCase
 
 class VideosScreenModel(
 	private val videoPlayer: IVideoPlayer,
 	private val videoRepository: IVideoRepository,
 	private val actorRepository: IActorRepository,
 	private val categoryRepository: ICategoryRepository,
-	private val taskManager: ITaskManager
+	private val taskManager: ITaskManager,
+	private val getVideosUseCase: GetVideosUseCase
 ) : ScreenModel {
 	data class VideosPage(
-		val items: List<Video>,
-		val currentPage: Long,
-		val pageCount: Long
+		val items: List<Video> = emptyList(),
+		val currentPage: Long = 0,
+		val pageCount: Long = 0
+	)
+
+	data class ToolbarState(
+		val actors: List<Actor> = emptyList(),
+		val categories: List<Category> = emptyList(),
+		val filters: FilterParams = FilterParams(),
 	)
 
 	data class FilterParams(
-		val initialized: Boolean = false,
 		val page: Long = 0,
 		val selectedActors: List<Actor> = emptyList(),
 		val selectedCategories: List<Category> = emptyList(),
@@ -46,33 +50,55 @@ class VideosScreenModel(
 
 	private val localVideoUpdate = MutableStateFlow<Map<Int, Video>>(emptyMap())
 
-	val filterState = MutableStateFlow(FilterParams())
-	var uiState: StateFlow<UiState<VideosPage>> = filterState
-		.flatMapLatest { params ->
+	private val _actors = MutableStateFlow<List<Actor>?>(null)
+	private val _categories = MutableStateFlow<List<Category>?>(null)
+
+	private val _editingVideo = MutableStateFlow<Video?>(null)
+	val editingVideo = _editingVideo.asStateFlow()
+
+	private val _filterState = MutableStateFlow(FilterParams())
+	val filterState = _filterState.asStateFlow()
+
+	private val lookupsReady = _actors.combine(_categories) { actors, categories ->
+		if (actors == null || categories == null)
+			return@combine null
+		actorLookup = actors.associateBy { it.id }
+		categoryLookup = categories.associateBy { it.id }
+		actors to categories
+	}.filterNotNull()
+
+	val toolbarState: StateFlow<UiState<ToolbarState>> = lookupsReady
+		.combine(filterState) { lookups, filter ->
+			UiState.Success(ToolbarState(lookups.first, lookups.second, filter))
+		}
+		.stateIn(
+			scope = screenModelScope,
+			started = SharingStarted.WhileSubscribed(5000),
+			initialValue = UiState.Loading
+		)
+
+	val uiState: StateFlow<UiState<VideosPage>> = toolbarState
+		.filterIsInstance<UiState.Success<ToolbarState>>()
+		.map { it.data.filters }
+		.flatMapLatest { filter ->
 			flow {
-				if (!params.initialized) {
-					emit(UiState.Loading)
-					return@flow
-				}
 				emit(UiState.Loading)
-				try {
-					val data = videoRepository.getVideos(params.page, params.selectedActors, params.selectedCategories, params.filterType, 15)
-					val enriched = coroutineScope {
-						data.movies.map { video ->
-							async { enrichVideo(video) }
-						}.awaitAll()
-					}
-					val page = VideosPage(
-						items = enriched,
-						currentPage = params.page,
-						pageCount = (data.count - 1) / 15
+				val page = with(getVideosUseCase({ actorLookup[it] }, { categoryLookup[it] }) {
+					page = filter.page
+					selectedActors = filter.selectedActors
+					selectedCategories = filter.selectedCategories
+					filterType = filter.filterType
+				}) {
+					VideosPage(
+						items = videos,
+						currentPage = filter.page,
+						pageCount = (count - 1) / pageSize
 					)
-					emit(UiState.Success(page))
-				} catch (e: Exception) {
-					emit(UiState.Error(e.message ?: "Unknown Error"))
 				}
+				emit(UiState.Success(page))
 			}
 		}
+		.catch { emit(UiState.Error(it.message ?: "Unknown Error")) }
 		.flowOn(bestConcurrencyDispatcher())
 		.combine(localVideoUpdate) { state, updates ->
 			if (state is UiState.Success && updates.isNotEmpty()) {
@@ -90,30 +116,12 @@ class VideosScreenModel(
 			initialValue = UiState.Loading
 		)
 
-	private val _actors = MutableStateFlow<List<Actor>>(emptyList())
-	val actors = _actors.asStateFlow()
-
-	private val _categories = MutableStateFlow<List<Category>>(emptyList())
-	val categories = _categories.asStateFlow()
-
-	private val _editingVideo = MutableStateFlow<Video?>(null)
-	val editingVideo = _editingVideo.asStateFlow()
-
 	fun init(actor: Actor?, category: Category?) {
-		if (filterState.value.initialized)
-			return
-		screenModelScope.launch(bestConcurrencyDispatcher()) {
-			val actors = actorRepository.getActors()
-			actorLookup = actors.associateBy { it.id }
-			_actors.emit(actors)
-
-			val categories = categoryRepository.getCategories()
-			categoryLookup = categories.associateBy { it.id }
-			_categories.emit(categories)
-
-			filterState.update { current ->
+		screenModelScope.launch {
+			_actors.emit(actorRepository.getActors())
+			_categories.emit(categoryRepository.getCategories())
+			_filterState.update { current ->
 				current.copy(
-					initialized = true,
 					selectedActors = actor?.let(::listOf) ?: emptyList(),
 					selectedCategories = category?.let(::listOf) ?: emptyList()
 				)
@@ -124,27 +132,16 @@ class VideosScreenModel(
 	fun changePage(page: Int) {
 		val state = uiState.value
 		localVideoUpdate.value = emptyMap()
-		filterState.update { current ->
+		_filterState.update { current ->
 			val maxPage = if (state is UiState.Success) state.data.pageCount else 0
 			current.copy(page = (current.page + page).coerceIn(0, maxPage), version = current.version + 1)
 		}
 	}
 
 	fun toggleSortFilter() {
-		filterState.update { current ->
+		_filterState.update { current ->
 			current.copy(filterType = (current.filterType + 1) % 2, page = 0)
 		}
-	}
-
-	private suspend fun enrichVideo(video: Video): Video {
-		val info = videoRepository.getInfo(video)
-		return video.copy(
-			image = videoRepository.getImage(video),
-			chips = VideoChips(
-				actors = info.actors.mapNotNull(transform = actorLookup::get),
-				categories = info.categories.mapNotNull(transform = categoryLookup::get)
-			)
-		)
 	}
 
 	fun play(video: Video) {
@@ -193,7 +190,7 @@ class VideosScreenModel(
 	}
 
 	fun toggleSelection(actor: Actor) {
-		filterState.update { current ->
+		_filterState.update { current ->
 			val newSelection = if (current.selectedActors.any { it.id == actor.id }) {
 				current.selectedActors.filter { it.id != actor.id }
 			} else {
@@ -204,7 +201,7 @@ class VideosScreenModel(
 	}
 
 	fun toggleSelection(category: Category) {
-		filterState.update { current ->
+		_filterState.update { current ->
 			val newSelection = if (current.selectedCategories.any { it.id == category.id }) {
 				current.selectedCategories.filter { it.id != category.id }
 			} else {
@@ -236,7 +233,7 @@ class VideosScreenModel(
 	}
 
 	fun refreshData() {
-		filterState.update { it.copy(version = it.version + 1) }
+		_filterState.update { it.copy(version = it.version + 1) }
 	}
 
 	private suspend fun updateEditingVideo(video: Video) {
