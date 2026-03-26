@@ -2,6 +2,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
 	alias(libs.plugins.mv.app.compose)
+	alias(libs.plugins.javaccp)
 }
 
 val versionString = "1.1.0"

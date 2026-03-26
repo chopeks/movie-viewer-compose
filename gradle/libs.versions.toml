@@ -17,6 +17,12 @@ kotest = "6.1.7"
 materialIcons = "1.7.3"
 imgscalr = "4.2"
 
+javaccp = "1.5.10"
+javacv = "1.5.13"
+opencv = "4.13.0-1.5.13"
+openblas = "0.3.9-1.5.13"
+ffmpeg = "8.0.1-1.5.13"
+
 [libraries]
 kotest-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
 kotest-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
@@ -50,19 +56,19 @@ jetbrains-compose-ui-test = { module = "org.jetbrains.compose.ui:ui-test", versi
 
 imgscalr = { module = "org.imgscalr:imgscalr-lib", version.ref = "imgscalr" }
 
-ktor-client-core =  { module = "io.ktor:ktor-client-core" , version.ref = "ktor" }
-ktor-client-contentnegotiation =  { module = "io.ktor:ktor-client-content-negotiation" , version.ref = "ktor" }
-ktor-client-json =  { module = "io.ktor:ktor-serialization-kotlinx-json" , version.ref = "ktor" }
-ktor-client-logging =  { module = "io.ktor:ktor-client-logging" , version.ref = "ktor" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-contentnegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 
-ktor-client-okhttp =  { module = "io.ktor:ktor-client-okhttp" , version.ref = "ktor" }
-ktor-client-js =  { module = "io.ktor:ktor-client-js" , version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
 
-ktor-server-core =  { module = "io.ktor:ktor-server-core" , version.ref = "ktor" }
-ktor-server-netty =  { module = "io.ktor:ktor-server-netty" , version.ref = "ktor" }
-ktor-server-gson =  { module = "io.ktor:ktor-serialization-gson" , version.ref = "ktor" }
-ktor-server-cors =  { module = "io.ktor:ktor-server-cors" , version.ref = "ktor" }
-ktor-server-contentnegotiation =  { module = "io.ktor:ktor-server-content-negotiation" , version.ref = "ktor" }
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
+ktor-server-gson = { module = "io.ktor:ktor-serialization-gson", version.ref = "ktor" }
+ktor-server-cors = { module = "io.ktor:ktor-server-cors", version.ref = "ktor" }
+ktor-server-contentnegotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
 
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil3" }
 coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil3" }
@@ -83,6 +89,8 @@ kotlinx-rpc-server = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-server",
 kotlinx-rpc-serialization = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-serialization-json", version.ref = "kotlinx-rpc" }
 kotlinx-rpc-ktor-client = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-client", version.ref = "kotlinx-rpc" }
 kotlinx-rpc-ktor-server = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-server", version.ref = "kotlinx-rpc" }
+
+javacv-platform = { group = "org.bytedeco", name = "javacv-platform", version.ref = "javacv" }
 
 # Dependencies of the included build-logic
 bl-multiplatform-plugin = { group = "org.jetbrains.kotlin.multiplatform", name = "org.jetbrains.kotlin.multiplatform.gradle.plugin", version.ref = "kotlin" }
@@ -114,6 +122,7 @@ kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", versio
 kotlinxRpc = { id = "org.jetbrains.kotlinx.rpc.plugin", version.ref = "kotlinx-rpc" }
 kotest = { id = "io.kotest", version.ref = "kotest" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+javaccp = { id = "org.bytedeco.gradle-javacpp-platform", version.ref = "javaccp"}
 
 # Convention plugins
 mv-desktop-library = { id = "mv.desktop.library" }

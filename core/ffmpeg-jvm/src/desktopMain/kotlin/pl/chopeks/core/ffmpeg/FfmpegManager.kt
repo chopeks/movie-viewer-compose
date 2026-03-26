@@ -1,18 +1,24 @@
 package pl.chopeks.core.ffmpeg
 
+import org.bytedeco.ffmpeg.ffmpeg
+import org.bytedeco.javacpp.Loader
+import org.bytedeco.javacv.FFmpegFrameGrabber
+import org.bytedeco.javacv.Java2DFrameConverter
+import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.IOException
-import java.io.InputStream
-import java.util.concurrent.TimeUnit
+import javax.imageio.ImageIO
 
 /**
  * Manages interaction with `ffmpeg` and `ffprobe` command-line tools for media processing.
  */
 class FfmpegManager(
+	private val converter: Java2DFrameConverter = Java2DFrameConverter(),
 	private val processFactory: (List<String>, ProcessBuilder.() -> ProcessBuilder) -> Process = { list, builder ->
 		builder(ProcessBuilder(list)).start()
 	}
 ) {
+	private val ffmpegPath by lazy { Loader.load(ffmpeg::class.java) }
+
 	/**
 	 * Starts a ffmpeg process to stream audio fingerprint data from a video file.
 	 *
@@ -22,7 +28,7 @@ class FfmpegManager(
 	 * @return The started `Process`.
 	 */
 	fun getFingerprintStream(video: File, start: Int? = null, duration: Int? = null): Process {
-		val ffmpegCmd = mutableListOf("ffmpeg")
+		val ffmpegCmd = mutableListOf(ffmpegPath)
 		if (start != null)
 			ffmpegCmd += listOf("-ss", (start / 1000.0).toString())
 
@@ -51,26 +57,23 @@ class FfmpegManager(
 	 * @return The duration in seconds, or null if it cannot be determined.
 	 */
 	fun getAudioDuration(video: File): Double? {
-		val ffmpegCmd = listOf(
-			"ffprobe",
-			"-v", "error",
-			"-select_streams", "a",
-			"-show_entries", "stream=duration",
-			"-of", "default=noprint_wrappers=1:nokey=1",
-			video.absolutePath
-		)
-
-		val process = processFactory(ffmpegCmd) {
-			redirectError(ProcessBuilder.Redirect.DISCARD)
-		}
-
-		val output = process.inputStream.bufferedReader().readText().trim()
-		process.waitFor()
-
-		if (output.isBlank() || output == "N/A")
-			return 0.0
-
-		return output.toDoubleOrNull()
+		return FFmpegFrameGrabber(video).use { grabber ->
+			try {
+				grabber.start()
+				val audioStreamIdx = grabber.audioStream
+				if (audioStreamIdx >= 0) {
+					val stream = grabber.formatContext.streams(audioStreamIdx)
+					val timeBase = stream.time_base()
+					val durationInSeconds = stream.duration().toDouble() * timeBase.num() / timeBase.den()
+					if (durationInSeconds <= 0)
+						return@use null
+					return@use durationInSeconds
+				}
+				null
+			} catch (e: Exception) {
+				null
+			}
+		}?.also { println("audio duration: ${video.absolutePath} -> ${it}s") }
 	}
 
 	/**
@@ -79,96 +82,42 @@ class FfmpegManager(
 	 * @param video The video file.
 	 * @return The duration in milliseconds.
 	 */
-	fun getVideoDuration(video: File) = try {
-		arrayOf("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", video.absolutePath)
-			.executeCommand(File("./"))
-			?.let {
-				val duration = it.toDouble()
-				TimeUnit.SECONDS.toMillis(duration.toLong()) + ((duration - duration.toLong()) * 1000).toLong()
-			} ?: 0
-	} catch (e: Throwable) {
-		e.printStackTrace()
-		0
-	}.let { it - (it % 1000) }
+	fun getVideoDuration(video: File): Long {
+		return FFmpegFrameGrabber(video).use { grabber ->
+			try {
+				grabber.start()
+				val duration = grabber.lengthInTime / 1000 // us -> ms
+				duration.let { it - (it % 1000) } // trim us
+			} catch (e: Exception) {
+				0L
+			}
+		}
+	}
 
 	/**
 	 * Captures a screenshot from the video at a specified percentage of the total duration.
 	 *
 	 * @param video The video file.
-	 * @param percent The percentage of the video duration where the screenshot should be taken (default is 110 which seems incorrect if it means % of duration, likely meant relative to some other metric or offset).
+	 * @param permille The permille of the video duration where the screenshot should be taken
 	 * @return The screenshot image data as a byte array.
 	 */
-	fun makeScreenshot(video: File, percent: Long = 110): ByteArray {
-		val interval: Long = getVideoDuration(video) * percent / 1000L
-		var bytes = byteArrayOf()
-		arrayOf(
-			"ffmpeg",
-			"-ss", "${TimeUnit.MILLISECONDS.toHours(interval)}:${TimeUnit.MILLISECONDS.toMinutes(interval) % 60}:${TimeUnit.MILLISECONDS.toSeconds(interval) % 60}",
-			"-i", video.absolutePath,
-			"-vframes", "1",
-			"-f", "image2pipe",
-			"-vcodec", "mjpeg",
-			"pipe:1"
-		).runPipeCommand(ProcessBuilder.Redirect.DISCARD) {
-			bytes = it.readBytes()
-		}
-		return bytes
-	}
+	fun makeScreenshot(video: File, permille: Long = 110): ByteArray {
+		return FFmpegFrameGrabber(video).use { grabber ->
+			try {
+				grabber.start()
+				grabber.timestamp = (grabber.lengthInTime * permille) / 1000L
+				val frame = grabber.grabImage()
+					?: return@use byteArrayOf()
 
-	/**
-	 * Checks if the `ffmpeg` command-line tool is available in the system's PATH.
-	 *
-	 * @return `true` if `ffmpeg` is available, `false` otherwise.
-	 */
-	fun isFfmpegAvailable(): Boolean {
-		return try {
-			val process = processFactory(listOf("ffmpeg", "-version")) {
-				redirectOutput(ProcessBuilder.Redirect.DISCARD)
-					.redirectError(ProcessBuilder.Redirect.DISCARD)
+				val bufferedImage = converter.convert(frame)
+				ByteArrayOutputStream().use { outputStream ->
+					ImageIO.write(bufferedImage, "jpg", outputStream)
+					outputStream.toByteArray()
+				}
+			} catch (e: Exception) {
+				e.printStackTrace()
+				byteArrayOf()
 			}
-			process.waitFor() == 0
-		} catch (e: IOException) {
-			false
 		}
-	}
-
-	/**
-	 * Checks if the `ffprobe` command-line tool is available in the system's PATH.
-	 *
-	 * @return `true` if `ffprobe` is available, `false` otherwise.
-	 */
-	fun isFfprobeAvailable(): Boolean {
-		return try {
-			val process = processFactory(listOf("ffprobe", "-version")) {
-				redirectOutput(ProcessBuilder.Redirect.DISCARD)
-					.redirectError(ProcessBuilder.Redirect.DISCARD)
-			}
-			process.waitFor() == 0
-		} catch (e: IOException) {
-			false
-		}
-	}
-
-	private fun Array<String>.executeCommand(workingDir: File): String? {
-		return try {
-			val proc = processFactory(toList()) {
-				directory(workingDir)
-					.redirectOutput(ProcessBuilder.Redirect.PIPE)
-					.redirectError(ProcessBuilder.Redirect.PIPE)
-			}
-			proc.waitFor(5, TimeUnit.SECONDS)
-			proc.inputStream.bufferedReader().readText()
-		} catch (e: IOException) {
-			e.printStackTrace()
-			null
-		}
-	}
-
-	private fun Array<String>.runPipeCommand(errorRedirect: ProcessBuilder.Redirect = ProcessBuilder.Redirect.INHERIT, callback: (InputStream) -> Unit) {
-		val process = processFactory(toList()) {
-			redirectError(errorRedirect)
-		}
-		process.inputStream.use(callback)
-		process.waitFor()
 	}
 }

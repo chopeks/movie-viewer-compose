@@ -27,8 +27,6 @@ actual fun ColumnScope.ExternalAppsContainer(screen: Screen) {
 		is UiState.Error -> Text("Error: ${current.message}")
 		is UiState.Success -> {
 			SettingsHeaderText(stringResource(Res.string.label_external_apps))
-			SettingStateTestButton("ffmpeg", stringResource(Res.string.button_test), current.data.ffmpegStatus, onClick = { screenModel.ffmpegTest() })
-			SettingStateTestButton("ffprobe", stringResource(Res.string.button_test), current.data.ffprobeStatus, onClick = { screenModel.ffprobeTest() })
 			SettingStateTestButton("fpcalc", stringResource(Res.string.button_test), current.data.fpcalcStatus, onClick = { screenModel.ffcalcTest() })
 		}
 	}
