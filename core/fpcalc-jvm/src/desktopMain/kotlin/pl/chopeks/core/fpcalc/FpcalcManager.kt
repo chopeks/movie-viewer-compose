@@ -26,6 +26,8 @@ class FpcalcManager(
 	 */
 	@OptIn(ExperimentalUnsignedTypes::class)
 	fun getFingerprint(video: File, start: Int? = null, duration: Int? = null): UIntArray? {
+		val audioByteArray = ffmpegManager.getFingerprintStream(video, start, duration)
+
 		val fpcalcCmd = listOf(
 			"fpcalc",
 			"-format", "s16le",
@@ -35,17 +37,14 @@ class FpcalcManager(
 			"-"
 		)
 
-		val ffmpeg = ffmpegManager.getFingerprintStream(video, start, duration)
+		val fpcalc = ProcessBuilder(fpcalcCmd)
+			.redirectError(ProcessBuilder.Redirect.DISCARD)
+			.start()
 
-		val fpcalc = processFactory(fpcalcCmd) {
-			redirectError(ProcessBuilder.Redirect.DISCARD)
-		}
-
-		ffmpeg.inputStream.pipe(fpcalc.outputStream)
+		fpcalc.outputStream.use { it.write(audioByteArray) }
 
 		val output = fpcalc.inputStream.bufferedReader().use { it.readText() }.trim()
 
-		ffmpeg.destroy()
 		fpcalc.destroy()
 
 		if (output.isBlank()) {
@@ -55,22 +54,31 @@ class FpcalcManager(
 			return UIntArray(0)
 		}
 
-		val fingerprintLine = output
-			.lineSequence()
-			.firstOrNull { it.startsWith("FINGERPRINT=") }
+		val result = parseFingerprint(output)
 
-		if (fingerprintLine == null) {
-			val duration = ffmpegManager.getAudioDuration(video)
-				?: return null
-			println("failed audio duration $duration, from file: ${video.absolutePath}")
+		if (result != null && result.isNotEmpty())
+			return result
+
+		val audioDuration = ffmpegManager.getAudioDuration(video)
+			?: return null
+		println("${if (output.isBlank()) "empty output" else "failed"} - audio duration $audioDuration, file: ${video.absolutePath}")
+		return UIntArray(0)
+	}
+
+	@OptIn(ExperimentalUnsignedTypes::class)
+	internal fun parseFingerprint(output: String): UIntArray? {
+		val line = output.lineSequence().firstOrNull { it.startsWith("FINGERPRINT=") }
+			?: return null
+		val parts = line.removePrefix("FINGERPRINT=").split(",")
+		if (parts.isEmpty() || parts[0].isBlank())
 			return UIntArray(0)
-		}
 
-		val fingerprint = fingerprintLine.removePrefix("FINGERPRINT=").split(",")
-		return UIntArray(fingerprint.size) {
-			fingerprint[it].toUInt()
+		return UIntArray(parts.size) {
+			parts[it].toUInt()
 		}
 	}
+
+
 	/**
 	 * Checks if the `fpcalc` command-line tool is available in the system's PATH.
 	 *

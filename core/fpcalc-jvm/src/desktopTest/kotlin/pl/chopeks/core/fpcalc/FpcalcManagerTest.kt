@@ -9,14 +9,12 @@ import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException
 
+@OptIn(ExperimentalUnsignedTypes::class)
 class FpcalcManagerTest : FunSpec({
 	val process = mockk<Process>(relaxed = true)
 
-	val processFfmpeg = mockk<Process>(relaxed = true)
-	every { processFfmpeg.inputStream } returns ByteArrayInputStream(byteArrayOf())
-
 	val ffmpegManager = mockk<FfmpegManager>()
-	every { ffmpegManager.getFingerprintStream(any(), any(), any()) } returns processFfmpeg
+	every { ffmpegManager.getFingerprintStream(any(), any(), any()) } returns byteArrayOf()
 	every { ffmpegManager.getAudioDuration(any()) } returns 123.5
 
 	val fpcalcManager = FpcalcManager(ffmpegManager, processFactory = { _, _ -> process })
@@ -36,13 +34,8 @@ class FpcalcManagerTest : FunSpec({
 		fpcalcManager.isFpcalcAvailable() shouldBe false
 	}
 
-	test("getFingerprint returns correct fingerprint") {
-		val expectedOutput = "FINGERPRINT=1,2,3,4,5,42"
-
-		every { process.inputStream } returns ByteArrayInputStream(expectedOutput.toByteArray())
-		every { process.waitFor(any(), any()) } returns true
-
-		fpcalcManager.getFingerprint(File("dummy.mp4")) shouldBe
+	test("parseFingerprint returns correct fingerprint") {
+		fpcalcManager.parseFingerprint("FINGERPRINT=1,2,3,4,5,42") shouldBe
 			uintArrayOf(1u, 2u, 3u, 4u, 5u, 42u)
 	}
 
