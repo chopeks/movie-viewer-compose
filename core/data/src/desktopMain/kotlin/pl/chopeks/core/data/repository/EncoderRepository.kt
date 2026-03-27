@@ -119,10 +119,14 @@ class EncoderRepository(
 		val duration = ffmpegManager.getVideoDuration(file)
 		val expectedDuration = ffmpegManager.getVideoDuration(targetFile)
 		val durationCheck = duration == expectedDuration
-
+		if (!durationCheck) {
+			println("durationCheck failed for file ${file.name}")
+		}
 		val compareResult = videoComparator.compareVideos(file, targetFile)
 		val compareCheck = compareResult.ssim > 0.9 && compareResult.psnr > 20.0
-
+		if (!compareCheck) {
+			println("compareCheck failed for file ${file.name} -> $compareResult")
+		}
 		return durationCheck && compareCheck
 	}
 
