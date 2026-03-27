@@ -1,7 +1,7 @@
 package pl.chopeks.core.ffmpeg
 
 import pl.chopeks.core.ffmpeg.utils.ffmpeg
-import pl.chopeks.core.ffmpeg.utils.forEachLineNonBlocking
+import pl.chopeks.core.ffmpeg.utils.linesFlow
 import pl.chopeks.core.ffmpeg.utils.runCancellable
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
@@ -31,18 +31,24 @@ class FfmpegManager(
 	 * @return The started `Process`.
 	 */
 	fun getFingerprintStream(video: File, start: Int? = null, duration: Int? = null): Process {
-		val cmd = ffmpeg()
-			.seek(start?.let { it * 1000L })
-			.input(video)
-			.duration(duration?.let { it * 1000L })
-			.disableVideoStream()
-			.setAudioChannels(1)
-			.setAudioSampling(16000)
-			.setDefaultAudioFormat()
-			.negativeMapping()
-			.build()
+		val ffmpegCmd = mutableListOf("ffmpeg")
+		if (start != null)
+			ffmpegCmd += listOf("-ss", (start / 1000.0).toString())
 
-		return processFactory(cmd) {
+		ffmpegCmd += listOf("-i", video.absolutePath)
+
+		if (duration != null)
+			ffmpegCmd += listOf("-t", (duration / 1000.0).toString())
+
+		ffmpegCmd += listOf(
+			"-vn",
+			"-ac", "1",
+			"-ar", "16000",
+			"-f", "s16le",
+			"-"
+		)
+
+		return processFactory(ffmpegCmd) {
 			redirectError(ProcessBuilder.Redirect.DISCARD)
 		}
 	}
@@ -286,7 +292,7 @@ class FfmpegManager(
 		processFactory(cmd) {
 			redirectError(ProcessBuilder.Redirect.DISCARD)
 		}.runCancellable {
-			inputStream.bufferedReader().forEachLineNonBlocking { line ->
+			inputStream.bufferedReader().linesFlow().collect { line ->
 				if (line.startsWith("out_time_us=")) {
 					val currentTimeUs = line.substringAfter("=").toLongOrNull() ?: 0L
 					if (totalDurationUs > 0) {
