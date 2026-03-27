@@ -7,6 +7,7 @@
     <string name="drawer_button_videos">Videos</string>
     <string name="drawer_shortcut_videos">[L.Alt+3]</string>
     <string name="drawer_button_duplicates">Duplicates</string>
+    <string name="drawer_button_encoder">Encoder</string>
     <string name="drawer_shortcut_duplicates">[L.Alt+4]</string>
     <string name="drawer_button_settings">Settings</string>
     <string name="drawer_button_logs">Logs</string>
@@ -16,6 +17,7 @@
     <string name="screen_duplicates">Duplicates</string>
     <string name="screen_logs">Logs</string>
     <string name="screen_settings">Settings</string>
+    <string name="screen_encoder">HEVC Encoder</string>
 
     <string name="button_desc_open_drawer">Open Drawer</string>
     <string name="button_desc_search">Search</string>
@@ -49,6 +51,8 @@
     <string name="label_external_apps">External apps</string>
     <string name="label_settings">Settings</string>
     <string name="label_browser">Browser path</string>
+    <string name="label_encoder_source">Encoder source dir</string>
+    <string name="label_encoder_sink">Encoder sink dir</string>
     <string name="label_player">Video player path</string>
     <string name="label_path">Path, paste full path</string>
     <string name="label_video_pager">Page %1$d of %2$d</string>

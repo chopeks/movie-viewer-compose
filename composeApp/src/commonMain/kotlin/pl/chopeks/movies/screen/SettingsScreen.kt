@@ -53,10 +53,14 @@ class SettingsScreen : Screen {
 				if (settings != null) {
 					var browser by remember { mutableStateOf(settings!!.browser) }
 					var moviePlayer by remember { mutableStateOf(settings!!.moviePlayer) }
+					var encoderSource by remember { mutableStateOf(settings!!.encoderSource) }
+					var encoderSink by remember { mutableStateOf(settings!!.encoderSink) }
 					TextField(browser, { browser = it }, label = { Text(stringResource(Res.string.label_browser)) })
 					TextField(moviePlayer, { moviePlayer = it }, label = { Text(stringResource(Res.string.label_player)) })
+					TextField(encoderSource, { encoderSource = it }, label = { Text(stringResource(Res.string.label_encoder_source)) })
+					TextField(encoderSink, { encoderSink = it }, label = { Text(stringResource(Res.string.label_encoder_sink)) })
 					Button({
-						screenModel.saveSettings(browser, moviePlayer)
+						screenModel.saveSettings(browser, moviePlayer, encoderSource, encoderSink)
 					}) { Text(stringResource(Res.string.button_save)) }
 				}
 

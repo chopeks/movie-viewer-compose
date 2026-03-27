@@ -82,6 +82,8 @@ class FfmpegManager(
 	 */
 
 	fun getVideoDuration(video: File): Long = try {
+		if (!video.exists())
+			return 0L
 		val ffmpegCmd = listOf(
 			"ffprobe",
 			"-v", "error",
@@ -97,7 +99,6 @@ class FfmpegManager(
 		TimeUnit.SECONDS.toMillis(duration.toLong()) + ((duration - duration.toLong()) * 1000).toLong()
 			.let { it - (it % 1000) }
 	} catch (e: Throwable) {
-		e.printStackTrace()
 		0
 	}
 
@@ -200,28 +201,6 @@ class FfmpegManager(
 		}
 	}
 
-//	fun findBestHevcEncoder(): String {
-//		val preferred = listOf(
-//			"hevc_amf",   // AMD Hardware
-//			"hevc_qsv",    // Intel Hardware
-//			"hevc_nvenc", // Nvidia Hardware
-//			"libx265"
-//		)
-//		for (name in preferred) {
-//			try {
-//				val codec = avcodec_find_encoder_by_name(name)
-//				if (codec != null && !codec.isNull) {
-//					println("Found encoder: $name")
-////					return name
-//				}
-//			} catch (e: Exception) {
-//				e.printStackTrace()
-//				continue
-//			}
-//		}
-//		return "libx265"  // Universal Software (Slow but guaranteed)
-//	}
-
 	fun availableEncoders(): List<String> {
 		val process = processFactory(ffmpeg().custom("-encoders").build()) {
 			redirectError(ProcessBuilder.Redirect.DISCARD)
@@ -281,19 +260,15 @@ class FfmpegManager(
 	}
 
 	fun encodeWithProgress(
-		oldFile: File,
+		file: File,
 		newFile: File,
-		vf: String?,
-		onProgress: (Double) -> Unit
+		onProgress: (Float) -> Unit
 	) {
-		val totalDurationUs = getVideoDuration(oldFile) * 1000L // Convert ms to us
-
-		val cmd = mutableListOf("ffmpeg", "-y", "-i", oldFile.absolutePath).apply {
-			if (vf != null) {
-				addAll(listOf("-vf", vf))
-			}
+		val totalDurationUs = getVideoDuration(file) * 1000L
+		val cmd = mutableListOf("ffmpeg", "-y", "-i", file.absolutePath).apply {
 			addAll(
 				listOf(
+					"-vf", "scale=-2:min(720\\,ih)",
 					"-c:v", "hevc_amf",
 					"-rc", "cqp",
 					"-qp_i", "28",
@@ -302,9 +277,9 @@ class FfmpegManager(
 					"-quality", "quality",
 					"-c:a", "libmp3lame",
 					"-b:a", "48k",
-					"-movflags", "+faststart", // Moves metadata to front for web/streaming
-					"-progress", "pipe:1",      // Output progress to stdout
-					"-nostats",                 // Disable the usual stderr stats
+					"-movflags", "+faststart",
+					"-progress", "pipe:1",
+					"-nostats",
 					newFile.absolutePath
 				)
 			)
@@ -314,20 +289,19 @@ class FfmpegManager(
 			.redirectError(ProcessBuilder.Redirect.DISCARD)
 			.start()
 
-		// Read the progress stream in a background thread
 		process.inputStream.bufferedReader().useLines { lines ->
 			lines.forEach { line ->
 				if (line.startsWith("out_time_us=")) {
 					val currentTimeUs = line.substringAfter("=").toLongOrNull() ?: 0L
 					if (totalDurationUs > 0) {
-						val progress = currentTimeUs.toDouble() / totalDurationUs.toDouble()
-						onProgress(progress.coerceIn(0.0, 1.0))
+						val progress = currentTimeUs.toFloat() / totalDurationUs.toFloat()
+						onProgress(progress.coerceIn(0.0f, 1.0f))
 					}
 				}
-				if (line == "progress=end") onProgress(1.0)
+				if (line == "progress=end")
+					onProgress(1.0f)
 			}
 		}
-
 		process.waitFor()
 	}
 }

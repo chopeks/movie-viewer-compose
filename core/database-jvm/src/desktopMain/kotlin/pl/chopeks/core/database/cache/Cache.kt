@@ -42,19 +42,19 @@ object Cache {
   var moviePlayer: String
     get() = settingsPojo?.moviePlayer ?: defaultMoviePlayer
     set(value) {
-      settingsPojo = settingsPojo?.copy(moviePlayer = value) ?: Settings(defaultBrowser, value)
+      settingsPojo = settingsPojo?.copy(moviePlayer = value) ?: Settings(defaultBrowser, value, "", "")
       saveSettings(settingsPojo!!)
     }
 
   var browser: String
     get() = settingsPojo?.browser ?: defaultBrowser
     set(value) {
-      settingsPojo = settingsPojo?.copy(browser = value) ?: Settings(value, defaultMoviePlayer)
+      settingsPojo = settingsPojo?.copy(browser = value) ?: Settings(value, defaultMoviePlayer, "", "")
       saveSettings(settingsPojo!!)
     }
 
   var settings: Settings
-    get() = settingsPojo ?: Settings(defaultBrowser, defaultMoviePlayer)
+    get() = settingsPojo ?: Settings(defaultBrowser, defaultMoviePlayer, "", "")
     set(value) {
       settingsPojo = value
       saveSettings(value)

@@ -26,9 +26,9 @@ class SettingsScreenModel(
 		}
 	}
 
-	fun saveSettings(browser: String, moviePlayer: String) {
+	fun saveSettings(browser: String, moviePlayer: String, encoderSource: String, encoderSink: String) {
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
-			repository.setSettings(Settings(browser, moviePlayer))
+			repository.setSettings(Settings(browser, moviePlayer, encoderSource, encoderSink))
 		}
 	}
 

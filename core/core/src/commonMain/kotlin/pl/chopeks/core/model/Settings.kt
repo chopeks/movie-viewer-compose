@@ -4,12 +4,14 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Settings(
-  var browser: String,
-  var moviePlayer: String
+	var browser: String,
+	var moviePlayer: String,
+	var encoderSource: String = "",
+	var encoderSink: String = ""
 )
 
 @Serializable
 data class Path(
-  val path: String,
-  val count: Int
+	val path: String,
+	val count: Int
 )

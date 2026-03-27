@@ -8,6 +8,7 @@ import org.kodein.di.DI
 import org.kodein.di.bindProvider
 import org.kodein.di.instance
 import pl.chopeks.core.data.repository.*
+import pl.chopeks.core.data.service.IVideoEncodingService
 
 actual fun bestConcurrencyDispatcher(): CoroutineDispatcher = Dispatchers.Unconfined
 
@@ -27,4 +28,6 @@ val dataModule = DI.Module("data-di") {
 	bindProvider<IDuplicateRepository> {
 		DuplicateRepository(instance<RpcClient>().withService<IDuplicateRepository>())
 	}
+	bindProvider<IEncoderRepository> { instance<RpcClient>().withService<IEncoderRepository>() }
+	bindProvider<IVideoEncodingService> { instance<RpcClient>().withService<IVideoEncodingService>() }
 }

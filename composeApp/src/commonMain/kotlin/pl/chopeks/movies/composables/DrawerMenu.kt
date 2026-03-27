@@ -45,6 +45,12 @@ fun DrawerMenu(scope: CoroutineScope, drawerState: DrawerState) {
 				navigator.replace(DuplicatesScreen())
 			}
 		}
+		DrawerButton(stringResource(Res.string.drawer_button_encoder)) {
+			scope.launch {
+				drawerState.close()
+				navigator.replace(EncoderScreen())
+			}
+		}
 		DrawerButton(stringResource(Res.string.drawer_button_settings)) {
 			scope.launch {
 				drawerState.close()

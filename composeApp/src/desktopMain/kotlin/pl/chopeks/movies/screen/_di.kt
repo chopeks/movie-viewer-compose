@@ -8,5 +8,5 @@ import pl.chopeks.core.data.ITaskManager
 
 val platformScreenModule = DI.Module("platform_screen") {
 	bindProvider { PreloadScreenModel(lazy { instance<Database>() }, lazy { instance<ITaskManager>() }) }
-	bindProvider { SettingsPlatformScreenModel(instance(), instance()) }
+	bindProvider { SettingsPlatformScreenModel(instance(), instance(), instance(), instance()) }
 }

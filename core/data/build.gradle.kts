@@ -16,6 +16,7 @@ kotlin {
 			api(projects.core.databaseJvm)
 			api(libs.kotlinx.rpc.server)
 			api(libs.kotlinx.rpc.ktor.server)
+			api(projects.core.ffmpegJvm)
 		}
 
 		wasmJsMain.dependencies {

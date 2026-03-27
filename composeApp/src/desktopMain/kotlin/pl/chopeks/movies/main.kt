@@ -73,6 +73,7 @@ fun main() = application {
 		import(dataModule)
 		import(taskModule)
 		import(platformScreenModule)
+		bindProvider<CoroutineScope> { BGTasks.scope }
 		bindProvider<IImageConverter> { ImageConverter(instance()) }
 		bindProvider<IVideoPlayer> { VideoPlayer(instance(), instance()) }
 		bindSingleton { KeyEventManager() }

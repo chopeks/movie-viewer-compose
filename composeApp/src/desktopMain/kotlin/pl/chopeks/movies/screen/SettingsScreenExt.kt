@@ -2,6 +2,7 @@ package pl.chopeks.movies.screen
 
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -30,6 +31,11 @@ actual fun ColumnScope.ExternalAppsContainer(screen: Screen) {
 			SettingStateTestButton("ffmpeg", stringResource(Res.string.button_test), current.data.ffmpegStatus, onClick = { screenModel.ffmpegTest() })
 			SettingStateTestButton("ffprobe", stringResource(Res.string.button_test), current.data.ffprobeStatus, onClick = { screenModel.ffprobeTest() })
 			SettingStateTestButton("fpcalc", stringResource(Res.string.button_test), current.data.fpcalcStatus, onClick = { screenModel.ffcalcTest() })
+			TextButton({
+				screenModel.encoderTest()
+			}) {
+				Text("test encoder")
+			}
 		}
 	}
 }
