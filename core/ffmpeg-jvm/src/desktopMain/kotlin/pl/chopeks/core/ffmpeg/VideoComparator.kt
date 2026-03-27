@@ -1,5 +1,9 @@
 package pl.chopeks.core.ffmpeg
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.withContext
 import pl.chopeks.core.model.comparator.VideoCompareResult
 import java.awt.image.BufferedImage
 import java.io.File
@@ -10,23 +14,37 @@ import kotlin.math.sqrt
 class VideoComparator(
 	private val ffmpeg: FfmpegManager
 ) {
-	fun compareVideos(originalFile: File, candidateFile: File, samples: Int = 4): VideoCompareResult {
+	suspend fun compareVideos(
+		originalFile: File,
+		candidateFile: File,
+		samples: Int = 4
+	): VideoCompareResult = withContext(Dispatchers.Default) {
 		val step = (1000 / (samples + 1))
-		val psnrs = mutableListOf<Double>()
-		val ssims = mutableListOf<Double>()
 
-		for (i in 1..samples) {
-			val permille = (i * step).toLong()
-			val img1 = ffmpeg.getFrame(originalFile, permille, 480, 480)
-				?: continue
-			val img2 = ffmpeg.getFrame(candidateFile, permille, 480, 480)
-				?: continue
-			psnrs.add(calculatePSNR(img1, img2))
-			ssims.add(calculateSSIM(img1, img2))
-		}
-		return VideoCompareResult(
-			ssim = ssims.average(),
-			psnr = psnrs.average()
+		val results = (1..samples).map { i ->
+			async {
+				val permille = (i * step).toLong()
+
+				val img1 = ffmpeg.getFrame(originalFile, permille, 480, 480)
+				val img2 = ffmpeg.getFrame(candidateFile, permille, 480, 480)
+
+				if (img1 == null || img2 == null)
+					return@async null
+
+				val psnr = calculatePSNR(img1, img2)
+				val ssim = calculateSSIM(img1, img2)
+
+				psnr to ssim
+			}
+		}.awaitAll()
+			.filterNotNull()
+
+		if (results.isEmpty())
+			return@withContext VideoCompareResult(0.0, 0.0)
+
+		VideoCompareResult(
+			psnr = results.map { it.first }.average(),
+			ssim = results.map { it.second }.average()
 		)
 	}
 
@@ -37,14 +55,26 @@ class VideoComparator(
 
 		for (y in 0 until h) {
 			for (x in 0 until w) {
-				val r1 = (img1.getRGB(x, y) shr 16) and 0xff
-				val r2 = (img2.getRGB(x, y) shr 16) and 0xff
+				val rgb = img1.getRGB(x, y)
+				val r1 = (rgb shr 16) and 0xff
+				val g1 = (rgb shr 8) and 0xff
+				val b1 = rgb and 0xff
+
+				val rgb2 = img2.getRGB(x, y)
+				val r2 = (rgb2 shr 16) and 0xff
+				val g2 = (rgb2 shr 8) and 0xff
+				val b2 = rgb2 and 0xff
+
 				mse += (r1 - r2).toDouble().pow(2.0)
-				// Note: You can add G and B channels too for better accuracy
+				mse += (g1 - g2).toDouble().pow(2.0)
+				mse += (b1 - b2).toDouble().pow(2.0)
 			}
 		}
-		mse /= (w * h)
-		if (mse == 0.0) return 100.0
+		mse /= (w * h * 3.0)
+
+		if (mse == 0.0)
+			return 100.0
+
 		return 20.0 * log10(255.0 / sqrt(mse))
 	}
 

@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import pl.chopeks.core.data.repository.IEncoderRepository
 import pl.chopeks.core.data.service.IVideoEncodingService
-import pl.chopeks.core.model.EncodedVideo
+import pl.chopeks.core.model.EncodeStatus
 import pl.chopeks.screenmodel.model.UiState
 
 class EncoderScreenModel(
@@ -16,7 +16,7 @@ class EncoderScreenModel(
 	private val encoderRepository: IEncoderRepository
 ): ScreenModel {
 	data class Page(
-		val encoder: List<EncodedVideo> = listOf()
+		val encoder: Map<String, EncodeStatus> = mapOf()
 	)
 
 	val uiState = MutableStateFlow<UiState<Page>>(UiState.Loading)
@@ -26,13 +26,13 @@ class EncoderScreenModel(
 			uiState.emit(
 				UiState.Success(
 					Page(
-						encoder = emptyList()
+						encoder = emptyMap()
 					)
 				)
 			)
 			encoderRepository.observeEncodingStatus().collect {
 				launchWithState { state ->
-					uiState.emit(UiState.Success(state.copy(encoder = it.map { EncodedVideo(it.key, it.value) })))
+					uiState.emit(UiState.Success(state.copy(encoder = it)))
 				}
 			}
 		}

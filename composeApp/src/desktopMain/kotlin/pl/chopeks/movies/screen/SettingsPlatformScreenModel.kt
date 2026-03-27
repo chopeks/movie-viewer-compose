@@ -6,7 +6,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import pl.chopeks.core.data.repository.IEncoderRepository
 import pl.chopeks.core.data.service.IVideoEncodingService
 import pl.chopeks.core.ffmpeg.FfmpegManager
 import pl.chopeks.core.fpcalc.FpcalcManager
@@ -16,7 +15,6 @@ import pl.chopeks.screenmodel.model.UiState
 class SettingsPlatformScreenModel(
 	private val ffmpegManager: FfmpegManager,
 	private val fpcalcManager: FpcalcManager,
-	private val encoderRepository: IEncoderRepository,
 	private val videoEncodingService: IVideoEncodingService
 ) : ScreenModel {
 	data class SettingsPage(
@@ -36,16 +34,10 @@ class SettingsPlatformScreenModel(
 					SettingsPage(
 						ffmpegStatus = ffmpegManager.isFfmpegAvailable(),
 						ffprobeStatus = ffmpegManager.isFfprobeAvailable(),
-						fpcalcStatus = fpcalcManager.isFpcalcAvailable(),
-						encoder = emptyList()
+						fpcalcStatus = fpcalcManager.isFpcalcAvailable()
 					)
 				)
 			)
-			encoderRepository.observeEncodingStatus().collect {
-				launchWithState { state ->
-					uiState.emit(UiState.Success(state.copy(encoder = it.map { EncodedVideo(it.key, it.value) })))
-				}
-			}
 		}
 	}
 
