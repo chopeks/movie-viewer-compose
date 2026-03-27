@@ -7,12 +7,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import pl.chopeks.core.data.repository.IEncoderRepository
-import pl.chopeks.core.data.service.IVideoEncodingService
 import pl.chopeks.core.model.EncodeStatus
 import pl.chopeks.screenmodel.model.UiState
 
 class EncoderScreenModel(
-	private val encodingService: IVideoEncodingService,
 	private val encoderRepository: IEncoderRepository
 ): ScreenModel {
 	data class Page(
@@ -36,10 +34,6 @@ class EncoderScreenModel(
 				}
 			}
 		}
-	}
-
-	fun startEncoder() = screenModelScope.launch {
-		encodingService.startQueue()
 	}
 
 	private fun launchWithState(block: suspend CoroutineScope.(Page) -> Unit): Job {

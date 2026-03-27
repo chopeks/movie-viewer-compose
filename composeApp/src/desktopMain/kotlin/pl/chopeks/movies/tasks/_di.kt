@@ -15,7 +15,7 @@ val taskModule = DI.Module("taskModule") {
 	import(fpcalcModule)
 	import(ffmpegModule)
 
-	bindSingleton<TaskManager> { TaskManager(instance(), instance()) }
+	bindSingleton<TaskManager> { TaskManager(instance(), instance(), instance()) }
 	bindProvider<ITaskManager> { instance<TaskManager>() }
 
 	bindProvider { CollectFingerprintsUseCase(instance(), instance()) }

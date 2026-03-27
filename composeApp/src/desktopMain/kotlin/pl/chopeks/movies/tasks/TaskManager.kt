@@ -2,11 +2,13 @@ package pl.chopeks.movies.tasks
 
 import kotlinx.coroutines.*
 import pl.chopeks.core.data.ITaskManager
+import pl.chopeks.core.data.service.IVideoEncodingService
 import pl.chopeks.movies.utils.AppLogger
 
 class TaskManager(
 	private val duplicatesSearchTask: DuplicatesSearchTask,
 	private val videoLookupTask: VideoLookupTask,
+	private val encodingService: IVideoEncodingService
 ): ITaskManager {
 	val job = Job()
 	val scope = CoroutineScope(Dispatchers.Main + job)
@@ -19,6 +21,7 @@ class TaskManager(
 			}
 		}
 		startDedupTask()
+		encodingService.startQueue()
 	}
 
 	override suspend fun startDedupTask() {

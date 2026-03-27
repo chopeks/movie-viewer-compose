@@ -53,10 +53,6 @@ class SettingsPlatformScreenModel(
 		uiState.emit(UiState.Success(it.copy(fpcalcStatus = fpcalcManager.isFpcalcAvailable())))
 	}
 
-	fun encoderTest() = launchWithState { state ->
-		videoEncodingService.startQueue()
-	}
-
 	private fun launchWithState(block: suspend CoroutineScope.(SettingsPage) -> Unit): Job {
 		return screenModelScope.launch {
 			val state = uiState.value as? UiState.Success
