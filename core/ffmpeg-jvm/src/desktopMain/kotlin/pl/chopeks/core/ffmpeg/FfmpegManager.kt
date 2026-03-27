@@ -1,6 +1,8 @@
 package pl.chopeks.core.ffmpeg
 
 import pl.chopeks.core.ffmpeg.utils.ffmpeg
+import pl.chopeks.core.ffmpeg.utils.forEachLineNonBlocking
+import pl.chopeks.core.ffmpeg.utils.runCancellable
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -259,11 +261,7 @@ class FfmpegManager(
 		return exitCode == 0
 	}
 
-	fun encodeWithProgress(
-		file: File,
-		newFile: File,
-		onProgress: (Float) -> Unit
-	) {
+	suspend fun encodeWithProgress(file: File, newFile: File, onProgress: (Float) -> Unit) {
 		val totalDurationUs = getVideoDuration(file) * 1000L
 		val cmd = mutableListOf("ffmpeg", "-y", "-i", file.absolutePath).apply {
 			addAll(
@@ -285,23 +283,17 @@ class FfmpegManager(
 			)
 		}
 
-		val process = ProcessBuilder(cmd)
-			.redirectError(ProcessBuilder.Redirect.DISCARD)
-			.start()
-
-		process.inputStream.bufferedReader().useLines { lines ->
-			lines.forEach { line ->
+		processFactory(cmd) {
+			redirectError(ProcessBuilder.Redirect.DISCARD)
+		}.runCancellable {
+			inputStream.bufferedReader().forEachLineNonBlocking { line ->
 				if (line.startsWith("out_time_us=")) {
 					val currentTimeUs = line.substringAfter("=").toLongOrNull() ?: 0L
 					if (totalDurationUs > 0) {
-						val progress = currentTimeUs.toFloat() / totalDurationUs.toFloat()
-						onProgress(progress.coerceIn(0.0f, 1.0f))
+						onProgress((currentTimeUs.toFloat() / totalDurationUs).coerceIn(0f, 1f))
 					}
 				}
-				if (line == "progress=end")
-					onProgress(1.0f)
 			}
 		}
-		process.waitFor()
 	}
 }

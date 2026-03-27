@@ -42,8 +42,8 @@ import pl.chopeks.movies.utils.KeyEventManager
 import java.awt.Toolkit
 
 object BGTasks {
-	val job = Job()
-	val scope = CoroutineScope(job)
+	val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+	val serverScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 }
 
 fun getAsyncImageLoader(context: PlatformContext) =
@@ -100,15 +100,21 @@ fun main() = application {
 		getAsyncImageLoader(context)
 	}
 
-	BGTasks.scope.launch(newSingleThreadContext("server-thread")) {
+	BGTasks.serverScope.launch {
 		embeddedServer(Netty, port = 15551, module = { module(di) }).start(wait = true)
 	}
 
 	Window(
 		onCloseRequest = {
 			di.direct.instance<TaskManager>().cancel()
-			BGTasks.job.cancel()
-			BGTasks.scope.cancel()
+			runBlocking {
+				listOf(BGTasks.scope, BGTasks.serverScope).forEach { scope ->
+					scope.cancel()
+					withTimeoutOrNull(500) {
+						scope.coroutineContext.job.join()
+					}
+				}
+			}
 			exitApplication()
 		},
 		state = windowState,

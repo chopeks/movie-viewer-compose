@@ -24,7 +24,7 @@ class VideoEncodingService(
 			return
 		scope.launch {
 			try {
-				while (scope.isActive) {
+				while (isActive) {
 					val files = repository.getFilesToEncode()
 					files.forEach { file ->
 						val outputFile = File(repository.getSink(), "${file.nameWithoutExtension}.HEVC.mp4")
