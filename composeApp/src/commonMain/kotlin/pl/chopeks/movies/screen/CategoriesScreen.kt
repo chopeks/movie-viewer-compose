@@ -24,6 +24,7 @@ import org.kodein.di.direct
 import org.kodein.di.instance
 import pl.chopeks.core.model.Category
 import pl.chopeks.movies.composables.FilterBar
+import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.buttons.GreenTextButton
 import pl.chopeks.movies.composables.cards.CategoryCard
@@ -32,6 +33,7 @@ import pl.chopeks.movies.composables.state.rememberAlertDialogState
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
 import pl.chopeks.screenmodel.CategoriesScreenModel
+import pl.chopeks.screenmodel.CategoriesScreenModel.Intent
 
 class CategoriesScreen : Screen {
 	@Composable
@@ -44,6 +46,8 @@ class CategoriesScreen : Screen {
 		val navigator = LocalNavigator.current
 		keyEventManager.setListener { KeyEventNavigation.onKeyEvent(it, navigator) }
 
+		val state by screenModel.state.collectAsState()
+
 		ScreenSkeleton(
 			title = stringResource(Res.string.screen_categories),
 			leftActions = {
@@ -52,32 +56,35 @@ class CategoriesScreen : Screen {
 				})
 			},
 			rightActions = {
-				val filter = screenModel.searchFilter.collectAsState()
 				FilterBar(
-					query = filter.value,
-					onQueryChange = { screenModel.updateSearchFilter(it) },
+					query = state.searchFilter,
+					onQueryChange = { screenModel.handleIntent(Intent.UpdateSearch(it)) },
 				)
 			}
 		) { scope ->
-			val categories by screenModel.filteredCategories.collectAsState()
-			LazyVerticalGrid(
-				columns = GridCells.Fixed(6),
-				modifier = Modifier.fillMaxSize(),
-				horizontalArrangement = Arrangement.spacedBy(2.dp),
-				verticalArrangement = Arrangement.spacedBy(2.dp)
-			) {
-				items(items = categories, key = Category::id) { category ->
-					CategoryCard(
-						category = category,
-						onClick = {
-							scope.launch {
-								navigator?.replace(VideosScreen(category = it))
+			if (state.isLoading) {
+				ProgressIndicator()
+			} else {
+				val categories = state.categories
+				LazyVerticalGrid(
+					columns = GridCells.Fixed(6),
+					modifier = Modifier.fillMaxSize(),
+					horizontalArrangement = Arrangement.spacedBy(2.dp),
+					verticalArrangement = Arrangement.spacedBy(2.dp)
+				) {
+					items(items = categories, key = Category::id) { category ->
+						CategoryCard(
+							category = category,
+							onClick = {
+								scope.launch {
+									navigator?.replace(VideosScreen(category = it))
+								}
+							},
+							onEditClick = {
+								editDialog.value = it
 							}
-						},
-						onEditClick = {
-							editDialog.value = it
-						}
-					)
+						)
+					}
 				}
 			}
 		}
@@ -86,7 +93,7 @@ class CategoriesScreen : Screen {
 		EditCategoryDialog(editDialog, screenModel)
 
 		LaunchedEffect(Unit) {
-			screenModel.getCategories()
+			screenModel.handleIntent(Intent.LoadCategories)
 		}
 	}
 
@@ -114,7 +121,7 @@ class CategoriesScreen : Screen {
 				}, confirmButton = {
 					Button(onClick = {
 						if (name.isNotBlank()) {
-							screenModel.add(name, url)
+							screenModel.handleIntent(Intent.AddCategory(name, url))
 							scope.launch { dialogState.hide() }
 						}
 					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
@@ -145,7 +152,7 @@ class CategoriesScreen : Screen {
 			}, confirmButton = {
 				Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
 					Button(onClick = {
-						screenModel.remove(category.value!!)
+						screenModel.handleIntent(Intent.RemoveCategory(category.value!!))
 						category.value = null
 					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
 						Text(stringResource(Res.string.button_remove), color = Color.Red)
@@ -157,7 +164,7 @@ class CategoriesScreen : Screen {
 
 					Button(onClick = {
 						if (name.isNotBlank()) {
-							screenModel.edit(category.value!!, name, url)
+							screenModel.handleIntent(Intent.EditCategory(category.value!!, name, url))
 							category.value = null
 						}
 					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
