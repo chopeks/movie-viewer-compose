@@ -24,6 +24,7 @@ import org.kodein.di.direct
 import org.kodein.di.instance
 import pl.chopeks.core.model.Actor
 import pl.chopeks.movies.composables.FilterBar
+import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.buttons.GreenTextButton
 import pl.chopeks.movies.composables.cards.ActorCard
@@ -32,6 +33,7 @@ import pl.chopeks.movies.composables.state.rememberAlertDialogState
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
 import pl.chopeks.screenmodel.ActorsScreenModel
+import pl.chopeks.screenmodel.ActorsScreenModel.Intent
 
 class ActorsScreen : Screen {
 	@Composable
@@ -44,6 +46,8 @@ class ActorsScreen : Screen {
 		val navigator = LocalNavigator.current
 		keyEventManager.setListener { KeyEventNavigation.onKeyEvent(it, navigator) }
 
+		val state by screenModel.state.collectAsState()
+
 		ScreenSkeleton(
 			title = stringResource(Res.string.screen_actors),
 			leftActions = {
@@ -52,36 +56,38 @@ class ActorsScreen : Screen {
 				})
 			},
 			rightActions = {
-				val filter = screenModel.searchFilter.collectAsState()
 				FilterBar(
-					query = filter.value,
-					onQueryChange = { screenModel.updateSearchFilter(it) }
+					query = state.searchFilter,
+					onQueryChange = { screenModel.handleIntent(Intent.UpdateSearch(it)) }
 				)
 			}
 		) { scope ->
-			val actors by screenModel.filteredActors.collectAsState()
-
-			BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-				val sidePadding = maxWidth * 0.08f
-				LazyVerticalGrid(
-					columns = GridCells.Fixed(8),
-					modifier = Modifier.fillMaxSize(),
-					contentPadding = PaddingValues(sidePadding, 0.dp),
-					horizontalArrangement = Arrangement.spacedBy(2.dp),
-					verticalArrangement = Arrangement.spacedBy(2.dp)
-				) {
-					items(items = actors, key = Actor::id) { actor ->
-						ActorCard(
-							actor = actor,
-							onClick = {
-								scope.launch {
-									navigator?.replace(VideosScreen(actor = it))
+			if (state.isLoading) {
+				ProgressIndicator()
+			} else {
+				val actors = state.actors
+				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+					val sidePadding = maxWidth * 0.08f
+					LazyVerticalGrid(
+						columns = GridCells.Fixed(8),
+						modifier = Modifier.fillMaxSize(),
+						contentPadding = PaddingValues(sidePadding, 0.dp),
+						horizontalArrangement = Arrangement.spacedBy(2.dp),
+						verticalArrangement = Arrangement.spacedBy(2.dp)
+					) {
+						items(items = actors, key = Actor::id) { actor ->
+							ActorCard(
+								actor = actor,
+								onClick = {
+									scope.launch {
+										navigator?.replace(VideosScreen(actor = it))
+									}
+								},
+								onEditClick = {
+									editDialog.value = it
 								}
-							},
-							onEditClick = {
-								editDialog.value = it
-							}
-						)
+							)
+						}
 					}
 				}
 			}
@@ -91,7 +97,7 @@ class ActorsScreen : Screen {
 		EditActorDialog(editDialog, screenModel)
 
 		LaunchedEffect(Unit) {
-			screenModel.getActors()
+			screenModel.handleIntent(Intent.LoadActors)
 		}
 	}
 
@@ -120,7 +126,7 @@ class ActorsScreen : Screen {
 				confirmButton = {
 					Button(onClick = {
 						if (name.isNotBlank()) {
-							screenModel.add(name, url)
+							screenModel.handleIntent(Intent.AddActor(name, url))
 							scope.launch { dialogState.hide() }
 						}
 					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
@@ -160,13 +166,13 @@ class ActorsScreen : Screen {
 				confirmButton = {
 					Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
 						Button(onClick = {
-							screenModel.dedup(actor.value!!)
+							screenModel.handleIntent(Intent.Deduplicate(actor.value!!))
 							actor.value = null
 						}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
 							Text(stringResource(Res.string.button_deduplicate), color = Color.LightGray)
 						}
 						Button(onClick = {
-							screenModel.remove(actor.value!!)
+							screenModel.handleIntent(Intent.RemoveActor(actor.value!!))
 							actor.value = null
 						}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
 							Text(stringResource(Res.string.button_remove), color = Color.Red)
@@ -178,7 +184,7 @@ class ActorsScreen : Screen {
 
 						Button(onClick = {
 							if (name.isNotBlank()) {
-								screenModel.edit(actor.value!!, name, url)
+								screenModel.handleIntent(Intent.EditActor(actor.value!!, name, url))
 								actor.value = null
 							}
 						}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
