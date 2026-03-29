@@ -2,6 +2,7 @@ package pl.chopeks.screenmodel
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import pl.chopeks.core.data.IImageConverter
@@ -15,7 +16,8 @@ import kotlin.io.encoding.Base64
 class ActorsScreenModel(
 	private val repository: IActorRepository,
 	private val duplicatesRepository: IDuplicateRepository,
-	private val imageConverter: IImageConverter
+	private val imageConverter: IImageConverter,
+	dispatcher: CoroutineDispatcher = bestConcurrencyDispatcher()
 ) : ScreenModel {
 	sealed class Intent {
 		object LoadActors : Intent()
@@ -32,7 +34,6 @@ class ActorsScreenModel(
 		val searchFilter: String = ""
 	)
 
-
 	private val _rawActors = MutableStateFlow<List<Actor>>(emptyList())
 	private val _searchQuery = MutableStateFlow("")
 	private val _isLoading = MutableStateFlow(false)
@@ -42,7 +43,7 @@ class ActorsScreenModel(
 			actors.runIf(query.isNotBlank()) {
 				filter { it.name.contains(query, ignoreCase = true) }
 			}
-		}.flowOn(bestConcurrencyDispatcher())
+		}.flowOn(dispatcher)
 
 	val state: StateFlow<UiState> = combine(
 		filteredActors,

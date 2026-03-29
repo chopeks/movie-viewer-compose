@@ -14,6 +14,7 @@ exposed = "0.58.0"
 kotlinx-rpc = "0.10.2"
 mockk = "1.13.12"
 kotest = "6.1.7"
+turbine = "1.2.1"
 materialIcons = "1.7.3"
 imgscalr = "4.2"
 
@@ -28,6 +29,7 @@ kotest-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "k
 kotest-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
 kotest-jvm-runner = { module = "io.kotest:kotest-runner-junit6", version.ref = "kotest" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine"}
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 androidx-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
@@ -100,8 +102,8 @@ bl-kotest-plugin = { group = "io.kotest", name = "io.kotest.gradle.plugin", vers
 bl-ksp-plugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 
 [bundles]
-kotest = ["kotest-engine", "kotest-core", "kotest-property", "kotlinx-coroutines-test"]
-kotest-desktop = ["kotest-engine", "kotest-core", "kotest-property", "kotest-jvm-runner", "mockk", "kotlinx-coroutines-test"]
+kotest = ["kotest-engine", "kotest-core", "kotest-property", "kotlinx-coroutines-test", "turbine"]
+kotest-desktop = ["kotest-engine", "kotest-core", "kotest-property", "kotest-jvm-runner", "mockk", "kotlinx-coroutines-test", "turbine"]
 jetbrains-compose-common = [
     "jetbrains-compose-runtime",
     "jetbrains-compose-foundation",

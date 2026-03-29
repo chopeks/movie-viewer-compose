@@ -2,6 +2,7 @@ package pl.chopeks.screenmodel
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import pl.chopeks.core.data.IImageConverter
@@ -13,7 +14,8 @@ import kotlin.io.encoding.Base64
 
 class CategoriesScreenModel(
 	private val repository: ICategoryRepository,
-	private val imageConverter: IImageConverter
+	private val imageConverter: IImageConverter,
+	private val dispatcher: CoroutineDispatcher = bestConcurrencyDispatcher()
 ) : ScreenModel {
 	sealed class Intent {
 		object LoadCategories : Intent()
@@ -38,7 +40,7 @@ class CategoriesScreenModel(
 			categories.runIf(query.isNotBlank()) {
 				filter { it.name.contains(query, ignoreCase = true) }
 			}
-		}.flowOn(bestConcurrencyDispatcher())
+		}.flowOn(dispatcher)
 
 	val state: StateFlow<UiState> = combine(
 		filteredCategories,
