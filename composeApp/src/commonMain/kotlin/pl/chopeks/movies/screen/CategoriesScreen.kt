@@ -52,8 +52,9 @@ class CategoriesScreen : Screen {
 				})
 			},
 			rightActions = {
+				val filter = screenModel.searchFilter.collectAsState()
 				FilterBar(
-					query = screenModel.searchFilter.value,
+					query = filter.value,
 					onQueryChange = { screenModel.updateSearchFilter(it) },
 				)
 			}

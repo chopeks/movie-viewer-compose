@@ -1,5 +1,7 @@
 package pl.chopeks.core.ffmpeg
 
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import pl.chopeks.core.ffmpeg.utils.ffmpeg
 import pl.chopeks.core.ffmpeg.utils.linesFlow
 import pl.chopeks.core.ffmpeg.utils.runCancellable
@@ -88,7 +90,6 @@ class FfmpegManager(
 	 * @param video The video file.
 	 * @return The duration in milliseconds.
 	 */
-
 	fun getVideoDuration(video: File): Long = try {
 		if (!video.exists())
 			return 0L
@@ -292,14 +293,14 @@ class FfmpegManager(
 		processFactory(cmd) {
 			redirectError(ProcessBuilder.Redirect.DISCARD)
 		}.runCancellable {
-			inputStream.bufferedReader().linesFlow().collect { line ->
-				if (line.startsWith("out_time_us=")) {
-					val currentTimeUs = line.substringAfter("=").toLongOrNull() ?: 0L
+			inputStream.bufferedReader().linesFlow()
+				.filter { it.startsWith("out_time_us=") }
+				.map { it.substringAfter("=").toLongOrNull() ?: 0L }
+				.collect { currentTimeUs ->
 					if (totalDurationUs > 0) {
 						onProgress((currentTimeUs.toFloat() / totalDurationUs).coerceIn(0f, 1f))
 					}
 				}
-			}
 		}
 	}
 }
