@@ -6,21 +6,18 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.kodein.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
-import coil3.compose.AsyncImage
-import coil3.compose.LocalPlatformContext
-import coil3.request.ImageRequest
-import coil3.request.crossfade
-import coil3.size.Size
 import movieviewer.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.kodein.di.compose.rememberInstance
 import pl.chopeks.core.model.Actor
+import pl.chopeks.movies.composables.DragDropImageContainer
 import pl.chopeks.movies.composables.FilterBar
 import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.ScreenSkeleton
@@ -97,8 +94,8 @@ class ActorsScreen : Screen {
 		AddActorDialog(
 			isVisible = addDialogState.isVisible,
 			onDismiss = { addDialogState.hide() },
-			onConfirm = { name, url ->
-				screenModel.handleIntent(Intent.AddActor(name, url))
+			onConfirm = { name, url, bytes ->
+				screenModel.handleIntent(Intent.AddActor(name, url, bytes))
 				addDialogState.hide()
 			}
 		)
@@ -106,8 +103,8 @@ class ActorsScreen : Screen {
 		EditActorDialog(
 			actor = editingActor,
 			onDismiss = { editingActor = null },
-			onConfirm = { name, url ->
-				editingActor?.let { screenModel.handleIntent(Intent.EditActor(it, name, url)) }
+			onConfirm = { name, url, bytes ->
+				editingActor?.let { screenModel.handleIntent(Intent.EditActor(it, name, url, bytes)) }
 				editingActor = null
 			},
 			onRemove = {
@@ -121,22 +118,26 @@ class ActorsScreen : Screen {
 		)
 	}
 
+	@OptIn(ExperimentalComposeUiApi::class)
 	@Composable
 	private fun AddActorDialog(
 		isVisible: Boolean,
 		onDismiss: () -> Unit,
-		onConfirm: (String, String) -> Unit
+		onConfirm: (String, String, ByteArray?) -> Unit
 	) {
 		if (isVisible) {
-			val context = LocalPlatformContext.current
 			var name by remember { mutableStateOf("") }
 			var url by remember { mutableStateOf("") }
+			var droppedImageBytes by remember { mutableStateOf<ByteArray?>(null) }
 
 			AlertDialog(
 				onDismissRequest = onDismiss,
 				title = { Text(stringResource(Res.string.button_add_actor)) },
 				text = {
-					Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+					Column(
+						Modifier.fillMaxWidth(),
+						verticalArrangement = Arrangement.spacedBy(8.dp)
+					) {
 						TextField(
 							value = name,
 							onValueChange = { name = it },
@@ -145,26 +146,27 @@ class ActorsScreen : Screen {
 						)
 						TextField(
 							value = url,
-							onValueChange = { url = it },
+							onValueChange = { url = it; droppedImageBytes = null },
 							label = { Text(stringResource(Res.string.label_image_url)) },
 							modifier = Modifier.fillMaxWidth()
 						)
-						if (url.isNotBlank()) {
-							AsyncImage(
-								model = ImageRequest.Builder(context)
-									.data(url)
-									.size(Size.ORIGINAL)
-									.crossfade(true)
-									.build(),
-								contentDescription = null,
-								modifier = Modifier.fillMaxWidth().aspectRatio(1.77f)
-							)
-						}
+
+						DragDropImageContainer(
+							ratio = 0.7f,
+							url = url,
+							imageBytes = null,
+							droppedImageBytes = droppedImageBytes,
+							onDroppedImageBytesChanged = { droppedImageBytes = it; url = "" }
+						)
 					}
 				},
 				confirmButton = {
 					Button(
-						onClick = { if (name.isNotBlank()) onConfirm(name, url) },
+						onClick = {
+							if (name.isNotBlank()) {
+								onConfirm(name, url, droppedImageBytes)
+							}
+						},
 						colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
 					) {
 						Text(stringResource(Res.string.button_add), color = Color.White)
@@ -182,26 +184,30 @@ class ActorsScreen : Screen {
 		}
 	}
 
+	@OptIn(ExperimentalComposeUiApi::class)
 	@Composable
 	private fun EditActorDialog(
 		actor: Actor?,
 		onDismiss: () -> Unit,
-		onConfirm: (String, String) -> Unit,
+		onConfirm: (String, String, ByteArray?) -> Unit,
 		onRemove: () -> Unit,
 		onDeduplicate: () -> Unit
 	) {
 		if (actor != null) {
-			val context = LocalPlatformContext.current
 			var name by remember { mutableStateOf(actor.name) }
 			var url by remember {
 				mutableStateOf(if ((actor.image ?: "").startsWith("http")) actor.image ?: "" else "")
 			}
+			var droppedImageBytes by remember { mutableStateOf<ByteArray?>(null) }
 
 			AlertDialog(
 				onDismissRequest = onDismiss,
 				title = { Text(stringResource(Res.string.label_edit_actor)) },
 				text = {
-					Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+					Column(
+						Modifier.fillMaxWidth(),
+						verticalArrangement = Arrangement.spacedBy(8.dp)
+					) {
 						TextField(
 							value = name,
 							onValueChange = { name = it },
@@ -210,21 +216,17 @@ class ActorsScreen : Screen {
 						)
 						TextField(
 							value = url,
-							onValueChange = { url = it },
+							onValueChange = { url = it; droppedImageBytes = null },
 							label = { Text(stringResource(Res.string.label_image_url)) },
 							modifier = Modifier.fillMaxWidth()
 						)
-						if (url.isNotBlank()) {
-							AsyncImage(
-								model = ImageRequest.Builder(context)
-									.data(url)
-									.size(Size.ORIGINAL)
-									.crossfade(true)
-									.build(),
-								contentDescription = null,
-								modifier = Modifier.fillMaxWidth().aspectRatio(1.77f)
-							)
-						}
+						DragDropImageContainer(
+							ratio = 0.7f,
+							url = url,
+							imageBytes = actor.imageBytes,
+							droppedImageBytes = droppedImageBytes,
+							onDroppedImageBytesChanged = { droppedImageBytes = it; url = "" }
+						)
 					}
 				},
 				confirmButton = {
@@ -248,7 +250,11 @@ class ActorsScreen : Screen {
 							Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
 						}
 						Button(
-							onClick = { if (name.isNotBlank()) onConfirm(name, url) },
+							onClick = {
+								if (name.isNotBlank()) {
+									onConfirm(name, url, droppedImageBytes)
+								}
+							},
 							colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
 						) {
 							Text(stringResource(Res.string.button_confirm), color = Color.White)

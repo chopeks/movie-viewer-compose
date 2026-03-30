@@ -2,6 +2,7 @@ package pl.chopeks.movies.platform
 
 import pl.chopeks.core.data.IImageConverter
 import pl.chopeks.core.ffmpeg.FfmpegManager
+import pl.chopeks.movies.server.utils.imageBytesToBase64
 import pl.chopeks.movies.server.utils.normalizeImage
 import pl.chopeks.movies.server.utils.urlImageToBase64
 import java.io.ByteArrayOutputStream
@@ -12,9 +13,18 @@ import javax.imageio.ImageIO
 class ImageConverter(
 	private val ffmpegManager: FfmpegManager
 ) : IImageConverter {
-	override fun urlToBase64(url: String, targetWidth: Int, targetHeight: Int): String? {
+	override suspend fun urlToBase64(url: String, targetWidth: Int, targetHeight: Int): String? {
 		return try {
 			url.urlImageToBase64(targetWidth, targetHeight)
+		} catch (e: Throwable) {
+			e.printStackTrace()
+			null
+		}
+	}
+
+	override suspend fun bytesToBase64(bytes: ByteArray, targetWidth: Int, targetHeight: Int): String? {
+		return try {
+			bytes.imageBytesToBase64(targetWidth, targetHeight)
 		} catch (e: Throwable) {
 			e.printStackTrace()
 			null

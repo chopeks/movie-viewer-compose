@@ -6,8 +6,10 @@ import org.imgscalr.Scalr
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import javax.imageio.IIOImage
 import javax.imageio.ImageIO
 import javax.imageio.ImageWriteParam
+import javax.imageio.stream.MemoryCacheImageOutputStream
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.random.Random
@@ -26,7 +28,12 @@ fun BufferedImage.normalizeImage() = this
 @OptIn(ExperimentalEncodingApi::class)
 fun String.urlImageToBase64(targetWidth: Int, targetHeight: Int): String {
 	val imageBytes = OkHttpClient().newCall(Request.Builder().url(this).build()).execute().body?.bytes() ?: return ""
-	val originalImage = ImageIO.read(imageBytes.inputStream())
+	return imageBytes.imageBytesToBase64(targetWidth, targetHeight)
+}
+
+@OptIn(ExperimentalEncodingApi::class)
+fun ByteArray.imageBytesToBase64(targetWidth: Int, targetHeight: Int): String {
+	val originalImage = ImageIO.read(this.inputStream()) ?: return ""
 
 	try {
 		// Calculate aspect ratio and scale
@@ -68,8 +75,8 @@ fun String.urlImageToBase64(targetWidth: Int, targetHeight: Int): String {
 		imageWriteParam.compressionQuality = 0.95f
 
 		// Write image to ByteArrayOutputStream with specified quality
-		imageWriter.output = javax.imageio.stream.MemoryCacheImageOutputStream(byteArrayOutputStream)
-		imageWriter.write(null, javax.imageio.IIOImage(croppedImage, null, null), imageWriteParam)
+		imageWriter.output = MemoryCacheImageOutputStream(byteArrayOutputStream)
+		imageWriter.write(null, IIOImage(croppedImage, null, null), imageWriteParam)
 		imageWriter.dispose()
 
 		// Convert to Base64

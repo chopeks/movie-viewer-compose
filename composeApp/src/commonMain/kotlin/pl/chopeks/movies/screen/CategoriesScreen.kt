@@ -12,15 +12,11 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.kodein.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
-import coil3.compose.AsyncImage
-import coil3.compose.LocalPlatformContext
-import coil3.request.ImageRequest
-import coil3.request.crossfade
-import coil3.size.Size
 import movieviewer.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.kodein.di.compose.rememberInstance
 import pl.chopeks.core.model.Category
+import pl.chopeks.movies.composables.DragDropImageContainer
 import pl.chopeks.movies.composables.FilterBar
 import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.ScreenSkeleton
@@ -120,9 +116,10 @@ class CategoriesScreen : Screen {
 		onConfirm: (String, String) -> Unit
 	) {
 		if (isVisible) {
-			val context = LocalPlatformContext.current
 			var name by remember { mutableStateOf("") }
 			var url by remember { mutableStateOf("") }
+			var droppedImageBytes by remember { mutableStateOf<ByteArray?>(null) }
+
 			AlertDialog(
 				onDismissRequest = onDismiss,
 				title = { Text(stringResource(Res.string.button_add_category)) },
@@ -140,17 +137,13 @@ class CategoriesScreen : Screen {
 							label = { Text(stringResource(Res.string.label_image_url)) },
 							modifier = Modifier.fillMaxWidth()
 						)
-						if (url.isNotBlank()) {
-							AsyncImage(
-								model = ImageRequest.Builder(context)
-									.data(url)
-									.size(Size.ORIGINAL)
-									.crossfade(true)
-									.build(),
-								contentDescription = null,
-								modifier = Modifier.fillMaxWidth().aspectRatio(1.77f)
-							)
-						}
+						DragDropImageContainer(
+							ratio = 1.77f,
+							url = url,
+							imageBytes = null,
+							droppedImageBytes = droppedImageBytes,
+							onDroppedImageBytesChanged = { droppedImageBytes = it; url = "" }
+						)
 					}
 				}, confirmButton = {
 					Button(
@@ -179,11 +172,12 @@ class CategoriesScreen : Screen {
 		onRemove: () -> Unit
 	) {
 		if (category != null) {
-			val context = LocalPlatformContext.current
 			var name by remember { mutableStateOf(category.name) }
 			var url by remember {
 				mutableStateOf(if ((category.image ?: "").startsWith("http")) category.image ?: "" else "")
 			}
+			var droppedImageBytes by remember { mutableStateOf<ByteArray?>(null) }
+
 			AlertDialog(
 				onDismissRequest = onDismiss,
 				title = { Text(stringResource(Res.string.label_edit_category)) },
@@ -201,17 +195,13 @@ class CategoriesScreen : Screen {
 							label = { Text(stringResource(Res.string.label_image_url)) },
 							modifier = Modifier.fillMaxWidth()
 						)
-						if (url.isNotBlank()) {
-							AsyncImage(
-								model = ImageRequest.Builder(context)
-									.data(url)
-									.size(Size.ORIGINAL)
-									.crossfade(true)
-									.build(),
-								contentDescription = null,
-								modifier = Modifier.fillMaxWidth().aspectRatio(1.77f)
-							)
-						}
+						DragDropImageContainer(
+							ratio = 1.77f,
+							url = url,
+							imageBytes = null,
+							droppedImageBytes = droppedImageBytes,
+							onDroppedImageBytesChanged = { droppedImageBytes = it; url = "" }
+						)
 					}
 				}, confirmButton = {
 					Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {

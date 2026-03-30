@@ -70,6 +70,8 @@
     <string name="dropdown_video_thumbnail">Generate Thumbnail</string>
     <string name="dropdown_video_delete">Delete video</string>
 
+    <string name="drag_drop_image">Point url to image or\ndrag&amp;drop one here</string>
+
     <string name="confirmation_remove_title">Do you really want to delete this file?</string>
     <string name="confirmation_remove_desc">%1$s will be deleted from hard-drive. This operation can't be reversed.</string>
 </resources>

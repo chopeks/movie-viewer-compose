@@ -2,6 +2,7 @@ package pl.chopeks.screenmodel
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import pl.chopeks.core.data.ITaskManager
@@ -77,6 +78,7 @@ class VideosScreenModel(
 			initialValue = UiState.Loading
 		)
 
+	@OptIn(ExperimentalCoroutinesApi::class)
 	val uiState: StateFlow<UiState<VideosPage>> = toolbarState
 		.filterIsInstance<UiState.Success<ToolbarState>>()
 		.map { it.data.filters }
