@@ -10,6 +10,7 @@ import pl.chopeks.core.data.bestConcurrencyDispatcher
 import pl.chopeks.core.data.repository.IActorRepository
 import pl.chopeks.core.data.repository.IDuplicateRepository
 import pl.chopeks.core.model.Actor
+import pl.chopeks.core.model.IntRect
 import pl.chopeks.core.utils.runIf
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -23,8 +24,8 @@ class ActorsScreenModel(
 	sealed class Intent {
 		object LoadActors : Intent()
 		data class UpdateSearch(val query: String) : Intent()
-		data class AddActor(val name: String, val imageBytes: ByteArray? = null) : Intent()
-		data class EditActor(val actor: Actor, val name: String, val imageBytes: ByteArray? = null) : Intent()
+		data class AddActor(val name: String, val imageBytes: ByteArray? = null, val rect: IntRect) : Intent()
+		data class EditActor(val actor: Actor, val name: String, val imageBytes: ByteArray? = null, val rect: IntRect) : Intent()
 		data class RemoveActor(val actor: Actor) : Intent()
 		data class Deduplicate(val actor: Actor) : Intent()
 	}
@@ -68,8 +69,8 @@ class ActorsScreenModel(
 		when (intent) {
 			is Intent.LoadActors -> load()
 			is Intent.UpdateSearch -> _searchQuery.value = intent.query
-			is Intent.AddActor -> add(intent.name, intent.imageBytes)
-			is Intent.EditActor -> edit(intent.actor, intent.name, intent.imageBytes)
+			is Intent.AddActor -> add(intent.name, intent.imageBytes, intent.rect)
+			is Intent.EditActor -> edit(intent.actor, intent.name, intent.imageBytes, intent.rect)
 			is Intent.RemoveActor -> remove(intent.actor)
 			is Intent.Deduplicate -> deduplicate(intent.actor)
 		}
@@ -89,17 +90,17 @@ class ActorsScreenModel(
 		}
 	}
 
-	private fun add(name: String, imageBytes: ByteArray?) {
+	private fun add(name: String, imageBytes: ByteArray?, rect: IntRect) {
 		screenModelScope.launch {
-			val image = imageBytes?.let { imageConverter.bytesToBase64(it, 269, 384) }
+			val image = imageBytes?.let { imageConverter.bytesToBase64(it, 269, 384, rect) }
 			repository.add(name, image)
 			load()
 		}
 	}
 
-	private fun edit(actor: Actor, name: String, imageBytes: ByteArray?) {
+	private fun edit(actor: Actor, name: String, imageBytes: ByteArray?, rect: IntRect) {
 		screenModelScope.launch {
-			val image = imageBytes?.let { imageConverter.bytesToBase64(it, 269, 384) }
+			val image = imageBytes?.let { imageConverter.bytesToBase64(it, 269, 384, rect) }
 			repository.edit(actor.id, name, image)
 			load()
 		}

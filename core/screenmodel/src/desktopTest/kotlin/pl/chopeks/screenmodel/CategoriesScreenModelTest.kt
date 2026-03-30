@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.*
 import pl.chopeks.core.data.IImageConverter
 import pl.chopeks.core.data.repository.ICategoryRepository
 import pl.chopeks.core.model.Category
+import pl.chopeks.core.model.IntRect
 import pl.chopeks.screenmodel.CategoriesScreenModel.Intent
 import kotlin.io.encoding.Base64
 
@@ -101,7 +102,7 @@ class CategoriesScreenModelTest : StringSpec({
 			coEvery { repository.getCategories() } returns emptyList()
 			coEvery { repository.getImage(any()) } returns null
 
-			screenModel.handleIntent(Intent.AddCategory("New Cat", null))
+			screenModel.handleIntent(Intent.AddCategory("New Cat", rect = IntRect(0, 0, 0, 0)))
 			advanceUntilIdle()
 
 			coVerify { repository.add("New Cat", null) }
@@ -116,7 +117,7 @@ class CategoriesScreenModelTest : StringSpec({
 			coEvery { repository.getCategories() } returns emptyList()
 			coEvery { repository.getImage(any()) } returns null
 
-			screenModel.handleIntent(Intent.EditCategory(category, "New Name", null))
+			screenModel.handleIntent(Intent.EditCategory(category, "New Name", rect = IntRect(0, 0, 0, 0)))
 			advanceUntilIdle()
 
 			coVerify { repository.edit(1, "New Name", null) }

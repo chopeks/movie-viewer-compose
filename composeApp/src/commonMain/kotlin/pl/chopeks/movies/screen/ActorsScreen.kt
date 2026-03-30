@@ -17,6 +17,7 @@ import movieviewer.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.kodein.di.compose.rememberInstance
 import pl.chopeks.core.model.Actor
+import pl.chopeks.core.model.IntRect
 import pl.chopeks.movies.composables.DragDropImageContainer
 import pl.chopeks.movies.composables.FilterBar
 import pl.chopeks.movies.composables.ProgressIndicator
@@ -94,8 +95,8 @@ class ActorsScreen : Screen {
 		AddActorDialog(
 			isVisible = addDialogState.isVisible,
 			onDismiss = { addDialogState.hide() },
-			onConfirm = { name, bytes ->
-				screenModel.handleIntent(Intent.AddActor(name, bytes))
+			onConfirm = { name, bytes, rect ->
+				screenModel.handleIntent(Intent.AddActor(name, bytes, rect))
 				addDialogState.hide()
 			}
 		)
@@ -103,8 +104,8 @@ class ActorsScreen : Screen {
 		EditActorDialog(
 			actor = editingActor,
 			onDismiss = { editingActor = null },
-			onConfirm = { name, bytes ->
-				editingActor?.let { screenModel.handleIntent(Intent.EditActor(it, name, bytes)) }
+			onConfirm = { name, bytes, rect ->
+				editingActor?.let { screenModel.handleIntent(Intent.EditActor(it, name, bytes, rect)) }
 				editingActor = null
 			},
 			onRemove = {
@@ -123,11 +124,12 @@ class ActorsScreen : Screen {
 	private fun AddActorDialog(
 		isVisible: Boolean,
 		onDismiss: () -> Unit,
-		onConfirm: (String, ByteArray?) -> Unit
+		onConfirm: (String, ByteArray?, IntRect) -> Unit
 	) {
 		if (isVisible) {
 			var name by remember { mutableStateOf("") }
 			var droppedImageBytes by remember { mutableStateOf<ByteArray?>(null) }
+			var cropRect by remember { mutableStateOf(IntRect(0, 0, 0, 0)) }
 
 			AlertDialog(
 				onDismissRequest = onDismiss,
@@ -149,7 +151,8 @@ class ActorsScreen : Screen {
 							url = "",
 							imageBytes = null,
 							droppedImageBytes = droppedImageBytes,
-							onDroppedImageBytesChanged = { droppedImageBytes = it }
+							onDroppedImageBytesChanged = { droppedImageBytes = it },
+							onCroppedRectChanged = { cropRect = it }
 						)
 					}
 				},
@@ -157,7 +160,7 @@ class ActorsScreen : Screen {
 					Button(
 						onClick = {
 							if (name.isNotBlank()) {
-								onConfirm(name, droppedImageBytes)
+								onConfirm(name, droppedImageBytes, cropRect)
 							}
 						},
 						colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
@@ -182,13 +185,14 @@ class ActorsScreen : Screen {
 	private fun EditActorDialog(
 		actor: Actor?,
 		onDismiss: () -> Unit,
-		onConfirm: (String, ByteArray?) -> Unit,
+		onConfirm: (String, ByteArray?, IntRect) -> Unit,
 		onRemove: () -> Unit,
 		onDeduplicate: () -> Unit
 	) {
 		if (actor != null) {
 			var name by remember { mutableStateOf(actor.name) }
 			var droppedImageBytes by remember { mutableStateOf<ByteArray?>(null) }
+			var cropRect by remember { mutableStateOf(IntRect(0, 0, 0, 0)) }
 
 			AlertDialog(
 				onDismissRequest = onDismiss,
@@ -209,7 +213,8 @@ class ActorsScreen : Screen {
 							url = if ((actor.image ?: "").startsWith("http")) actor.image ?: "" else "",
 							imageBytes = actor.imageBytes,
 							droppedImageBytes = droppedImageBytes,
-							onDroppedImageBytesChanged = { droppedImageBytes = it }
+							onDroppedImageBytesChanged = { droppedImageBytes = it },
+							onCroppedRectChanged = { cropRect = it }
 						)
 					}
 				},
@@ -236,7 +241,7 @@ class ActorsScreen : Screen {
 						Button(
 							onClick = {
 								if (name.isNotBlank()) {
-									onConfirm(name, droppedImageBytes)
+									onConfirm(name, droppedImageBytes, cropRect)
 								}
 							},
 							colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)

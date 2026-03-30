@@ -16,6 +16,7 @@ import movieviewer.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.kodein.di.compose.rememberInstance
 import pl.chopeks.core.model.Category
+import pl.chopeks.core.model.IntRect
 import pl.chopeks.movies.composables.DragDropImageContainer
 import pl.chopeks.movies.composables.FilterBar
 import pl.chopeks.movies.composables.ProgressIndicator
@@ -89,8 +90,8 @@ class CategoriesScreen : Screen {
 		AddCategoryDialog(
 			isVisible = addDialogState.isVisible,
 			onDismiss = { addDialogState.hide() },
-			onConfirm = { name, bytes ->
-				screenModel.handleIntent(Intent.AddCategory(name, bytes))
+			onConfirm = { name, bytes, rect ->
+				screenModel.handleIntent(Intent.AddCategory(name, bytes, rect))
 				addDialogState.hide()
 			}
 		)
@@ -98,8 +99,8 @@ class CategoriesScreen : Screen {
 		EditCategoryDialog(
 			category = editingCategory,
 			onDismiss = { editingCategory = null },
-			onConfirm = { name, bytes ->
-				editingCategory?.let { screenModel.handleIntent(Intent.EditCategory(it, name, bytes)) }
+			onConfirm = { name, bytes, rect ->
+				editingCategory?.let { screenModel.handleIntent(Intent.EditCategory(it, name, bytes, rect)) }
 				editingCategory = null
 			},
 			onRemove = {
@@ -113,11 +114,12 @@ class CategoriesScreen : Screen {
 	private fun AddCategoryDialog(
 		isVisible: Boolean,
 		onDismiss: () -> Unit,
-		onConfirm: (String, ByteArray?) -> Unit
+		onConfirm: (String, ByteArray?, IntRect) -> Unit
 	) {
 		if (isVisible) {
 			var name by remember { mutableStateOf("") }
 			var droppedImageBytes by remember { mutableStateOf<ByteArray?>(null) }
+			var cropRect by remember { mutableStateOf(IntRect(0, 0, 0, 0)) }
 
 			AlertDialog(
 				onDismissRequest = onDismiss,
@@ -135,12 +137,13 @@ class CategoriesScreen : Screen {
 							url = "",
 							imageBytes = null,
 							droppedImageBytes = droppedImageBytes,
-							onDroppedImageBytesChanged = { droppedImageBytes = it }
+							onDroppedImageBytesChanged = { droppedImageBytes = it },
+							onCroppedRectChanged = { cropRect = it }
 						)
 					}
 				}, confirmButton = {
 					Button(
-						onClick = { if (name.isNotBlank()) onConfirm(name, droppedImageBytes) },
+						onClick = { if (name.isNotBlank()) onConfirm(name, droppedImageBytes, cropRect) },
 						colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
 					) {
 						Text(stringResource(Res.string.button_add), color = Color.White)
@@ -161,12 +164,13 @@ class CategoriesScreen : Screen {
 	private fun EditCategoryDialog(
 		category: Category?,
 		onDismiss: () -> Unit,
-		onConfirm: (String, ByteArray?) -> Unit,
+		onConfirm: (String, ByteArray?, IntRect) -> Unit,
 		onRemove: () -> Unit
 	) {
 		if (category != null) {
 			var name by remember { mutableStateOf(category.name) }
 			var droppedImageBytes by remember { mutableStateOf<ByteArray?>(null) }
+			var cropRect by remember { mutableStateOf(IntRect(0, 0, 0, 0)) }
 
 			AlertDialog(
 				onDismissRequest = onDismiss,
@@ -184,7 +188,8 @@ class CategoriesScreen : Screen {
 							url = if ((category.image ?: "").startsWith("http")) category.image ?: "" else "",
 							imageBytes = category.imageBytes,
 							droppedImageBytes = droppedImageBytes,
-							onDroppedImageBytesChanged = { droppedImageBytes = it }
+							onDroppedImageBytesChanged = { droppedImageBytes = it },
+							onCroppedRectChanged = { cropRect = it }
 						)
 					}
 				}, confirmButton = {
@@ -202,7 +207,7 @@ class CategoriesScreen : Screen {
 							Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
 						}
 						Button(
-							onClick = { if (name.isNotBlank()) onConfirm(name, droppedImageBytes) },
+							onClick = { if (name.isNotBlank()) onConfirm(name, droppedImageBytes, cropRect) },
 							colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
 						) {
 							Text(stringResource(Res.string.button_confirm), color = Color.White)

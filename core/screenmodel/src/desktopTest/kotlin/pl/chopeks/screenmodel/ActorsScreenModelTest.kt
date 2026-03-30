@@ -15,6 +15,7 @@ import pl.chopeks.core.data.IImageConverter
 import pl.chopeks.core.data.repository.IActorRepository
 import pl.chopeks.core.data.repository.IDuplicateRepository
 import pl.chopeks.core.model.Actor
+import pl.chopeks.core.model.IntRect
 import pl.chopeks.screenmodel.ActorsScreenModel.Intent
 import kotlin.io.encoding.Base64
 
@@ -93,7 +94,7 @@ class ActorsScreenModelTest : StringSpec({
 			coEvery { repository.add(any(), any()) } returns Unit
 			coEvery { repository.getActors() } returns emptyList()
 
-			screenModel.handleIntent(Intent.AddActor("New Actor", null))
+			screenModel.handleIntent(Intent.AddActor("New Actor", rect = IntRect(0, 0, 0, 0)))
 			advanceUntilIdle()
 
 			coVerify { repository.add("New Actor", null) }
@@ -107,7 +108,7 @@ class ActorsScreenModelTest : StringSpec({
 			coEvery { repository.edit(any(), any(), any()) } returns Unit
 			coEvery { repository.getActors() } returns emptyList()
 
-			screenModel.handleIntent(Intent.EditActor(actor, "New Name", null))
+			screenModel.handleIntent(Intent.EditActor(actor, "New Name", rect = IntRect(0, 0, 0, 0)))
 			advanceUntilIdle()
 
 			coVerify { repository.edit(1, "New Name", null) }

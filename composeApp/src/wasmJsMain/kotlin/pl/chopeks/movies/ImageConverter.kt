@@ -1,12 +1,13 @@
 package pl.chopeks.movies
 
 import pl.chopeks.core.data.IImageConverter
+import pl.chopeks.core.model.IntRect
 import pl.chopeks.movies.utils.imageBytesToBase64
 
 class ImageConverter : IImageConverter {
-	override suspend fun bytesToBase64(bytes: ByteArray, targetWidth: Int, targetHeight: Int): String? {
+	override suspend fun bytesToBase64(bytes: ByteArray, targetWidth: Int, targetHeight: Int, rect: IntRect): String? {
 		return try {
-			bytes.imageBytesToBase64(targetWidth, targetHeight)
+			bytes.imageBytesToBase64(targetWidth, targetHeight, rect)
 		} catch (e: Throwable) {
 			e.printStackTrace()
 			null
