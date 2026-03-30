@@ -4,7 +4,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material.*
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,10 +20,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.kodein.di.compose.rememberInstance
 import pl.chopeks.core.model.Category
 import pl.chopeks.core.model.IntRect
-import pl.chopeks.movies.composables.DragDropImageContainer
-import pl.chopeks.movies.composables.FilterBar
-import pl.chopeks.movies.composables.ProgressIndicator
-import pl.chopeks.movies.composables.ScreenSkeleton
+import pl.chopeks.movies.composables.*
 import pl.chopeks.movies.composables.buttons.GreenTextButton
 import pl.chopeks.movies.composables.cards.CategoryCard
 import pl.chopeks.movies.composables.state.rememberAlertDialogState
@@ -126,10 +126,10 @@ class CategoriesScreen : Screen {
 				title = { Text(stringResource(Res.string.button_add_category)) },
 				text = {
 					Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-						TextField(
+						StyledTextField(
 							value = name,
 							onValueChange = { name = it },
-							label = { Text(stringResource(Res.string.label_name)) },
+							label = stringResource(Res.string.label_name),
 							modifier = Modifier.fillMaxWidth()
 						)
 						DragDropImageContainer(
@@ -177,10 +177,10 @@ class CategoriesScreen : Screen {
 				title = { Text(stringResource(Res.string.label_edit_category)) },
 				text = {
 					Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-						TextField(
+						StyledTextField(
 							value = name,
 							onValueChange = { name = it },
-							label = { Text(stringResource(Res.string.label_name)) },
+							label = stringResource(Res.string.label_name),
 							modifier = Modifier.fillMaxWidth()
 						)
 						DragDropImageContainer(

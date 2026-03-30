@@ -97,33 +97,44 @@ fun DragDropImageContainer(
 				)
 		) {
 			if (droppedImageBytes != null || url != null || imageBytes != null) {
-				BoxWithConstraints(Modifier.matchParentSize().clipToBounds()) {
-					var imageRatio by remember { mutableStateOf(1f) }
-					var originalWidth by remember { mutableStateOf(0f) }
-					var originalHeight by remember { mutableStateOf(0f) }
-
-					val boxWidth = constraints.maxWidth.toFloat()
-					val boxHeight = constraints.maxHeight.toFloat()
-					val boxRatio = boxWidth / boxHeight
-
+				if (droppedImageBytes == null) {
 					AsyncImage(
 						model = ImageRequest.Builder(context)
-							.data(droppedImageBytes ?: url ?: imageBytes)
+							.data(url ?: imageBytes)
 							.size(Size.ORIGINAL)
 							.crossfade(true)
 							.build(),
 						contentDescription = null,
-						contentScale = ContentScale.Fit,
-						onSuccess = { state ->
-							val size = state.painter.intrinsicSize
-							imageRatio = size.width / size.height
-							originalWidth = size.width
-							originalHeight = size.height
-						},
-						modifier = Modifier
-							.matchParentSize()
-							.run {
-								if (droppedImageBytes != null) {
+						contentScale = ContentScale.Crop,
+						modifier = Modifier.matchParentSize()
+					)
+				} else {
+					BoxWithConstraints(Modifier.matchParentSize().clipToBounds()) {
+						var imageRatio by remember { mutableStateOf(1f) }
+						var originalWidth by remember { mutableStateOf(0f) }
+						var originalHeight by remember { mutableStateOf(0f) }
+
+						val boxWidth = constraints.maxWidth.toFloat()
+						val boxHeight = constraints.maxHeight.toFloat()
+						val boxRatio = boxWidth / boxHeight
+
+						AsyncImage(
+							model = ImageRequest.Builder(context)
+								.data(droppedImageBytes)
+								.size(Size.ORIGINAL)
+								.crossfade(true)
+								.build(),
+							contentDescription = null,
+							contentScale = ContentScale.Fit,
+							onSuccess = { state ->
+								val size = state.painter.intrinsicSize
+								imageRatio = size.width / size.height
+								originalWidth = size.width
+								originalHeight = size.height
+							},
+							modifier = Modifier
+								.matchParentSize()
+								.run {
 									pointerInput(scale, imageRatio) {
 										awaitPointerEventScope {
 											while (true) {
@@ -157,9 +168,9 @@ fun DragDropImageContainer(
 										translationX = offset.x
 										translationY = offset.y
 									}
-								} else this
-							}
-					)
+								}
+						)
+					}
 				}
 			} else {
 				Text(

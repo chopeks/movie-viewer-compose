@@ -1,12 +1,12 @@
 package pl.chopeks.movies.screen
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.*
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,6 +20,7 @@ import org.kodein.di.compose.rememberInstance
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.SettingsDirectory
 import pl.chopeks.movies.composables.SettingsHeaderText
+import pl.chopeks.movies.composables.StyledTextField
 import pl.chopeks.movies.composables.state.rememberAlertDialogState
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
@@ -72,29 +73,29 @@ class SettingsScreen : Screen {
 					var encoderSource by remember(currentSettings) { mutableStateOf(currentSettings.encoderSource) }
 					var encoderSink by remember(currentSettings) { mutableStateOf(currentSettings.encoderSink) }
 
-					TextField(
+					StyledTextField(
 						value = browser,
 						onValueChange = { browser = it },
-						label = { Text(stringResource(Res.string.label_browser)) },
-						modifier = Modifier.fillMaxWidth()
+						label = stringResource(Res.string.label_browser),
+						modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()
 					)
-					TextField(
+					StyledTextField(
 						value = moviePlayer,
 						onValueChange = { moviePlayer = it },
-						label = { Text(stringResource(Res.string.label_player)) },
-						modifier = Modifier.fillMaxWidth()
+						label = stringResource(Res.string.label_player),
+						modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()
 					)
-					TextField(
+					StyledTextField(
 						value = encoderSource,
 						onValueChange = { encoderSource = it },
-						label = { Text(stringResource(Res.string.label_encoder_source)) },
-						modifier = Modifier.fillMaxWidth()
+						label = stringResource(Res.string.label_encoder_source),
+						modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()
 					)
-					TextField(
+					StyledTextField(
 						value = encoderSink,
 						onValueChange = { encoderSink = it },
-						label = { Text(stringResource(Res.string.label_encoder_sink)) },
-						modifier = Modifier.fillMaxWidth()
+						label = stringResource(Res.string.label_encoder_sink),
+						modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()
 					)
 					Button(onClick = {
 						screenModel.saveSettings(browser, moviePlayer, encoderSource, encoderSink)
@@ -129,10 +130,10 @@ class SettingsScreen : Screen {
 				onDismissRequest = onDismiss,
 				title = { Text(stringResource(Res.string.button_add_directory)) },
 				text = {
-					TextField(
+					StyledTextField(
 						value = path,
 						onValueChange = { path = it },
-						label = { Text(stringResource(Res.string.label_path)) },
+						label = stringResource(Res.string.label_path),
 						modifier = Modifier.fillMaxWidth()
 					)
 				},

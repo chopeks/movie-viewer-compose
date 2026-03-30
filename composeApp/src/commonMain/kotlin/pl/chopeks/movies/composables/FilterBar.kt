@@ -1,12 +1,12 @@
 package pl.chopeks.movies.composables
 
-import androidx.compose.material.*
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import movieviewer.composeapp.generated.resources.Res
 import movieviewer.composeapp.generated.resources.button_desc_delete
@@ -20,7 +20,7 @@ fun FilterBar(
 	onQueryChange: (String) -> Unit,
 	modifier: Modifier = Modifier
 ) {
-	TextField(
+	StyledTextField(
 		modifier = modifier.testTag("textField"),
 		value = query,
 		onValueChange = onQueryChange,
@@ -32,7 +32,6 @@ fun FilterBar(
 					Icon(Icons.Default.Delete, contentDescription = stringResource(Res.string.button_desc_delete))
 				}
 		},
-		label = { Text(stringResource(Res.string.label_filter)) },
-		colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Black, textColor = Color.White)
+		label = stringResource(Res.string.label_filter),
 	)
 }
