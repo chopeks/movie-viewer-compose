@@ -1,9 +1,7 @@
 package pl.chopeks.core.ffmpeg
 
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flow
 import pl.chopeks.core.ffmpeg.utils.formatDurationToFfmpegFormat
-import pl.chopeks.core.ffmpeg.utils.linesFlow
 import pl.chopeks.core.ffmpeg.utils.runCancellable
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
@@ -273,7 +271,7 @@ class FfmpegManager(
 		return exitCode == 0
 	}
 
-	suspend fun encodeWithProgress(file: File, newFile: File, onProgress: (Float) -> Unit) {
+	fun encodeWithProgress(file: File, newFile: File) = flow {
 		val totalDurationUs = getVideoDuration(file) * 1000L
 		val cmd = mutableListOf("ffmpeg", "-y", "-i", file.absolutePath).apply {
 			addAll(
@@ -298,14 +296,15 @@ class FfmpegManager(
 		processFactory(cmd) {
 			redirectError(ProcessBuilder.Redirect.DISCARD)
 		}.runCancellable {
-			inputStream.bufferedReader().linesFlow()
+			inputStream.bufferedReader().lineSequence()
 				.filter { it.startsWith("out_time_us=") }
-				.map { it.substringAfter("=").toLongOrNull() ?: 0L }
-				.collect { currentTimeUs ->
+				.map { line ->
+					val currentTimeUs = line.substringAfter("=").toLongOrNull() ?: 0L
 					if (totalDurationUs > 0) {
-						onProgress((currentTimeUs.toFloat() / totalDurationUs).coerceIn(0f, 1f))
-					}
+						(currentTimeUs.toFloat() / totalDurationUs).coerceIn(0f, 1f)
+					} else 0f
 				}
+				.forEach { emit(it) }
 		}
 	}
 }

@@ -18,9 +18,8 @@ class EncodingTask(
 
 	suspend fun run() = withContext(Dispatchers.IO) {
 		try {
-			ffmpeg.encodeWithProgress(inputFile, outputFile) {
-				_progress.value = it
-			}
+			ffmpeg.encodeWithProgress(inputFile, outputFile)
+				.collect(_progress::emit)
 		} catch (e: CancellationException) {
 			if (outputFile.exists())
 				outputFile.delete()
