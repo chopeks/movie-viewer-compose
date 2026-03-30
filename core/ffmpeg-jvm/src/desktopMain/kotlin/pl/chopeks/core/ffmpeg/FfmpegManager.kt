@@ -2,7 +2,7 @@ package pl.chopeks.core.ffmpeg
 
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
-import pl.chopeks.core.ffmpeg.utils.ffmpeg
+import pl.chopeks.core.ffmpeg.utils.formatDurationToFfmpegFormat
 import pl.chopeks.core.ffmpeg.utils.linesFlow
 import pl.chopeks.core.ffmpeg.utils.runCancellable
 import java.awt.image.BufferedImage
@@ -35,12 +35,12 @@ class FfmpegManager(
 	fun getFingerprintStream(video: File, start: Int? = null, duration: Int? = null): Process {
 		val ffmpegCmd = mutableListOf("ffmpeg")
 		if (start != null)
-			ffmpegCmd += listOf("-ss", (start / 1000.0).toString())
+			ffmpegCmd += listOf("-ss", formatDurationToFfmpegFormat(start.toLong()))
 
 		ffmpegCmd += listOf("-i", video.absolutePath)
 
 		if (duration != null)
-			ffmpegCmd += listOf("-t", (duration / 1000.0).toString())
+			ffmpegCmd += listOf("-t", formatDurationToFfmpegFormat(duration.toLong()))
 
 		ffmpegCmd += listOf(
 			"-vn",
@@ -118,7 +118,7 @@ class FfmpegManager(
 	 */
 	fun isFfmpegAvailable(): Boolean {
 		return try {
-			val process = processFactory(ffmpeg().version().build()) {
+			val process = processFactory(listOf("ffmpeg", "-version")) {
 				redirectOutput(ProcessBuilder.Redirect.DISCARD)
 					.redirectError(ProcessBuilder.Redirect.DISCARD)
 			}
@@ -184,16 +184,21 @@ class FfmpegManager(
 	 * @return The screenshot in form of buffered image.
 	 */
 	internal fun getFrame(video: File, permille: Long, width: Int = 0, height: Int = 0): BufferedImage? {
-		val timestampUs = (getVideoDuration(video) * permille) / 1000L
-		val cmd = ffmpeg()
-			.seek(timestampUs)
-			.input(video)
-			.frames(1)
-			.scale(width, height)
-			.format("image2pipe")
-			.videoCodec("mjpeg")
-			.pipe()
-			.build()
+		val timestampMs = (getVideoDuration(video) * permille) / 1000L
+		val cmd = mutableListOf(
+			"ffmpeg",
+			"-ss", formatDurationToFfmpegFormat(timestampMs),
+			"-i", video.absolutePath,
+			"-vframes", "1"
+		)
+		if (width > 0 && height > 0) {
+			cmd += listOf("-vf", "scale=$width:$height")
+		}
+		cmd += listOf(
+			"-f", "image2pipe",
+			"-vcodec", "mjpeg",
+			"-"
+		)
 
 		val process = processFactory(cmd) {
 			redirectError(ProcessBuilder.Redirect.DISCARD)
@@ -211,7 +216,7 @@ class FfmpegManager(
 	}
 
 	fun availableEncoders(): List<String> {
-		val process = processFactory(ffmpeg().custom("-encoders").build()) {
+		val process = processFactory(listOf("ffmpeg", "-encoders")) {
 			redirectError(ProcessBuilder.Redirect.DISCARD)
 		}
 		val output = process.inputStream.bufferedReader().readText()
@@ -241,7 +246,7 @@ class FfmpegManager(
 		val cmd = mutableListOf(
 			"ffmpeg", "-y",
 			"-t", "0.1",
-			"-f", "lavfi", "-i", "color=c=black:s=1280x720:r=24", // Changed to 720p
+			"-f", "lavfi", "-i", "color=c=black:s=1280x720:r=24",
 			"-pix_fmt", "yuv420p",
 			"-c:v", encoder
 		)
