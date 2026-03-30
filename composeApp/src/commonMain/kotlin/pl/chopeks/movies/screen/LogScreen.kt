@@ -18,9 +18,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import movieviewer.composeapp.generated.resources.Res
 import movieviewer.composeapp.generated.resources.screen_logs
 import org.jetbrains.compose.resources.stringResource
-import org.kodein.di.compose.localDI
-import org.kodein.di.direct
-import org.kodein.di.instance
+import org.kodein.di.compose.rememberInstance
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.utils.AppLogger
 import pl.chopeks.movies.utils.KeyEventManager
@@ -31,7 +29,7 @@ class LogScreen : Screen {
 	override fun Content() {
 		val logs = AppLogger.logLines
 		val listState = rememberLazyListState()
-		val keyEventManager = localDI().direct.instance<KeyEventManager>()
+		val keyEventManager by rememberInstance<KeyEventManager>()
 		val navigator = LocalNavigator.current
 
 		DisposableEffect(keyEventManager, navigator) {

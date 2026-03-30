@@ -1,11 +1,6 @@
 package pl.chopeks.movies.utils
 
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isAltPressed
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.*
 import cafe.adriel.voyager.navigator.Navigator
 import pl.chopeks.movies.screen.ActorsScreen
 import pl.chopeks.movies.screen.CategoriesScreen
@@ -18,19 +13,19 @@ object KeyEventNavigation {
       return false
     if (event.isAltPressed) {
       when (event.key) {
-        Key(49) -> {
+        Key.One -> {
           navigator?.replace(ActorsScreen()); return true
         }
 
-        Key(50) -> {
+        Key.Two -> {
           navigator?.replace(CategoriesScreen()); return true
         }
 
-        Key(51) -> {
+        Key.Three -> {
           navigator?.replace(VideosScreen()); return true
         }
 
-        Key(52) -> {
+        Key.Four -> {
           navigator?.replace(DuplicatesScreen()); return true
         }
       }

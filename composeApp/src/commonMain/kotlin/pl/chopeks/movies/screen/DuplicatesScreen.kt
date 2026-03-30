@@ -17,9 +17,7 @@ import movieviewer.composeapp.generated.resources.button_deduplicate_all
 import movieviewer.composeapp.generated.resources.label_left_to_check
 import movieviewer.composeapp.generated.resources.screen_duplicates
 import org.jetbrains.compose.resources.stringResource
-import org.kodein.di.compose.localDI
-import org.kodein.di.direct
-import org.kodein.di.instance
+import org.kodein.di.compose.rememberInstance
 import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.buttons.GreenTextButton
@@ -33,7 +31,7 @@ class DuplicatesScreen : Screen {
 	@Composable
 	override fun Content() {
 		val screenModel = rememberScreenModel<DuplicatesScreenModel>()
-		val keyEventManager = localDI().direct.instance<KeyEventManager>()
+		val keyEventManager by rememberInstance<KeyEventManager>()
 		val navigator = LocalNavigator.current
 
 		DisposableEffect(keyEventManager, navigator) {

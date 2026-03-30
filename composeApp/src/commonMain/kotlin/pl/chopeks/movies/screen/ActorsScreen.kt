@@ -19,9 +19,7 @@ import coil3.request.crossfade
 import coil3.size.Size
 import movieviewer.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
-import org.kodein.di.compose.localDI
-import org.kodein.di.direct
-import org.kodein.di.instance
+import org.kodein.di.compose.rememberInstance
 import pl.chopeks.core.model.Actor
 import pl.chopeks.movies.composables.FilterBar
 import pl.chopeks.movies.composables.ProgressIndicator
@@ -38,7 +36,7 @@ class ActorsScreen : Screen {
 	@Composable
 	override fun Content() {
 		val screenModel = rememberScreenModel<ActorsScreenModel>()
-		val keyEventManager = localDI().direct.instance<KeyEventManager>()
+		val keyEventManager by rememberInstance<KeyEventManager>()
 		val navigator = LocalNavigator.current
 		val state by screenModel.state.collectAsState()
 
@@ -67,7 +65,7 @@ class ActorsScreen : Screen {
 					onQueryChange = { screenModel.handleIntent(Intent.UpdateSearch(it)) }
 				)
 			}
-		) { scope ->
+		) {
 			if (state.isLoading) {
 				ProgressIndicator()
 			} else {

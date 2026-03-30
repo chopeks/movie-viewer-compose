@@ -23,9 +23,7 @@ import cafe.adriel.voyager.navigator.Navigator
 import kotlinx.coroutines.launch
 import movieviewer.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
-import org.kodein.di.compose.localDI
-import org.kodein.di.direct
-import org.kodein.di.instance
+import org.kodein.di.compose.rememberInstance
 import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Category
 import pl.chopeks.core.model.Video
@@ -52,7 +50,7 @@ class VideosScreen(
 	override fun Content() {
 		val screenModel = rememberScreenModel<VideosScreenModel>()
 		val scope = rememberCoroutineScope()
-		val keyEventManager = localDI().direct.instance<KeyEventManager>()
+		val keyEventManager by rememberInstance<KeyEventManager>()
 		val navigator = LocalNavigator.current
 
 		var currentSheet by remember { mutableStateOf(SheetType.NONE) }
@@ -384,11 +382,11 @@ class VideosScreen(
 			}
 		}
 		when (event.key) {
-			Key(49) -> return shortCutPlayVideo(0, screenModel)
-			Key(50) -> return shortCutPlayVideo(1, screenModel)
-			Key(51) -> return shortCutPlayVideo(2, screenModel)
-			Key(52) -> return shortCutPlayVideo(3, screenModel)
-			Key(53) -> return shortCutPlayVideo(4, screenModel)
+			Key.One -> return shortCutPlayVideo(0, screenModel)
+			Key.Two -> return shortCutPlayVideo(1, screenModel)
+			Key.Three -> return shortCutPlayVideo(2, screenModel)
+			Key.Four -> return shortCutPlayVideo(3, screenModel)
+			Key.Five -> return shortCutPlayVideo(4, screenModel)
 			Key.Q -> return shortCutPlayVideo(5, screenModel)
 			Key.W -> return shortCutPlayVideo(6, screenModel)
 			Key.E -> return shortCutPlayVideo(7, screenModel)

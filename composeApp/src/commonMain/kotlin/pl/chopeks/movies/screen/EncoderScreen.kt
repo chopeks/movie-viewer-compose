@@ -31,9 +31,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import movieviewer.composeapp.generated.resources.Res
 import movieviewer.composeapp.generated.resources.screen_encoder
 import org.jetbrains.compose.resources.stringResource
-import org.kodein.di.compose.localDI
-import org.kodein.di.direct
-import org.kodein.di.instance
+import org.kodein.di.compose.rememberInstance
 import pl.chopeks.core.model.EncodeStatus
 import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.ScreenSkeleton
@@ -46,7 +44,7 @@ class EncoderScreen : Screen {
 	@Composable
 	override fun Content() {
 		val screenModel = rememberScreenModel<EncoderScreenModel>()
-		val keyEventManager = localDI().direct.instance<KeyEventManager>()
+		val keyEventManager by rememberInstance<KeyEventManager>()
 		val navigator = LocalNavigator.current
 		val state by screenModel.uiState.collectAsState()
 		val successGreen = Color(0xFF4CAF50)
