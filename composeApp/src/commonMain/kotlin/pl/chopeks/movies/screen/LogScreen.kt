@@ -7,33 +7,46 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
 import movieviewer.composeapp.generated.resources.Res
 import movieviewer.composeapp.generated.resources.screen_logs
 import org.jetbrains.compose.resources.stringResource
+import org.kodein.di.compose.localDI
+import org.kodein.di.direct
+import org.kodein.di.instance
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.utils.AppLogger
+import pl.chopeks.movies.utils.KeyEventManager
+import pl.chopeks.movies.utils.KeyEventNavigation
 
-class LogScreen() : Screen {
+class LogScreen : Screen {
 	@Composable
 	override fun Content() {
 		val logs = AppLogger.logLines
 		val listState = rememberLazyListState()
+		val keyEventManager = localDI().direct.instance<KeyEventManager>()
+		val navigator = LocalNavigator.current
 
-		// Auto-scroll to the bottom when a new log arrives
+		DisposableEffect(keyEventManager, navigator) {
+			keyEventManager.setListener { KeyEventNavigation.onKeyEvent(it, navigator) }
+			onDispose { keyEventManager.setListener(null) }
+		}
+
 		LaunchedEffect(logs.size) {
 			if (logs.isNotEmpty()) {
 				listState.animateScrollToItem(logs.size - 1)
 			}
 		}
 
-		ScreenSkeleton(title = stringResource(Res.string.screen_logs)) { scope ->
-			SelectionContainer { // Allows you to copy-paste logs
+		ScreenSkeleton(title = stringResource(Res.string.screen_logs)) {
+			SelectionContainer {
 				LazyColumn(state = listState, modifier = Modifier.padding(8.dp)) {
 					items(logs) { line ->
 						Text(

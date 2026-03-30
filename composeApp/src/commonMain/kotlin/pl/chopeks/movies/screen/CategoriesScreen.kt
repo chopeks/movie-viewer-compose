@@ -15,8 +15,8 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
+import coil3.request.crossfade
 import coil3.size.Size
-import kotlinx.coroutines.launch
 import movieviewer.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.kodein.di.compose.localDI
@@ -28,7 +28,6 @@ import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.buttons.GreenTextButton
 import pl.chopeks.movies.composables.cards.CategoryCard
-import pl.chopeks.movies.composables.state.AlertDialogState
 import pl.chopeks.movies.composables.state.rememberAlertDialogState
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
@@ -38,21 +37,28 @@ import pl.chopeks.screenmodel.CategoriesScreenModel.Intent
 class CategoriesScreen : Screen {
 	@Composable
 	override fun Content() {
-		val scope = rememberCoroutineScope()
-		val addDialog = rememberAlertDialogState()
-		val editDialog = remember { mutableStateOf<Category?>(null) }
 		val screenModel = rememberScreenModel<CategoriesScreenModel>()
 		val keyEventManager = localDI().direct.instance<KeyEventManager>()
 		val navigator = LocalNavigator.current
-		keyEventManager.setListener { KeyEventNavigation.onKeyEvent(it, navigator) }
-
 		val state by screenModel.state.collectAsState()
+
+		val addDialogState = rememberAlertDialogState()
+		var editingCategory by remember { mutableStateOf<Category?>(null) }
+
+		DisposableEffect(keyEventManager, navigator) {
+			keyEventManager.setListener { KeyEventNavigation.onKeyEvent(it, navigator) }
+			onDispose { keyEventManager.setListener(null) }
+		}
+
+		LaunchedEffect(Unit) {
+			screenModel.handleIntent(Intent.LoadCategories)
+		}
 
 		ScreenSkeleton(
 			title = stringResource(Res.string.screen_categories),
 			leftActions = {
 				GreenTextButton(stringResource(Res.string.button_add_category), onClick = {
-					scope.launch { addDialog.show() }
+					addDialogState.show()
 				})
 			},
 			rightActions = {
@@ -61,27 +67,24 @@ class CategoriesScreen : Screen {
 					onQueryChange = { screenModel.handleIntent(Intent.UpdateSearch(it)) },
 				)
 			}
-		) { scope ->
+		) {
 			if (state.isLoading) {
 				ProgressIndicator()
 			} else {
-				val categories = state.categories
 				LazyVerticalGrid(
 					columns = GridCells.Fixed(6),
 					modifier = Modifier.fillMaxSize(),
 					horizontalArrangement = Arrangement.spacedBy(2.dp),
 					verticalArrangement = Arrangement.spacedBy(2.dp)
 				) {
-					items(items = categories, key = Category::id) { category ->
+					items(items = state.categories, key = { it.id }) { category ->
 						CategoryCard(
 							category = category,
 							onClick = {
-								scope.launch {
-									navigator?.replace(VideosScreen(category = it))
-								}
+								navigator?.replace(VideosScreen(category = it))
 							},
 							onEditClick = {
-								editDialog.value = it
+								editingCategory = it
 							}
 						)
 					}
@@ -89,90 +92,152 @@ class CategoriesScreen : Screen {
 			}
 		}
 
-		AddCategoryDialog(addDialog, screenModel)
-		EditCategoryDialog(editDialog, screenModel)
+		AddCategoryDialog(
+			isVisible = addDialogState.isVisible,
+			onDismiss = { addDialogState.hide() },
+			onConfirm = { name, url ->
+				screenModel.handleIntent(Intent.AddCategory(name, url))
+				addDialogState.hide()
+			}
+		)
 
-		LaunchedEffect(Unit) {
-			screenModel.handleIntent(Intent.LoadCategories)
-		}
+		EditCategoryDialog(
+			category = editingCategory,
+			onDismiss = { editingCategory = null },
+			onConfirm = { name, url ->
+				editingCategory?.let { screenModel.handleIntent(Intent.EditCategory(it, name, url)) }
+				editingCategory = null
+			},
+			onRemove = {
+				editingCategory?.let { screenModel.handleIntent(Intent.RemoveCategory(it)) }
+				editingCategory = null
+			}
+		)
 	}
 
 	@Composable
-	fun AddCategoryDialog(dialogState: AlertDialogState, screenModel: CategoriesScreenModel) {
-		if (dialogState.isVisible) {
-			val scope = rememberCoroutineScope()
+	private fun AddCategoryDialog(
+		isVisible: Boolean,
+		onDismiss: () -> Unit,
+		onConfirm: (String, String) -> Unit
+	) {
+		if (isVisible) {
 			val context = LocalPlatformContext.current
 			var name by remember { mutableStateOf("") }
 			var url by remember { mutableStateOf("") }
 			AlertDialog(
-				onDismissRequest = { scope.launch { dialogState.hide() } },
+				onDismissRequest = onDismiss,
 				title = { Text(stringResource(Res.string.button_add_category)) },
 				text = {
-					Column(Modifier.fillMaxWidth()) {
-						TextField(name, { name = it }, label = { Text(stringResource(Res.string.label_name)) }, modifier = Modifier.fillMaxWidth())
-						TextField(url, { url = it }, label = { Text(stringResource(Res.string.label_image_url)) }, modifier = Modifier.fillMaxWidth())
-						AsyncImage(
-							ImageRequest.Builder(context)
-								.data(url)
-								.size(Size.ORIGINAL)
-								.build(), null, Modifier.fillMaxWidth().aspectRatio(1.77f)
+					Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+						TextField(
+							value = name,
+							onValueChange = { name = it },
+							label = { Text(stringResource(Res.string.label_name)) },
+							modifier = Modifier.fillMaxWidth()
 						)
+						TextField(
+							value = url,
+							onValueChange = { url = it },
+							label = { Text(stringResource(Res.string.label_image_url)) },
+							modifier = Modifier.fillMaxWidth()
+						)
+						if (url.isNotBlank()) {
+							AsyncImage(
+								model = ImageRequest.Builder(context)
+									.data(url)
+									.size(Size.ORIGINAL)
+									.crossfade(true)
+									.build(),
+								contentDescription = null,
+								modifier = Modifier.fillMaxWidth().aspectRatio(1.77f)
+							)
+						}
 					}
 				}, confirmButton = {
-					Button(onClick = {
-						if (name.isNotBlank()) {
-							screenModel.handleIntent(Intent.AddCategory(name, url))
-							scope.launch { dialogState.hide() }
-						}
-					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+					Button(
+						onClick = { if (name.isNotBlank()) onConfirm(name, url) },
+						colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
+					) {
 						Text(stringResource(Res.string.button_add), color = Color.White)
 					}
 				}, dismissButton = {
-					Button(onClick = { scope.launch { dialogState.hide() } }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+					Button(
+						onClick = onDismiss,
+						colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
+					) {
 						Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
 					}
-				})
+				}
+			)
 		}
 	}
 
 	@Composable
-	fun EditCategoryDialog(category: MutableState<Category?>, screenModel: CategoriesScreenModel) {
-		if (category.value != null) {
+	private fun EditCategoryDialog(
+		category: Category?,
+		onDismiss: () -> Unit,
+		onConfirm: (String, String) -> Unit,
+		onRemove: () -> Unit
+	) {
+		if (category != null) {
 			val context = LocalPlatformContext.current
-			var name by remember { mutableStateOf(category.value!!.name) }
-			var url by remember { mutableStateOf(if ((category.value!!.image ?: "").startsWith("http:")) category.value!!.image ?: "" else "") }
-			AlertDialog(onDismissRequest = { category.value = null }, title = { Text(stringResource(Res.string.label_edit_category)) }, text = {
-				Column(Modifier.fillMaxWidth()) {
-					TextField(name, { name = it }, label = { Text(stringResource(Res.string.label_name)) }, modifier = Modifier.fillMaxWidth())
-					TextField(url, { url = it }, label = { Text(stringResource(Res.string.label_image_url)) }, modifier = Modifier.fillMaxWidth())
-					AsyncImage(
-						ImageRequest.Builder(context).data(url).size(Size.ORIGINAL).build(), null, Modifier.fillMaxWidth().aspectRatio(1.77f)
-					)
-				}
-			}, confirmButton = {
-				Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-					Button(onClick = {
-						screenModel.handleIntent(Intent.RemoveCategory(category.value!!))
-						category.value = null
-					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-						Text(stringResource(Res.string.button_remove), color = Color.Red)
-					}
-
-					Button(onClick = { category.value = null }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-						Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
-					}
-
-					Button(onClick = {
-						if (name.isNotBlank()) {
-							screenModel.handleIntent(Intent.EditCategory(category.value!!, name, url))
-							category.value = null
+			var name by remember { mutableStateOf(category.name) }
+			var url by remember {
+				mutableStateOf(if ((category.image ?: "").startsWith("http")) category.image ?: "" else "")
+			}
+			AlertDialog(
+				onDismissRequest = onDismiss,
+				title = { Text(stringResource(Res.string.label_edit_category)) },
+				text = {
+					Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+						TextField(
+							value = name,
+							onValueChange = { name = it },
+							label = { Text(stringResource(Res.string.label_name)) },
+							modifier = Modifier.fillMaxWidth()
+						)
+						TextField(
+							value = url,
+							onValueChange = { url = it },
+							label = { Text(stringResource(Res.string.label_image_url)) },
+							modifier = Modifier.fillMaxWidth()
+						)
+						if (url.isNotBlank()) {
+							AsyncImage(
+								model = ImageRequest.Builder(context)
+									.data(url)
+									.size(Size.ORIGINAL)
+									.crossfade(true)
+									.build(),
+								contentDescription = null,
+								modifier = Modifier.fillMaxWidth().aspectRatio(1.77f)
+							)
 						}
-					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
-						Text(stringResource(Res.string.button_confirm), color = Color.White)
+					}
+				}, confirmButton = {
+					Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+						Button(
+							onClick = onRemove,
+							colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
+						) {
+							Text(stringResource(Res.string.button_remove), color = Color.Red)
+						}
+						Button(
+							onClick = onDismiss,
+							colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
+						) {
+							Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
+						}
+						Button(
+							onClick = { if (name.isNotBlank()) onConfirm(name, url) },
+							colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
+						) {
+							Text(stringResource(Res.string.button_confirm), color = Color.White)
+						}
 					}
 				}
-
-			})
+			)
 		}
 	}
 }

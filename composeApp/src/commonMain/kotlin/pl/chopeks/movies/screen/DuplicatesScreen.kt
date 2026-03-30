@@ -3,6 +3,7 @@ package pl.chopeks.movies.screen
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -34,7 +35,11 @@ class DuplicatesScreen : Screen {
 		val screenModel = rememberScreenModel<DuplicatesScreenModel>()
 		val keyEventManager = localDI().direct.instance<KeyEventManager>()
 		val navigator = LocalNavigator.current
-		keyEventManager.setListener { KeyEventNavigation.onKeyEvent(it, navigator) }
+
+		DisposableEffect(keyEventManager, navigator) {
+			keyEventManager.setListener { KeyEventNavigation.onKeyEvent(it, navigator) }
+			onDispose { keyEventManager.setListener(null) }
+		}
 
 		ScreenSkeleton(
 			title = stringResource(Res.string.screen_duplicates),
@@ -46,31 +51,37 @@ class DuplicatesScreen : Screen {
 				val count by screenModel.count.collectAsState()
 				Text(stringResource(Res.string.label_left_to_check, count), color = Color.LightGray)
 			}
-		) { scope ->
+		) {
 			val state by screenModel.duplicates.collectAsState()
 			when (val current = state) {
-				is UiState.Success -> Column(modifier = Modifier.fillMaxSize().padding(4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+				is UiState.Success -> Column(
+					modifier = Modifier.fillMaxSize().padding(4.dp),
+					verticalArrangement = Arrangement.spacedBy(8.dp)
+				) {
 					val chunks = current.data.chunked(2)
 					chunks.forEach { chunk ->
-						Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-							chunk.forEachIndexed { i, videos ->
-								Box(Modifier.fillMaxSize().weight(1f)) {
+						Row(
+							modifier = Modifier.fillMaxWidth().weight(1f),
+							horizontalArrangement = Arrangement.spacedBy(8.dp)
+						) {
+							chunk.forEach { videos ->
+								Box(modifier = Modifier.fillMaxSize().weight(1f)) {
 									DuplicateCard(
-										videos,
+										videos = videos,
 										onClick = screenModel::play,
 										onRemoveClick = screenModel::remove,
 										onDumpClick = screenModel::dump,
 										onCancelClick = screenModel::cancel
 									)
 								}
-								repeat(2 - chunk.size) {
-									Spacer(Modifier.weight(1f))
-								}
+							}
+							repeat(2 - chunk.size) {
+								Spacer(modifier = Modifier.weight(1f))
 							}
 						}
 					}
 					repeat(4 - chunks.size) {
-						Spacer(Modifier.weight(1f))
+						Spacer(modifier = Modifier.weight(1f))
 					}
 				}
 

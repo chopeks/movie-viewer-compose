@@ -17,6 +17,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -26,12 +27,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.kodein.rememberScreenModel
+import cafe.adriel.voyager.navigator.LocalNavigator
 import movieviewer.composeapp.generated.resources.Res
 import movieviewer.composeapp.generated.resources.screen_encoder
 import org.jetbrains.compose.resources.stringResource
+import org.kodein.di.compose.localDI
+import org.kodein.di.direct
+import org.kodein.di.instance
 import pl.chopeks.core.model.EncodeStatus
 import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.ScreenSkeleton
+import pl.chopeks.movies.utils.KeyEventManager
+import pl.chopeks.movies.utils.KeyEventNavigation
 import pl.chopeks.screenmodel.EncoderScreenModel
 import pl.chopeks.screenmodel.model.UiState
 
@@ -39,12 +46,19 @@ class EncoderScreen : Screen {
 	@Composable
 	override fun Content() {
 		val screenModel = rememberScreenModel<EncoderScreenModel>()
+		val keyEventManager = localDI().direct.instance<KeyEventManager>()
+		val navigator = LocalNavigator.current
 		val state by screenModel.uiState.collectAsState()
 		val successGreen = Color(0xFF4CAF50)
 
+		DisposableEffect(keyEventManager, navigator) {
+			keyEventManager.setListener { KeyEventNavigation.onKeyEvent(it, navigator) }
+			onDispose { keyEventManager.setListener(null) }
+		}
+
 		ScreenSkeleton(
 			title = stringResource(Res.string.screen_encoder)
-		) { scope ->
+		) {
 			when (val current = state) {
 				is UiState.Loading -> ProgressIndicator()
 				is UiState.Error -> Text("Error: ${current.message}")
@@ -125,9 +139,6 @@ class EncoderScreen : Screen {
 									backgroundColor = MaterialTheme.colors.onSurface.copy(alpha = 0.1f),
 									strokeCap = StrokeCap.Round
 								)
-//									item.eta?.let {
-//										Text(it.toRemainingLabel(), style = MaterialTheme.typography.caption)
-//									}
 							}
 						}
 					}

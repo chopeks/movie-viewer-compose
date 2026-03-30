@@ -13,14 +13,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.kodein.rememberScreenModel
-import kotlinx.coroutines.launch
+import cafe.adriel.voyager.navigator.LocalNavigator
 import movieviewer.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
+import org.kodein.di.compose.localDI
+import org.kodein.di.direct
+import org.kodein.di.instance
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.SettingsDirectory
 import pl.chopeks.movies.composables.SettingsHeaderText
-import pl.chopeks.movies.composables.state.AlertDialogState
 import pl.chopeks.movies.composables.state.rememberAlertDialogState
+import pl.chopeks.movies.utils.KeyEventManager
+import pl.chopeks.movies.utils.KeyEventNavigation
 import pl.chopeks.screenmodel.SettingsScreenModel
 
 @Composable
@@ -30,74 +34,123 @@ class SettingsScreen : Screen {
 	@Composable
 	override fun Content() {
 		val screenModel = rememberScreenModel<SettingsScreenModel>()
-		val addDialog = rememberAlertDialogState()
+		val keyEventManager = localDI().direct.instance<KeyEventManager>()
+		val navigator = LocalNavigator.current
+		val addDialogState = rememberAlertDialogState()
+
+		DisposableEffect(keyEventManager, navigator) {
+			keyEventManager.setListener { KeyEventNavigation.onKeyEvent(it, navigator) }
+			onDispose { keyEventManager.setListener(null) }
+		}
+
+		LaunchedEffect(screenModel) {
+			screenModel.init()
+		}
 
 		ScreenSkeleton(
 			title = stringResource(Res.string.screen_settings)
-		) { scope ->
+		) {
 			Column(
 				modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
 				verticalArrangement = Arrangement.spacedBy(2.dp)
 			) {
 				SettingsHeaderText(stringResource(Res.string.label_directories))
 				Column {
-					screenModel.paths.value.forEach { path ->
+					val paths by screenModel.paths.collectAsState()
+					paths.forEach { path ->
 						SettingsDirectory(path) {
 							screenModel.removePath(it)
 						}
 					}
 				}
-				Button({ scope.launch { addDialog.show() } }) { Text(stringResource(Res.string.button_add)) }
+				Button(onClick = { addDialogState.show() }) {
+					Text(stringResource(Res.string.button_add))
+				}
 				SettingsHeaderText(stringResource(Res.string.label_settings))
 				val settings by screenModel.settings.collectAsState()
-				if (settings != null) {
-					var browser by remember { mutableStateOf(settings!!.browser) }
-					var moviePlayer by remember { mutableStateOf(settings!!.moviePlayer) }
-					var encoderSource by remember { mutableStateOf(settings!!.encoderSource) }
-					var encoderSink by remember { mutableStateOf(settings!!.encoderSink) }
-					TextField(browser, { browser = it }, label = { Text(stringResource(Res.string.label_browser)) })
-					TextField(moviePlayer, { moviePlayer = it }, label = { Text(stringResource(Res.string.label_player)) })
-					TextField(encoderSource, { encoderSource = it }, label = { Text(stringResource(Res.string.label_encoder_source)) })
-					TextField(encoderSink, { encoderSink = it }, label = { Text(stringResource(Res.string.label_encoder_sink)) })
-					Button({
+				settings?.let { currentSettings ->
+					var browser by remember(currentSettings) { mutableStateOf(currentSettings.browser) }
+					var moviePlayer by remember(currentSettings) { mutableStateOf(currentSettings.moviePlayer) }
+					var encoderSource by remember(currentSettings) { mutableStateOf(currentSettings.encoderSource) }
+					var encoderSink by remember(currentSettings) { mutableStateOf(currentSettings.encoderSink) }
+
+					TextField(
+						value = browser,
+						onValueChange = { browser = it },
+						label = { Text(stringResource(Res.string.label_browser)) },
+						modifier = Modifier.fillMaxWidth()
+					)
+					TextField(
+						value = moviePlayer,
+						onValueChange = { moviePlayer = it },
+						label = { Text(stringResource(Res.string.label_player)) },
+						modifier = Modifier.fillMaxWidth()
+					)
+					TextField(
+						value = encoderSource,
+						onValueChange = { encoderSource = it },
+						label = { Text(stringResource(Res.string.label_encoder_source)) },
+						modifier = Modifier.fillMaxWidth()
+					)
+					TextField(
+						value = encoderSink,
+						onValueChange = { encoderSink = it },
+						label = { Text(stringResource(Res.string.label_encoder_sink)) },
+						modifier = Modifier.fillMaxWidth()
+					)
+					Button(onClick = {
 						screenModel.saveSettings(browser, moviePlayer, encoderSource, encoderSink)
-					}) { Text(stringResource(Res.string.button_save)) }
+					}) {
+						Text(stringResource(Res.string.button_save))
+					}
 				}
 
 				ExternalAppsContainer(this@SettingsScreen)
 
-				AddDialog(addDialog, screenModel)
-			}
-
-			LaunchedEffect(screenModel) {
-				screenModel.init()
+				AddDialog(
+					isVisible = addDialogState.isVisible,
+					onDismiss = { addDialogState.hide() },
+					onConfirm = { path ->
+						screenModel.addPath(path)
+						addDialogState.hide()
+					}
+				)
 			}
 		}
 	}
 
 	@Composable
-	fun AddDialog(dialogState: AlertDialogState, screenModel: SettingsScreenModel) {
-		if (dialogState.isVisible) {
-			val scope = rememberCoroutineScope()
+	private fun AddDialog(
+		isVisible: Boolean,
+		onDismiss: () -> Unit,
+		onConfirm: (String) -> Unit
+	) {
+		if (isVisible) {
 			var path by remember { mutableStateOf("") }
 			AlertDialog(
-				onDismissRequest = { scope.launch { dialogState.hide() } },
+				onDismissRequest = onDismiss,
 				title = { Text(stringResource(Res.string.button_add_directory)) },
 				text = {
-					TextField(path, { path = it }, label = { Text(stringResource(Res.string.label_path)) }, modifier = Modifier.fillMaxWidth())
+					TextField(
+						value = path,
+						onValueChange = { path = it },
+						label = { Text(stringResource(Res.string.label_path)) },
+						modifier = Modifier.fillMaxWidth()
+					)
 				},
 				confirmButton = {
-					Button(onClick = {
-						if (path.isNotBlank()) {
-							screenModel.addPath(path)
-							scope.launch { dialogState.hide() }
-						}
-					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+					Button(
+						onClick = { if (path.isNotBlank()) onConfirm(path) },
+						colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
+					) {
 						Text(stringResource(Res.string.button_add), color = Color.White)
 					}
 				},
 				dismissButton = {
-					Button(onClick = { scope.launch { dialogState.hide() } }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+					Button(
+						onClick = onDismiss,
+						colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
+					) {
 						Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
 					}
 				}

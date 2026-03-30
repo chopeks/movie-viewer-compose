@@ -15,8 +15,8 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
+import coil3.request.crossfade
 import coil3.size.Size
-import kotlinx.coroutines.launch
 import movieviewer.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.kodein.di.compose.localDI
@@ -28,7 +28,6 @@ import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.buttons.GreenTextButton
 import pl.chopeks.movies.composables.cards.ActorCard
-import pl.chopeks.movies.composables.state.AlertDialogState
 import pl.chopeks.movies.composables.state.rememberAlertDialogState
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
@@ -38,21 +37,28 @@ import pl.chopeks.screenmodel.ActorsScreenModel.Intent
 class ActorsScreen : Screen {
 	@Composable
 	override fun Content() {
-		val scope = rememberCoroutineScope()
-		val addDialog = rememberAlertDialogState()
-		val editDialog = remember { mutableStateOf<Actor?>(null) }
 		val screenModel = rememberScreenModel<ActorsScreenModel>()
 		val keyEventManager = localDI().direct.instance<KeyEventManager>()
 		val navigator = LocalNavigator.current
-		keyEventManager.setListener { KeyEventNavigation.onKeyEvent(it, navigator) }
-
 		val state by screenModel.state.collectAsState()
+
+		val addDialogState = rememberAlertDialogState()
+		var editingActor by remember { mutableStateOf<Actor?>(null) }
+
+		DisposableEffect(keyEventManager, navigator) {
+			keyEventManager.setListener { KeyEventNavigation.onKeyEvent(it, navigator) }
+			onDispose { keyEventManager.setListener(null) }
+		}
+
+		LaunchedEffect(Unit) {
+			screenModel.handleIntent(Intent.LoadActors)
+		}
 
 		ScreenSkeleton(
 			title = stringResource(Res.string.screen_actors),
 			leftActions = {
 				GreenTextButton(stringResource(Res.string.button_add_actor), onClick = {
-					scope.launch { addDialog.show() }
+					addDialogState.show()
 				})
 			},
 			rightActions = {
@@ -65,7 +71,6 @@ class ActorsScreen : Screen {
 			if (state.isLoading) {
 				ProgressIndicator()
 			} else {
-				val actors = state.actors
 				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 					val sidePadding = maxWidth * 0.08f
 					LazyVerticalGrid(
@@ -75,16 +80,14 @@ class ActorsScreen : Screen {
 						horizontalArrangement = Arrangement.spacedBy(2.dp),
 						verticalArrangement = Arrangement.spacedBy(2.dp)
 					) {
-						items(items = actors, key = Actor::id) { actor ->
+						items(items = state.actors, key = { it.id }) { actor ->
 							ActorCard(
 								actor = actor,
 								onClick = {
-									scope.launch {
-										navigator?.replace(VideosScreen(actor = it))
-									}
+									navigator?.replace(VideosScreen(actor = it))
 								},
 								onEditClick = {
-									editDialog.value = it
+									editingActor = it
 								}
 							)
 						}
@@ -93,48 +96,87 @@ class ActorsScreen : Screen {
 			}
 		}
 
-		AddActorDialog(addDialog, screenModel)
-		EditActorDialog(editDialog, screenModel)
+		AddActorDialog(
+			isVisible = addDialogState.isVisible,
+			onDismiss = { addDialogState.hide() },
+			onConfirm = { name, url ->
+				screenModel.handleIntent(Intent.AddActor(name, url))
+				addDialogState.hide()
+			}
+		)
 
-		LaunchedEffect(Unit) {
-			screenModel.handleIntent(Intent.LoadActors)
-		}
+		EditActorDialog(
+			actor = editingActor,
+			onDismiss = { editingActor = null },
+			onConfirm = { name, url ->
+				editingActor?.let { screenModel.handleIntent(Intent.EditActor(it, name, url)) }
+				editingActor = null
+			},
+			onRemove = {
+				editingActor?.let { screenModel.handleIntent(Intent.RemoveActor(it)) }
+				editingActor = null
+			},
+			onDeduplicate = {
+				editingActor?.let { screenModel.handleIntent(Intent.Deduplicate(it)) }
+				editingActor = null
+			}
+		)
 	}
 
 	@Composable
-	fun AddActorDialog(dialogState: AlertDialogState, screenModel: ActorsScreenModel) {
-		if (dialogState.isVisible) {
-			val scope = rememberCoroutineScope()
+	private fun AddActorDialog(
+		isVisible: Boolean,
+		onDismiss: () -> Unit,
+		onConfirm: (String, String) -> Unit
+	) {
+		if (isVisible) {
 			val context = LocalPlatformContext.current
 			var name by remember { mutableStateOf("") }
 			var url by remember { mutableStateOf("") }
+
 			AlertDialog(
-				onDismissRequest = { scope.launch { dialogState.hide() } },
+				onDismissRequest = onDismiss,
 				title = { Text(stringResource(Res.string.button_add_actor)) },
 				text = {
-					Column(Modifier.fillMaxWidth()) {
-						TextField(name, { name = it }, label = { Text(stringResource(Res.string.label_name)) }, modifier = Modifier.fillMaxWidth())
-						TextField(url, { url = it }, label = { Text(stringResource(Res.string.label_image_url)) }, modifier = Modifier.fillMaxWidth())
-						AsyncImage(
-							ImageRequest.Builder(context)
-								.data(url)
-								.size(Size.ORIGINAL)
-								.build(), null, Modifier.fillMaxWidth().aspectRatio(1.77f)
+					Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+						TextField(
+							value = name,
+							onValueChange = { name = it },
+							label = { Text(stringResource(Res.string.label_name)) },
+							modifier = Modifier.fillMaxWidth()
 						)
+						TextField(
+							value = url,
+							onValueChange = { url = it },
+							label = { Text(stringResource(Res.string.label_image_url)) },
+							modifier = Modifier.fillMaxWidth()
+						)
+						if (url.isNotBlank()) {
+							AsyncImage(
+								model = ImageRequest.Builder(context)
+									.data(url)
+									.size(Size.ORIGINAL)
+									.crossfade(true)
+									.build(),
+								contentDescription = null,
+								modifier = Modifier.fillMaxWidth().aspectRatio(1.77f)
+							)
+						}
 					}
 				},
 				confirmButton = {
-					Button(onClick = {
-						if (name.isNotBlank()) {
-							screenModel.handleIntent(Intent.AddActor(name, url))
-							scope.launch { dialogState.hide() }
-						}
-					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+					Button(
+						onClick = { if (name.isNotBlank()) onConfirm(name, url) },
+						colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
+					) {
 						Text(stringResource(Res.string.button_add), color = Color.White)
 					}
 				},
 				dismissButton = {
-					Button(onClick = { scope.launch { dialogState.hide() } }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+					Button(
+						onClick = onDismiss,
+						colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
+					) {
 						Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
 					}
 				}
@@ -143,51 +185,74 @@ class ActorsScreen : Screen {
 	}
 
 	@Composable
-	fun EditActorDialog(actor: MutableState<Actor?>, screenModel: ActorsScreenModel) {
-		if (actor.value != null) {
+	private fun EditActorDialog(
+		actor: Actor?,
+		onDismiss: () -> Unit,
+		onConfirm: (String, String) -> Unit,
+		onRemove: () -> Unit,
+		onDeduplicate: () -> Unit
+	) {
+		if (actor != null) {
 			val context = LocalPlatformContext.current
-			var name by remember { mutableStateOf(actor.value!!.name) }
-			var url by remember { mutableStateOf(if ((actor.value!!.image ?: "").startsWith("http:")) actor.value!!.image ?: "" else "") }
+			var name by remember { mutableStateOf(actor.name) }
+			var url by remember {
+				mutableStateOf(if ((actor.image ?: "").startsWith("http")) actor.image ?: "" else "")
+			}
+
 			AlertDialog(
-				onDismissRequest = { actor.value = null },
+				onDismissRequest = onDismiss,
 				title = { Text(stringResource(Res.string.label_edit_actor)) },
 				text = {
-					Column(Modifier.fillMaxWidth()) {
-						TextField(name, { name = it }, label = { Text(stringResource(Res.string.label_name)) }, modifier = Modifier.fillMaxWidth())
-						TextField(url, { url = it }, label = { Text(stringResource(Res.string.label_image_url)) }, modifier = Modifier.fillMaxWidth())
-						AsyncImage(
-							ImageRequest.Builder(context)
-								.data(url)
-								.size(Size.ORIGINAL)
-								.build(), null, Modifier.fillMaxWidth().aspectRatio(1.77f)
+					Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+						TextField(
+							value = name,
+							onValueChange = { name = it },
+							label = { Text(stringResource(Res.string.label_name)) },
+							modifier = Modifier.fillMaxWidth()
 						)
+						TextField(
+							value = url,
+							onValueChange = { url = it },
+							label = { Text(stringResource(Res.string.label_image_url)) },
+							modifier = Modifier.fillMaxWidth()
+						)
+						if (url.isNotBlank()) {
+							AsyncImage(
+								model = ImageRequest.Builder(context)
+									.data(url)
+									.size(Size.ORIGINAL)
+									.crossfade(true)
+									.build(),
+								contentDescription = null,
+								modifier = Modifier.fillMaxWidth().aspectRatio(1.77f)
+							)
+						}
 					}
 				},
 				confirmButton = {
 					Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-						Button(onClick = {
-							screenModel.handleIntent(Intent.Deduplicate(actor.value!!))
-							actor.value = null
-						}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+						Button(
+							onClick = onDeduplicate,
+							colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
+						) {
 							Text(stringResource(Res.string.button_deduplicate), color = Color.LightGray)
 						}
-						Button(onClick = {
-							screenModel.handleIntent(Intent.RemoveActor(actor.value!!))
-							actor.value = null
-						}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+						Button(
+							onClick = onRemove,
+							colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
+						) {
 							Text(stringResource(Res.string.button_remove), color = Color.Red)
 						}
-
-						Button(onClick = { actor.value = null }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+						Button(
+							onClick = onDismiss,
+							colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
+						) {
 							Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
 						}
-
-						Button(onClick = {
-							if (name.isNotBlank()) {
-								screenModel.handleIntent(Intent.EditActor(actor.value!!, name, url))
-								actor.value = null
-							}
-						}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+						Button(
+							onClick = { if (name.isNotBlank()) onConfirm(name, url) },
+							colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
+						) {
 							Text(stringResource(Res.string.button_confirm), color = Color.White)
 						}
 					}

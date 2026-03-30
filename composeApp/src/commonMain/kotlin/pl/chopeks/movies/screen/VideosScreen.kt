@@ -33,7 +33,6 @@ import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.ScreenSkeleton
 import pl.chopeks.movies.composables.buttons.GreenTextButton
 import pl.chopeks.movies.composables.cards.VideoCard
-import pl.chopeks.movies.composables.state.AlertDialogState
 import pl.chopeks.movies.composables.state.rememberAlertDialogState
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
@@ -53,6 +52,8 @@ class VideosScreen(
 	override fun Content() {
 		val screenModel = rememberScreenModel<VideosScreenModel>()
 		val scope = rememberCoroutineScope()
+		val keyEventManager = localDI().direct.instance<KeyEventManager>()
+		val navigator = LocalNavigator.current
 
 		var currentSheet by remember { mutableStateOf(SheetType.NONE) }
 		val actorsScrollState = rememberLazyGridState()
@@ -72,11 +73,16 @@ class VideosScreen(
 			scope.launch { sheetState.show() }
 		}
 
-		val removeConfirmDialog = rememberAlertDialogState()
+		val removeConfirmDialogState = rememberAlertDialogState()
 
-		val keyEventManager = localDI().direct.instance<KeyEventManager>()
-		val navigator = LocalNavigator.current
-		keyEventManager.setListener { onKeyEvent(it, navigator, screenModel) }
+		DisposableEffect(keyEventManager, navigator, screenModel) {
+			keyEventManager.setListener { onKeyEvent(it, navigator, screenModel) }
+			onDispose { keyEventManager.setListener(null) }
+		}
+
+		LaunchedEffect(screenModel) {
+			screenModel.init(actor, category)
+		}
 
 		val state by screenModel.uiState.collectAsState()
 
@@ -84,15 +90,21 @@ class VideosScreen(
 			sheetState = sheetState,
 			sheetGesturesEnabled = false,
 			sheetContent = {
-				val state by screenModel.toolbarState.collectAsState()
-				when (val current = state) {
+				val toolbarState by screenModel.toolbarState.collectAsState()
+				when (val current = toolbarState) {
 					is UiState.Error -> Text("Error: ${current.message}")
 					UiState.Loading -> ProgressIndicator()
 					is UiState.Success -> {
 						Column {
-							Row(Modifier.background(Color.Black).fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+							Row(
+								modifier = Modifier.background(Color.Black).fillMaxWidth(),
+								horizontalArrangement = Arrangement.End
+							) {
 								IconButton(onClick = { scope.launch { sheetState.hide() } }) {
-									Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.button_close))
+									Icon(
+										imageVector = Icons.Default.Close,
+										contentDescription = stringResource(Res.string.button_close)
+									)
 								}
 							}
 							when (currentSheet) {
@@ -114,26 +126,32 @@ class VideosScreen(
 				GreenTextButton("+1".uppercase()) { screenModel.changePage(1) }
 				GreenTextButton("+10".uppercase()) { screenModel.changePage(10) }
 
-				TextButton({
-					scope.launch { openSheet(SheetType.ACTORS_FILTER) }
-				}) { Text(stringResource(Res.string.button_actors), color = Color.Gray) }
-				TextButton({
-					scope.launch { openSheet(SheetType.CATEGORIES_FILTER) }
-				}) { Text(stringResource(Res.string.button_categories), color = Color.Gray) }
+				TextButton(onClick = { openSheet(SheetType.ACTORS_FILTER) }) {
+					Text(stringResource(Res.string.button_actors), color = Color.Gray)
+				}
+				TextButton(onClick = { openSheet(SheetType.CATEGORIES_FILTER) }) {
+					Text(stringResource(Res.string.button_categories), color = Color.Gray)
+				}
 
 				TextButton(onClick = screenModel::toggleSortFilter) {
 					val filterType = screenModel.toolbarState.collectAsSuccessState(initial = 0) { it.filters.filterType }
 					Text(
-						text = listOf(stringResource(Res.string.label_sort_by_date), stringResource(Res.string.label_sort_by_duration))[filterType],
+						text = listOf(
+							stringResource(Res.string.label_sort_by_date),
+							stringResource(Res.string.label_sort_by_duration)
+						)[filterType],
 						color = Color.Gray
 					)
 				}
 			}, rightActions = {
 				val page = screenModel.uiState.collectAsSuccessState(initial = null) { it }
 				if (page != null) {
-					Text(stringResource(Res.string.label_video_pager, page.currentPage + 1, page.pageCount + 1), color = Color.Green.copy(alpha = 0.6f))
+					Text(
+						text = stringResource(Res.string.label_video_pager, page.currentPage + 1, page.pageCount + 1),
+						color = Color.Green.copy(alpha = 0.6f)
+					)
 				}
-			}) { scope ->
+			}) {
 				when (val current = state) {
 					is UiState.Success -> Column(
 						modifier = Modifier.fillMaxSize(),
@@ -146,7 +164,6 @@ class VideosScreen(
 							) {
 								for (columnIndex in 0 until 5) {
 									val itemIndex = rowIndex * 5 + columnIndex
-
 									val video = current.data.items.getOrNull(itemIndex)
 									Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
 										if (video != null) {
@@ -165,10 +182,8 @@ class VideosScreen(
 													screenModel.generateThumbnail(video)
 												},
 												onRemoveClick = {
-													scope.launch {
-														screenModel.setEditing(video)
-														removeConfirmDialog.show()
-													}
+													screenModel.setEditing(video)
+													removeConfirmDialogState.show()
 												},
 												onDumpClick = {
 													screenModel.dump(video)
@@ -187,17 +202,25 @@ class VideosScreen(
 					is UiState.Error -> Text("Error: ${current.message}")
 				}
 
-				RemoveVideoDialog(removeConfirmDialog, screenModel)
-			}
-
-			LaunchedEffect(screenModel) {
-				screenModel.init(actor, category)
+				RemoveVideoDialog(
+					isVisible = removeConfirmDialogState.isVisible,
+					onDismiss = { removeConfirmDialogState.hide() },
+					onConfirm = { video ->
+						screenModel.remove(video)
+						removeConfirmDialogState.hide()
+					},
+					editingVideo = screenModel.editingVideo.collectAsState().value
+				)
 			}
 		}
 	}
 
 	@Composable
-	fun ActorsSheet(state: VideosScreenModel.ToolbarState, screenModel: VideosScreenModel, scrollState: LazyGridState) {
+	fun ActorsSheet(
+		state: VideosScreenModel.ToolbarState,
+		screenModel: VideosScreenModel,
+		scrollState: LazyGridState
+	) {
 		val noneText = stringResource(Res.string.checkbox_none)
 		val actors = remember(state.actors, noneText) {
 			listOf(Actor(0, noneText)) + state.actors
@@ -219,7 +242,11 @@ class VideosScreen(
 	}
 
 	@Composable
-	fun CategoriesSheet(state: VideosScreenModel.ToolbarState, screenModel: VideosScreenModel, scrollState: LazyGridState) {
+	fun CategoriesSheet(
+		state: VideosScreenModel.ToolbarState,
+		screenModel: VideosScreenModel,
+		scrollState: LazyGridState
+	) {
 		val noneText = stringResource(Res.string.checkbox_none)
 		val categories = remember(state.categories, noneText) {
 			listOf(Category(0, noneText)) + state.categories
@@ -242,13 +269,17 @@ class VideosScreen(
 	}
 
 	@Composable
-	fun EditActorsSheet(state: VideosScreenModel.ToolbarState, screenModel: VideosScreenModel, scrollState: LazyGridState) {
+	fun EditActorsSheet(
+		state: VideosScreenModel.ToolbarState,
+		screenModel: VideosScreenModel,
+		scrollState: LazyGridState
+	) {
 		EditGridSheet(screenModel, scrollState, state.actors) { video, actor ->
 			val isSelected by remember(actor.id, video.chips?.actors) {
-				derivedStateOf { video.chips?.actors?.firstOrNull { it.id == actor.id } != null }
+				derivedStateOf { video.chips?.actors?.any { it.id == actor.id } == true }
 			}
 			Row(verticalAlignment = Alignment.CenterVertically) {
-				Checkbox(isSelected, {
+				Checkbox(isSelected, onCheckedChange = {
 					screenModel.toggleBinding(video, actor)
 				})
 				Text(actor.name)
@@ -257,13 +288,17 @@ class VideosScreen(
 	}
 
 	@Composable
-	fun EditCategoriesSheet(state: VideosScreenModel.ToolbarState, screenModel: VideosScreenModel, scrollState: LazyGridState) {
+	fun EditCategoriesSheet(
+		state: VideosScreenModel.ToolbarState,
+		screenModel: VideosScreenModel,
+		scrollState: LazyGridState
+	) {
 		EditGridSheet(screenModel, scrollState, state.categories) { video, category ->
 			val isSelected by remember(category.id, video.chips?.categories) {
-				derivedStateOf { video.chips?.categories?.firstOrNull { it.id == category.id } != null }
+				derivedStateOf { video.chips?.categories?.any { it.id == category.id } == true }
 			}
 			Row(verticalAlignment = Alignment.CenterVertically) {
-				Checkbox(isSelected, {
+				Checkbox(isSelected, onCheckedChange = {
 					screenModel.toggleBinding(video, category)
 				})
 				Text(category.name)
@@ -272,26 +307,30 @@ class VideosScreen(
 	}
 
 	@Composable
-	fun RemoveVideoDialog(dialogState: AlertDialogState, screenModel: VideosScreenModel) {
-		val scope = rememberCoroutineScope()
-		if (dialogState.isVisible) {
-			val video = screenModel.editingVideo.value ?: return
+	private fun RemoveVideoDialog(
+		isVisible: Boolean,
+		onDismiss: () -> Unit,
+		onConfirm: (Video) -> Unit,
+		editingVideo: Video?
+	) {
+		if (isVisible && editingVideo != null) {
 			AlertDialog(
-				onDismissRequest = { scope.launch { dialogState.hide() } },
+				onDismissRequest = onDismiss,
 				title = { Text(stringResource(Res.string.confirmation_remove_title)) },
-				text = { Text(stringResource(Res.string.confirmation_remove_desc, video.name)) },
+				text = { Text(stringResource(Res.string.confirmation_remove_desc, editingVideo.name)) },
 				confirmButton = {
-					Button(onClick = {
-						scope.launch {
-							dialogState.hide()
-							screenModel.remove(video)
-						}
-					}, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)) {
+					Button(
+						onClick = { onConfirm(editingVideo) },
+						colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)
+					) {
 						Text(stringResource(Res.string.button_remove), color = Color.White)
 					}
 				},
 				dismissButton = {
-					Button(onClick = { scope.launch { dialogState.hide() } }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)) {
+					Button(
+						onClick = onDismiss,
+						colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
+					) {
 						Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
 					}
 				}
@@ -300,10 +339,14 @@ class VideosScreen(
 	}
 
 	@Composable
-	private fun <T> EditGridSheet(screenModel: VideosScreenModel, scrollState: LazyGridState, container: List<T>, item: @Composable (Video, T) -> Unit) {
+	private fun <T> EditGridSheet(
+		screenModel: VideosScreenModel,
+		scrollState: LazyGridState,
+		container: List<T>,
+		item: @Composable (Video, T) -> Unit
+	) {
 		val video by screenModel.editingVideo.collectAsState()
-		val currentVideo = video
-		if (currentVideo != null) {
+		video?.let { currentVideo ->
 			LazyVerticalGrid(
 				columns = Fixed(3),
 				state = scrollState

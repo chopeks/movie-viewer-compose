@@ -20,13 +20,13 @@ class AlertDialogState(
 	val isVisible: Boolean
 		get() = _isVisible
 
-	suspend fun show() { // no need for suspended, but to keep it consistent with modal dialog
+	fun show() {
 		if (confirmValueChange(true)) {
 			_isVisible = true
 		}
 	}
 
-	suspend fun hide() { // no need for suspended, but to keep it consistent with modal dialog
+	fun hide() {
 		if (confirmValueChange(false)) {
 			_isVisible = false
 		}
