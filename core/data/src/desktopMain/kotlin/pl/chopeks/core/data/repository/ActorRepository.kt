@@ -4,6 +4,7 @@ import pl.chopeks.core.database.datasource.ActorLocalDataSource
 import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.Video
 import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 class ActorRepository(
 	private val dataSource: ActorLocalDataSource
@@ -16,6 +17,7 @@ class ActorRepository(
 		return dataSource.getImage(actor)
 	}
 
+	@OptIn(ExperimentalEncodingApi::class)
 	override suspend fun getImageBytes(actor: Actor): ByteArray? {
 		return getImage(actor)?.let { Base64.Mime.decode(it) }
 	}
@@ -28,12 +30,12 @@ class ActorRepository(
 		dataSource.unbind(actor, video)
 	}
 
-	override suspend fun add(name: String, url: String?) {
-		dataSource.edit(0, name, url)
+	override suspend fun add(name: String, image: String?) {
+		dataSource.edit(0, name, image)
 	}
 
-	override suspend fun edit(id: Int, name: String, url: String?) {
-		dataSource.edit(id, name, url)
+	override suspend fun edit(id: Int, name: String, image: String?) {
+		dataSource.edit(id, name, image)
 	}
 
 	override suspend fun delete(actor: Actor) {

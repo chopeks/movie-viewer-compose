@@ -11,7 +11,7 @@ interface IActorRepository {
 	suspend fun getImageBytes(actor: Actor): ByteArray?
 	suspend fun bind(actor: Actor, video: Video)
 	suspend fun unbind(actor: Actor, video: Video)
-	suspend fun add(name: String, url: String?)
-	suspend fun edit(id: Int, name: String, url: String?)
+	suspend fun add(name: String, image: String?)
+	suspend fun edit(id: Int, name: String, image: String?)
 	suspend fun delete(actor: Actor)
 }

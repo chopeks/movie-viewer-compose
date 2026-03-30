@@ -91,13 +91,12 @@ class ActorsScreenModelTest : StringSpec({
 	"AddActor intent should call repository and reload" {
 		runTest {
 			coEvery { repository.add(any(), any()) } returns Unit
-			coEvery { imageConverter.urlToBase64(any(), any(), any()) } returns "base64"
 			coEvery { repository.getActors() } returns emptyList()
 
-			screenModel.handleIntent(Intent.AddActor("New Actor", "url"))
+			screenModel.handleIntent(Intent.AddActor("New Actor", null))
 			advanceUntilIdle()
 
-			coVerify { repository.add("New Actor", "base64") }
+			coVerify { repository.add("New Actor", null) }
 			coVerify { repository.getActors() }
 		}
 	}
@@ -106,13 +105,12 @@ class ActorsScreenModelTest : StringSpec({
 		runTest {
 			val actor = Actor(1, "Old Name")
 			coEvery { repository.edit(any(), any(), any()) } returns Unit
-			coEvery { imageConverter.urlToBase64(any(), any(), any()) } returns "new_base64"
 			coEvery { repository.getActors() } returns emptyList()
 
-			screenModel.handleIntent(Intent.EditActor(actor, "New Name", "new_url"))
+			screenModel.handleIntent(Intent.EditActor(actor, "New Name", null))
 			advanceUntilIdle()
 
-			coVerify { repository.edit(1, "New Name", "new_base64") }
+			coVerify { repository.edit(1, "New Name", null) }
 			coVerify { repository.getActors() }
 		}
 	}

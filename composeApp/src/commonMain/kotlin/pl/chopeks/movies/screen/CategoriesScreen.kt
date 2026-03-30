@@ -89,8 +89,8 @@ class CategoriesScreen : Screen {
 		AddCategoryDialog(
 			isVisible = addDialogState.isVisible,
 			onDismiss = { addDialogState.hide() },
-			onConfirm = { name, url ->
-				screenModel.handleIntent(Intent.AddCategory(name, url))
+			onConfirm = { name, bytes ->
+				screenModel.handleIntent(Intent.AddCategory(name, bytes))
 				addDialogState.hide()
 			}
 		)
@@ -98,8 +98,8 @@ class CategoriesScreen : Screen {
 		EditCategoryDialog(
 			category = editingCategory,
 			onDismiss = { editingCategory = null },
-			onConfirm = { name, url ->
-				editingCategory?.let { screenModel.handleIntent(Intent.EditCategory(it, name, url)) }
+			onConfirm = { name, bytes ->
+				editingCategory?.let { screenModel.handleIntent(Intent.EditCategory(it, name, bytes)) }
 				editingCategory = null
 			},
 			onRemove = {
@@ -113,11 +113,10 @@ class CategoriesScreen : Screen {
 	private fun AddCategoryDialog(
 		isVisible: Boolean,
 		onDismiss: () -> Unit,
-		onConfirm: (String, String) -> Unit
+		onConfirm: (String, ByteArray?) -> Unit
 	) {
 		if (isVisible) {
 			var name by remember { mutableStateOf("") }
-			var url by remember { mutableStateOf("") }
 			var droppedImageBytes by remember { mutableStateOf<ByteArray?>(null) }
 
 			AlertDialog(
@@ -131,23 +130,17 @@ class CategoriesScreen : Screen {
 							label = { Text(stringResource(Res.string.label_name)) },
 							modifier = Modifier.fillMaxWidth()
 						)
-						TextField(
-							value = url,
-							onValueChange = { url = it },
-							label = { Text(stringResource(Res.string.label_image_url)) },
-							modifier = Modifier.fillMaxWidth()
-						)
 						DragDropImageContainer(
 							ratio = 1.77f,
-							url = url,
+							url = "",
 							imageBytes = null,
 							droppedImageBytes = droppedImageBytes,
-							onDroppedImageBytesChanged = { droppedImageBytes = it; url = "" }
+							onDroppedImageBytesChanged = { droppedImageBytes = it }
 						)
 					}
 				}, confirmButton = {
 					Button(
-						onClick = { if (name.isNotBlank()) onConfirm(name, url) },
+						onClick = { if (name.isNotBlank()) onConfirm(name, droppedImageBytes) },
 						colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
 					) {
 						Text(stringResource(Res.string.button_add), color = Color.White)
@@ -168,14 +161,11 @@ class CategoriesScreen : Screen {
 	private fun EditCategoryDialog(
 		category: Category?,
 		onDismiss: () -> Unit,
-		onConfirm: (String, String) -> Unit,
+		onConfirm: (String, ByteArray?) -> Unit,
 		onRemove: () -> Unit
 	) {
 		if (category != null) {
 			var name by remember { mutableStateOf(category.name) }
-			var url by remember {
-				mutableStateOf(if ((category.image ?: "").startsWith("http")) category.image ?: "" else "")
-			}
 			var droppedImageBytes by remember { mutableStateOf<ByteArray?>(null) }
 
 			AlertDialog(
@@ -189,18 +179,12 @@ class CategoriesScreen : Screen {
 							label = { Text(stringResource(Res.string.label_name)) },
 							modifier = Modifier.fillMaxWidth()
 						)
-						TextField(
-							value = url,
-							onValueChange = { url = it },
-							label = { Text(stringResource(Res.string.label_image_url)) },
-							modifier = Modifier.fillMaxWidth()
-						)
 						DragDropImageContainer(
 							ratio = 1.77f,
-							url = url,
-							imageBytes = null,
+							url = if ((category.image ?: "").startsWith("http")) category.image ?: "" else "",
+							imageBytes = category.imageBytes,
 							droppedImageBytes = droppedImageBytes,
-							onDroppedImageBytesChanged = { droppedImageBytes = it; url = "" }
+							onDroppedImageBytesChanged = { droppedImageBytes = it }
 						)
 					}
 				}, confirmButton = {
@@ -218,7 +202,7 @@ class CategoriesScreen : Screen {
 							Text(stringResource(Res.string.button_cancel), color = Color.LightGray)
 						}
 						Button(
-							onClick = { if (name.isNotBlank()) onConfirm(name, url) },
+							onClick = { if (name.isNotBlank()) onConfirm(name, droppedImageBytes) },
 							colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
 						) {
 							Text(stringResource(Res.string.button_confirm), color = Color.White)

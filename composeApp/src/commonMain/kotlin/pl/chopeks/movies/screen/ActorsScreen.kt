@@ -94,8 +94,8 @@ class ActorsScreen : Screen {
 		AddActorDialog(
 			isVisible = addDialogState.isVisible,
 			onDismiss = { addDialogState.hide() },
-			onConfirm = { name, url, bytes ->
-				screenModel.handleIntent(Intent.AddActor(name, url, bytes))
+			onConfirm = { name, bytes ->
+				screenModel.handleIntent(Intent.AddActor(name, bytes))
 				addDialogState.hide()
 			}
 		)
@@ -103,8 +103,8 @@ class ActorsScreen : Screen {
 		EditActorDialog(
 			actor = editingActor,
 			onDismiss = { editingActor = null },
-			onConfirm = { name, url, bytes ->
-				editingActor?.let { screenModel.handleIntent(Intent.EditActor(it, name, url, bytes)) }
+			onConfirm = { name, bytes ->
+				editingActor?.let { screenModel.handleIntent(Intent.EditActor(it, name, bytes)) }
 				editingActor = null
 			},
 			onRemove = {
@@ -123,11 +123,10 @@ class ActorsScreen : Screen {
 	private fun AddActorDialog(
 		isVisible: Boolean,
 		onDismiss: () -> Unit,
-		onConfirm: (String, String, ByteArray?) -> Unit
+		onConfirm: (String, ByteArray?) -> Unit
 	) {
 		if (isVisible) {
 			var name by remember { mutableStateOf("") }
-			var url by remember { mutableStateOf("") }
 			var droppedImageBytes by remember { mutableStateOf<ByteArray?>(null) }
 
 			AlertDialog(
@@ -144,19 +143,13 @@ class ActorsScreen : Screen {
 							label = { Text(stringResource(Res.string.label_name)) },
 							modifier = Modifier.fillMaxWidth()
 						)
-						TextField(
-							value = url,
-							onValueChange = { url = it; droppedImageBytes = null },
-							label = { Text(stringResource(Res.string.label_image_url)) },
-							modifier = Modifier.fillMaxWidth()
-						)
 
 						DragDropImageContainer(
 							ratio = 0.7f,
-							url = url,
+							url = "",
 							imageBytes = null,
 							droppedImageBytes = droppedImageBytes,
-							onDroppedImageBytesChanged = { droppedImageBytes = it; url = "" }
+							onDroppedImageBytesChanged = { droppedImageBytes = it }
 						)
 					}
 				},
@@ -164,7 +157,7 @@ class ActorsScreen : Screen {
 					Button(
 						onClick = {
 							if (name.isNotBlank()) {
-								onConfirm(name, url, droppedImageBytes)
+								onConfirm(name, droppedImageBytes)
 							}
 						},
 						colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
@@ -189,15 +182,12 @@ class ActorsScreen : Screen {
 	private fun EditActorDialog(
 		actor: Actor?,
 		onDismiss: () -> Unit,
-		onConfirm: (String, String, ByteArray?) -> Unit,
+		onConfirm: (String, ByteArray?) -> Unit,
 		onRemove: () -> Unit,
 		onDeduplicate: () -> Unit
 	) {
 		if (actor != null) {
 			var name by remember { mutableStateOf(actor.name) }
-			var url by remember {
-				mutableStateOf(if ((actor.image ?: "").startsWith("http")) actor.image ?: "" else "")
-			}
 			var droppedImageBytes by remember { mutableStateOf<ByteArray?>(null) }
 
 			AlertDialog(
@@ -214,18 +204,12 @@ class ActorsScreen : Screen {
 							label = { Text(stringResource(Res.string.label_name)) },
 							modifier = Modifier.fillMaxWidth()
 						)
-						TextField(
-							value = url,
-							onValueChange = { url = it; droppedImageBytes = null },
-							label = { Text(stringResource(Res.string.label_image_url)) },
-							modifier = Modifier.fillMaxWidth()
-						)
 						DragDropImageContainer(
 							ratio = 0.7f,
-							url = url,
+							url = if ((actor.image ?: "").startsWith("http")) actor.image ?: "" else "",
 							imageBytes = actor.imageBytes,
 							droppedImageBytes = droppedImageBytes,
-							onDroppedImageBytesChanged = { droppedImageBytes = it; url = "" }
+							onDroppedImageBytesChanged = { droppedImageBytes = it }
 						)
 					}
 				},
@@ -252,7 +236,7 @@ class ActorsScreen : Screen {
 						Button(
 							onClick = {
 								if (name.isNotBlank()) {
-									onConfirm(name, url, droppedImageBytes)
+									onConfirm(name, droppedImageBytes)
 								}
 							},
 							colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)

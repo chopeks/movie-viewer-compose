@@ -50,27 +50,29 @@ class CategoriesDataSource(
 	}
 
 
-	suspend fun add(name: String, url: String?) = withContext(Dispatchers.IO) {
+	suspend fun add(name: String, image: String?) = withContext(Dispatchers.IO) {
 		transaction(db) {
 			CategoryTable.insert { new ->
 				new[CategoryTable.name] = name
-				new[CategoryTable.image] = url?.ifBlank { null }
+				new[CategoryTable.image] = image?.ifBlank { null }
 			}
 			Unit
 		}
 	}
 
-	suspend fun edit(id: Int, name: String, url: String?) = withContext(Dispatchers.IO) {
+	suspend fun edit(id: Int, name: String, image: String?) = withContext(Dispatchers.IO) {
 		transaction(db) {
 			if (CategoryEntity.find { CategoryTable.id eq id }.firstOrNull() != null) {
 				CategoryTable.update({ CategoryTable.id eq id }) { obj ->
 					obj[CategoryTable.name] = name
-					obj[CategoryTable.image] = url?.ifBlank { null }
+					if (image != null)
+						obj[CategoryTable.image] = image
 				}
 			} else {
 				CategoryTable.insert { new ->
 					new[CategoryTable.name] = name
-					new[CategoryTable.image] = url?.ifBlank { null }
+					if (image != null)
+						new[CategoryTable.image] = image
 				}
 			}
 		}

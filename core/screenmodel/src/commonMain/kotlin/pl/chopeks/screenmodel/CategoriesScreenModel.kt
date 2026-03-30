@@ -11,6 +11,7 @@ import pl.chopeks.core.data.repository.ICategoryRepository
 import pl.chopeks.core.model.Category
 import pl.chopeks.core.utils.runIf
 import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 class CategoriesScreenModel(
 	private val repository: ICategoryRepository,
@@ -20,8 +21,8 @@ class CategoriesScreenModel(
 	sealed class Intent {
 		object LoadCategories : Intent()
 		data class UpdateSearch(val query: String) : Intent()
-		data class AddCategory(val name: String, val url: String, val imageBytes: ByteArray? = null) : Intent()
-		data class EditCategory(val category: Category, val name: String, val url: String, val imageBytes: ByteArray? = null) : Intent()
+		data class AddCategory(val name: String, val imageBytes: ByteArray? = null) : Intent()
+		data class EditCategory(val category: Category, val name: String, val imageBytes: ByteArray? = null) : Intent()
 		data class RemoveCategory(val category: Category) : Intent()
 	}
 
@@ -62,8 +63,8 @@ class CategoriesScreenModel(
 		when (intent) {
 			is Intent.LoadCategories -> load()
 			is Intent.UpdateSearch -> _searchQuery.value = intent.query
-			is Intent.AddCategory -> add(intent.name, intent.url, intent.imageBytes)
-			is Intent.EditCategory -> edit(intent.category, intent.name, intent.url, intent.imageBytes)
+			is Intent.AddCategory -> add(intent.name, intent.imageBytes)
+			is Intent.EditCategory -> edit(intent.category, intent.name, intent.imageBytes)
 			is Intent.RemoveCategory -> remove(intent.category)
 		}
 	}
@@ -81,18 +82,18 @@ class CategoriesScreenModel(
 		}
 	}
 
-	private fun add(name: String, url: String, imageBytes: ByteArray?) {
+	private fun add(name: String, imageBytes: ByteArray?) {
 		screenModelScope.launch {
 			val image = imageBytes?.let { imageConverter.bytesToBase64(it, 269, 384) }
-			repository.add(name, image ?: imageConverter.urlToBase64(url, 269, 384))
+			repository.add(name, image)
 			load()
 		}
 	}
 
-	private fun edit(category: Category, name: String, url: String, imageBytes: ByteArray?) {
+	private fun edit(category: Category, name: String, imageBytes: ByteArray?) {
 		screenModelScope.launch {
 			val image = imageBytes?.let { imageConverter.bytesToBase64(it, 269, 384) }
-			repository.edit(category.id, name, image ?: imageConverter.urlToBase64(url, 269, 384))
+			repository.edit(category.id, name, image)
 			load()
 		}
 	}
@@ -104,6 +105,7 @@ class CategoriesScreenModel(
 		}
 	}
 
+	@OptIn(ExperimentalEncodingApi::class)
 	private suspend fun fetchImage(category: Category) {
 		repository.getImage(category)?.let { img ->
 			val decoded = Base64.Mime.decode(img)

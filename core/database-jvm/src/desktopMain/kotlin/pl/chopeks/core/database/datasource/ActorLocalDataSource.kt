@@ -45,18 +45,20 @@ class ActorLocalDataSource(
 		}
 	}
 
-	suspend fun edit(id: Int, name: String, url: String?) {
+	suspend fun edit(id: Int, name: String, image: String?) {
 		withContext(Dispatchers.IO) {
 			transaction(db) {
 				if (ActorTable.selectAll().where { ActorTable.id eq id }.firstOrNull() != null) {
 					ActorTable.update({ ActorTable.id eq id }) { obj ->
 						obj[ActorTable.name] = name
-						obj[ActorTable.image] = url?.ifBlank { null }
+						if (image != null)
+							obj[ActorTable.image] = image
 					}
 				} else {
 					ActorTable.insert { new ->
 						new[ActorTable.name] = name
-						new[ActorTable.image] = url?.ifBlank { null }
+						if (image != null)
+							new[ActorTable.image] = image
 					}
 				}
 			}

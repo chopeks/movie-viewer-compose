@@ -25,12 +25,12 @@ class ActorRepository(
 		delegate.unbind(actor, video)
 	}
 
-	override suspend fun add(name: String, url: String?) = rpc {
-		delegate.add(name, url)
+	override suspend fun add(name: String, image: String?) = rpc {
+		delegate.add(name, image)
 	}
 
-	override suspend fun edit(id: Int, name: String, url: String?) = rpc {
-		delegate.edit(id, name, url)
+	override suspend fun edit(id: Int, name: String, image: String?) = rpc {
+		delegate.edit(id, name, image)
 	}
 
 	override suspend fun delete(actor: Actor) = rpc {

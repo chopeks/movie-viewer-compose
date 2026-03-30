@@ -98,14 +98,13 @@ class CategoriesScreenModelTest : StringSpec({
 	"AddCategory intent should call repository and reload" {
 		runTest {
 			coEvery { repository.add(any(), any()) } returns Unit
-			coEvery { imageConverter.urlToBase64(any(), any(), any()) } returns "base64"
 			coEvery { repository.getCategories() } returns emptyList()
 			coEvery { repository.getImage(any()) } returns null
 
-			screenModel.handleIntent(Intent.AddCategory("New Cat", "url"))
+			screenModel.handleIntent(Intent.AddCategory("New Cat", null))
 			advanceUntilIdle()
 
-			coVerify { repository.add("New Cat", "base64") }
+			coVerify { repository.add("New Cat", null) }
 			coVerify { repository.getCategories() }
 		}
 	}
@@ -114,14 +113,13 @@ class CategoriesScreenModelTest : StringSpec({
 		runTest {
 			val category = Category(1, "Old Name")
 			coEvery { repository.edit(any(), any(), any()) } returns Unit
-			coEvery { imageConverter.urlToBase64(any(), any(), any()) } returns "new_base64"
 			coEvery { repository.getCategories() } returns emptyList()
 			coEvery { repository.getImage(any()) } returns null
 
-			screenModel.handleIntent(Intent.EditCategory(category, "New Name", "new_url"))
+			screenModel.handleIntent(Intent.EditCategory(category, "New Name", null))
 			advanceUntilIdle()
 
-			coVerify { repository.edit(1, "New Name", "new_base64") }
+			coVerify { repository.edit(1, "New Name", null) }
 			coVerify { repository.getCategories() }
 		}
 	}
