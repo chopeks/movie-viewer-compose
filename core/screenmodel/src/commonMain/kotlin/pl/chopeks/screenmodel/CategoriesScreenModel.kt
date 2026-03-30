@@ -84,7 +84,7 @@ class CategoriesScreenModel(
 
 	private fun add(name: String, imageBytes: ByteArray?) {
 		screenModelScope.launch {
-			val image = imageBytes?.let { imageConverter.bytesToBase64(it, 269, 384) }
+			val image = imageBytes?.let { imageConverter.bytesToBase64(it, 425, 240) }
 			repository.add(name, image)
 			load()
 		}
@@ -92,7 +92,7 @@ class CategoriesScreenModel(
 
 	private fun edit(category: Category, name: String, imageBytes: ByteArray?) {
 		screenModelScope.launch {
-			val image = imageBytes?.let { imageConverter.bytesToBase64(it, 269, 384) }
+			val image = imageBytes?.let { imageConverter.bytesToBase64(it, 425, 240) }
 			repository.edit(category.id, name, image)
 			load()
 		}

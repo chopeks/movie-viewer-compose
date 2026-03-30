@@ -63,8 +63,6 @@ kotlin {
 			implementation(libs.kotlinx.rpc.server)
 			implementation(libs.kotlinx.rpc.ktor.server)
 			implementation(libs.kotlinx.rpc.serialization)
-
-			implementation(libs.imgscalr)
 		}
 
 		wasmJsMain.dependencies {
