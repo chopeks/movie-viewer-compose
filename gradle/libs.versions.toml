@@ -16,7 +16,7 @@ mockk = "1.13.12"
 kotest = "6.1.7"
 turbine = "1.2.1"
 materialIcons = "1.7.3"
-imgscalr = "4.2"
+androidx-datastore = "1.2.1"
 
 javaccp = "1.5.10"
 javacv = "1.5.13"
@@ -89,6 +89,9 @@ kotlinx-rpc-server = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-server",
 kotlinx-rpc-serialization = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-serialization-json", version.ref = "kotlinx-rpc" }
 kotlinx-rpc-ktor-client = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-client", version.ref = "kotlinx-rpc" }
 kotlinx-rpc-ktor-server = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-server", version.ref = "kotlinx-rpc" }
+
+androidx-datastore-core = { module = "androidx.datastore:datastore-core", version.ref = "androidx-datastore" }
+androidx-datastore-core-okio = { module = "androidx.datastore:datastore-core-okio", version.ref = "androidx-datastore" }
 
 # Dependencies of the included build-logic
 bl-multiplatform-plugin = { group = "org.jetbrains.kotlin.multiplatform", name = "org.jetbrains.kotlin.multiplatform.gradle.plugin", version.ref = "kotlin" }

@@ -1,5 +1,6 @@
 package pl.chopeks.core.data.repository
 
+import kotlinx.coroutines.flow.Flow
 import pl.chopeks.core.data.utils.RpcWrapper
 import pl.chopeks.core.model.Path
 import pl.chopeks.core.model.Settings
@@ -7,8 +8,9 @@ import pl.chopeks.core.model.Settings
 class SettingsRepository(
 	private val delegate: ISettingsRepository
 ) : ISettingsRepository, RpcWrapper {
-	override suspend fun getSettings(): Settings = rpc {
-		delegate.getSettings()
+
+	override fun getSettings(): Flow<Settings> {
+		return delegate.getSettings()
 	}
 
 	override suspend fun setSettings(settings: Settings) = rpc {

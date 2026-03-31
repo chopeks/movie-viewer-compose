@@ -1,6 +1,7 @@
 package pl.chopeks.movies.platform
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import pl.chopeks.core.data.IVideoPlayer
 import pl.chopeks.core.data.repository.ISettingsRepository
@@ -18,7 +19,7 @@ class VideoPlayer(
 	override suspend fun play(video: Video) = withContext(Dispatchers.IO) {
 		val path = repository.getVideoPath(video)
 			?: return@withContext
-		val settings = settingsRepository.getSettings()
+		val settings = settingsRepository.getSettings().first()
 		arrayOf(settings.moviePlayer, "\"$path\"")
 			.runCommand(File(path).parentFile, ProcessBuilder.Redirect.DISCARD)
 	}

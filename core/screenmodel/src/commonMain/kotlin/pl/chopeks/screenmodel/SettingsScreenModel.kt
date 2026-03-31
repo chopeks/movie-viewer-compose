@@ -4,6 +4,7 @@ import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import pl.chopeks.core.data.bestConcurrencyDispatcher
 import pl.chopeks.core.data.repository.ISettingsRepository
@@ -21,7 +22,11 @@ class SettingsScreenModel(
 
 	fun init() {
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
-			_settings.emit(repository.getSettings())
+			launch {
+				repository.getSettings().collectLatest {
+					_settings.emit(it)
+				}
+			}
 			_paths.emit(repository.getPaths())
 		}
 	}

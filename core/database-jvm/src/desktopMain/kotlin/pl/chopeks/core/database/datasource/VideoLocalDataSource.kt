@@ -6,14 +6,13 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import pl.chopeks.core.database.*
-import pl.chopeks.core.database.cache.Cache
 import pl.chopeks.core.model.*
 import java.io.File
 import java.nio.file.Files
 
 class VideoLocalDataSource(
 	private val db: Database,
-	private val directories: DirectoriesLocalDataSource,
+	private val directories: DirectoriesLocalDataSource
 ) {
 	data class NewVideo(
 		val name: String,
@@ -120,14 +119,6 @@ class VideoLocalDataSource(
 					.map { it[MovieCategories.category] },
 				actors = MovieActors.selectAll().where { MovieActors.movie eq video.id }
 					.map { it[MovieActors.actor] })
-		}
-	}
-
-	suspend fun play(video: Video): Pair<String, File>? = withContext(Dispatchers.IO) {
-		transaction(db) {
-			MovieTable.select(MovieTable.id, MovieTable.path).where { MovieTable.id eq video.id }.limit(1).firstOrNull()?.let {
-				Cache.moviePlayer to File(it[MovieTable.path])
-			}
 		}
 	}
 

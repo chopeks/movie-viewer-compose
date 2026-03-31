@@ -12,8 +12,8 @@ import pl.chopeks.core.database.duplicates.VideoDedupLocalDataStorage
 val databaseModule = DI.Module("databaseModule") {
 	bindSingleton { DatabaseHelper.connect() }
 	// for app
+	bindSingleton { SettingsLocalDataSource() }
 	bindProvider { ActorLocalDataSource(instance()) }
-	bindProvider { SettingsLocalDataSource() }
 	bindProvider { DirectoriesLocalDataSource(instance()) }
 	bindProvider { CategoriesDataSource(instance()) }
 	bindProvider { VideoLocalDataSource(instance(), instance()) }

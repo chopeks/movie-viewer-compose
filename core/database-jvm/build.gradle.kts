@@ -14,6 +14,9 @@ kotlin {
 
 			implementation(libs.sqlite.jdbc)
 			implementation(libs.sqlite.jdbm)
+
+			implementation(libs.androidx.datastore.core)
+			implementation(libs.androidx.datastore.core.okio)
 		}
 	}
 }

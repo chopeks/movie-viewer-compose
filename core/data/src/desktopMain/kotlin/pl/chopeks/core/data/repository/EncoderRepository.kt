@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -92,8 +93,8 @@ class EncoderRepository(
 		_encodingStatus.update { currentMap -> currentMap + (name to status) }
 	}
 
-	internal fun getFilesToEncode(): List<File> {
-		val settings = settingsLocalDataSource.get()
+	internal suspend fun getFilesToEncode(): List<File> {
+		val settings = settingsLocalDataSource.get().first()
 		val targetDir = File(settings.encoderSink)
 		return getFilesFromSource()
 			.filter { file ->
@@ -103,13 +104,15 @@ class EncoderRepository(
 			}
 	}
 
-	internal fun getFilesFromSource(): List<File> {
-		val settings = settingsLocalDataSource.get()
-		return File(settings.encoderSource).listFiles().filter { it.isFile }
+	internal suspend fun getFilesFromSource(): List<File> {
+		val settings = settingsLocalDataSource.get().first()
+		val dir = File(settings.encoderSource)
+		if (!dir.exists() || !dir.isDirectory) return emptyList()
+		return dir.listFiles()?.filter { it.isFile } ?: emptyList()
 	}
 
-	internal fun getSink(): File {
-		val settings = settingsLocalDataSource.get()
+	internal suspend fun getSink(): File {
+		val settings = settingsLocalDataSource.get().first()
 		return File(settings.encoderSink)
 	}
 

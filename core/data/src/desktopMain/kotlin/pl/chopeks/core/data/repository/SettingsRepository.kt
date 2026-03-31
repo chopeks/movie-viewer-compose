@@ -1,5 +1,6 @@
 package pl.chopeks.core.data.repository
 
+import kotlinx.coroutines.flow.Flow
 import pl.chopeks.core.database.datasource.DirectoriesLocalDataSource
 import pl.chopeks.core.database.datasource.SettingsLocalDataSource
 import pl.chopeks.core.model.Path
@@ -9,7 +10,7 @@ class SettingsRepository(
 	private val settingsDataSource: SettingsLocalDataSource,
 	private val directoriesDataSource: DirectoriesLocalDataSource
 ) : ISettingsRepository {
-	override suspend fun getSettings(): Settings {
+	override fun getSettings(): Flow<Settings> {
 		return settingsDataSource.get()
 	}
 
