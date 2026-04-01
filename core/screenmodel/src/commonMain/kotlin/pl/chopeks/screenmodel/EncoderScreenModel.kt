@@ -8,11 +8,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import pl.chopeks.core.data.repository.IEncoderRepository
 import pl.chopeks.core.model.EncodeStatus
+import pl.chopeks.core.model.priority
 import pl.chopeks.screenmodel.model.UiState
 
 class EncoderScreenModel(
 	private val encoderRepository: IEncoderRepository
-): ScreenModel {
+) : ScreenModel {
 	data class Page(
 		val encoder: Map<String, EncodeStatus> = mapOf()
 	)
@@ -30,7 +31,15 @@ class EncoderScreenModel(
 			)
 			encoderRepository.observeEncodingStatus().collect {
 				launchWithState { state ->
-					uiState.emit(UiState.Success(state.copy(encoder = it)))
+					uiState.emit(
+						value = UiState.Success(
+							data = state.copy(
+								encoder = it.entries
+									.sortedBy { it.value.priority() }
+									.associate { it.key to it.value }
+							)
+						)
+					)
 				}
 			}
 		}

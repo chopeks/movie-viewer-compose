@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -62,6 +63,9 @@ class EncoderScreen : Screen {
 				is UiState.Error -> Text("Error: ${current.message}")
 				is UiState.Success -> {
 					LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.fillMaxWidth()) {
+						item(span = { GridItemSpan(2) }, key = "SCROLL_ANCHOR") {
+							Spacer(modifier = Modifier.height(1.dp).fillMaxWidth())
+						}
 						items(current.data.encoder.toList(), { it.first }) { pair ->
 							val item = pair.second
 
@@ -76,6 +80,7 @@ class EncoderScreen : Screen {
 
 							Column(
 								modifier = Modifier
+									.animateItem()
 									.fillMaxWidth()
 									.padding(4.dp)
 									.background(MaterialTheme.colors.surface, RoundedCornerShape(8.dp))

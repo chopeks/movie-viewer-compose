@@ -19,3 +19,11 @@ sealed class EncodeStatus {
 	data class Processing(val progress: Float, val eta: Duration? = null) : EncodeStatus()
 	data class Error(val message: String) : EncodeStatus()
 }
+
+fun EncodeStatus.priority(): Int = when (this) {
+	is EncodeStatus.Processing -> 0
+	is EncodeStatus.Waiting -> 1
+	is EncodeStatus.Finished -> 3
+	is EncodeStatus.FinishedAndRemoved -> 4
+	is EncodeStatus.Error -> 2
+}
