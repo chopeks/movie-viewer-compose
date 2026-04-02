@@ -22,7 +22,10 @@ val dataModule = DI.Module("data-di") {
 	bindSingleton<ICategoryRepository> { CategoryRepository(instance()) }
 	bindSingleton<IVideoRepository> { VideoRepository(instance(), instance()) }
 	bindSingleton<IDuplicateRepository> { DuplicateRepository(instance()) }
-	bindSingleton<ISystemCapabilityRepository> { SystemCapabilityRepository() }
+
+	bindSingleton<SystemCapabilityRepository> { SystemCapabilityRepository() }
+	bindProvider<ISystemCapabilityRepository> { instance<SystemCapabilityRepository>() }
+
 	bindSingleton<EncoderRepository> { EncoderRepository(instance(), instance(), instance(), instance()) }
 	bindProvider<IEncoderRepository> { instance<EncoderRepository>() }
 

@@ -4,6 +4,9 @@ import kotlinx.coroutines.flow.flow
 import pl.chopeks.core.ffmpeg.model.FfmpegCapabilities
 import pl.chopeks.core.ffmpeg.utils.formatDurationToFfmpegFormat
 import pl.chopeks.core.ffmpeg.utils.runCancellable
+import pl.chopeks.core.model.capability.Capability
+import pl.chopeks.core.model.capability.CapabilityGuard
+import pl.chopeks.core.utils.ensure
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -46,7 +49,10 @@ class FfmpegManager(
 	 * @param duration The duration in milliseconds for the fingerprint stream.
 	 * @return The started `Process`.
 	 */
+	context(guard: CapabilityGuard)
 	fun getFingerprintStream(video: File, start: Int? = null, duration: Int? = null): Process {
+		ensure(Capability.VIDEO_ENGINE)
+
 		val ffmpegCmd = mutableListOf(FFMPEG_COMMAND)
 		if (start != null)
 			ffmpegCmd += listOf("-ss", formatDurationToFfmpegFormat(start.toLong()))
@@ -89,7 +95,7 @@ class FfmpegManager(
 			redirectError(ProcessBuilder.Redirect.DISCARD)
 		}
 
-		val output = process.inputStream.bufferedReader().use { it.readText()}.trim()
+		val output = process.inputStream.bufferedReader().use { it.readText() }.trim()
 		process.waitFor()
 
 		if (output.isBlank() || output == "N/A")
@@ -146,7 +152,7 @@ class FfmpegManager(
 			val process = processFactory(listOf(FFMPEG_COMMAND, "-version")) {
 				redirectError(ProcessBuilder.Redirect.DISCARD)
 			}
-			val output = process.inputStream.bufferedReader().use { it.readText()}
+			val output = process.inputStream.bufferedReader().use { it.readText() }
 
 			process.destroy()
 

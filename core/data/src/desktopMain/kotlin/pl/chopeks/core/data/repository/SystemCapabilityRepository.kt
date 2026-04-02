@@ -7,6 +7,10 @@ class SystemCapabilityRepository : ISystemCapabilityRepository {
 	private val versionMap = mutableMapOf<ExternalSoftware, String>()
 	private val capabilitySet = mutableSetOf<Capability>()
 
+	fun contains(capability: Capability): Boolean {
+		return capabilitySet.contains(capability)
+	}
+
 	override suspend fun addCapability(capability: Capability) {
 		capabilitySet.add(capability)
 	}

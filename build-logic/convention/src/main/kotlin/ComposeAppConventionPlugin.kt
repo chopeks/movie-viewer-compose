@@ -4,6 +4,7 @@ import org.gradle.kotlin.dsl.invoke
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
+import utils.enableContextParameters
 import utils.libs
 
 /**
@@ -60,6 +61,7 @@ abstract class ComposeAppConventionPlugin : Plugin<Project> {
 					}
 				}
 			}
+			enableContextParameters()
 		}
 	}
 }

@@ -22,6 +22,6 @@ val taskModule = DI.Module("taskModule") {
 	bindProvider { CompareAudioUseCase(instance(), instance()) }
 	bindProvider { CompareVideoFramesUseCase(instance(), instance()) }
 
-	bindProvider { DuplicatesSearchTask(instance(), instance(), instance()) }
+	bindProvider { DuplicatesSearchTask(instance(), instance(), instance(), instance()) }
 	bindProvider { VideoLookupTask(instance(), instance(), instance(), instance()) }
 }

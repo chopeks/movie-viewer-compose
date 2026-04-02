@@ -8,6 +8,7 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import pl.chopeks.core.database.duplicates.FingerprintLocalDataSource
 import pl.chopeks.core.fpcalc.FpcalcManager
+import pl.chopeks.core.model.capability.CapabilityGuard
 import pl.chopeks.movies.server.utils.toByteArray
 import pl.chopeks.movies.utils.AppLogger
 import java.io.File
@@ -28,13 +29,14 @@ class CollectFingerprintsUseCase(
 	 * @return false if there are no more movies to be checked
 	 * @return true if a movie was checked and is ready to check next
 	 */
+	@OptIn(ExperimentalUnsignedTypes::class)
+	context(guard: CapabilityGuard)
 	suspend fun run(): Boolean = withContext(Dispatchers.Default) {
 		var entries = dataSource.getVideosWithoutFingerprints(16)
 		if (entries.isEmpty()) {
 			AppLogger.log("No entries without fingerprint found, aborting...")
 			return@withContext false
 		}
-
 		val time = measureTimeMillis {
 			entries = entries.map {
 				async {

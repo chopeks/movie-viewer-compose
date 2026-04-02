@@ -1,18 +1,9 @@
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-
 plugins {
-	alias(libs.plugins.kotlinMultiplatform)
-	alias(libs.plugins.kotlinSerialization)
+	alias(libs.plugins.mv.desktop.library)
+	alias(libs.plugins.mv.wasm.library)
 }
 
 kotlin {
-	jvm("desktop")
-	@OptIn(ExperimentalWasmDsl::class)
-	wasmJs {
-		browser()
-		binaries.library()
-	}
-
 	sourceSets {
 		commonMain.dependencies {
 			api(libs.kotlinx.serialization.json)

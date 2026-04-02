@@ -23,6 +23,7 @@ class SystemCapabilityService(
 		val ffmpegCapabilities = ffmpegManager.getFfmpegCapabilities()
 		if (ffmpegCapabilities != null) {
 			repository.addVersion(ExternalSoftware.FFMPEG, ffmpegCapabilities.version)
+			repository.addCapability(Capability.VIDEO_ENGINE)
 
 			if (ffmpegCapabilities.hasVmaf)
 				repository.addCapability(Capability.VIDEO_VMAF)
@@ -49,6 +50,7 @@ class SystemCapabilityService(
 		val fpcalcVersion = fpcalcManager.getFpcalcVersion()
 		if (fpcalcVersion != null) {
 			repository.addVersion(ExternalSoftware.FPCALC, fpcalcVersion)
+			repository.addCapability(Capability.AUDIO_ENGINE)
 			repository.addCapability(Capability.AUDIO_FINGERPRINT)
 		}
 	}

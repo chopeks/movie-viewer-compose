@@ -1,6 +1,9 @@
 package pl.chopeks.core.fpcalc
 
 import pl.chopeks.core.ffmpeg.FfmpegManager
+import pl.chopeks.core.model.capability.Capability
+import pl.chopeks.core.model.capability.CapabilityGuard
+import pl.chopeks.core.utils.ensure
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -29,7 +32,14 @@ class FpcalcManager(
 	 * @return An array of unsigned integers representing the audio fingerprint, or `null` if an error occurs.
 	 */
 	@OptIn(ExperimentalUnsignedTypes::class)
-	fun getFingerprint(video: File, start: Int? = null, duration: Int? = null): UIntArray? {
+	context(guard: CapabilityGuard)
+	fun getFingerprint(
+		video: File,
+		start: Int? = null,
+		duration: Int? = null
+	): UIntArray? {
+		ensure(Capability.AUDIO_FINGERPRINT)
+
 		val fpcalcCmd = listOf(
 			"fpcalc",
 			"-format", "s16le",

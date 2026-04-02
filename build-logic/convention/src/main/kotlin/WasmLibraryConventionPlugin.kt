@@ -4,6 +4,7 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import utils.enableContextParameters
 import utils.libs
 
 val NamedDomainObjectContainer<KotlinSourceSet>.wasmJsMain: KotlinSourceSet
@@ -40,6 +41,7 @@ abstract class WasmLibraryConventionPlugin : Plugin<Project> {
 					}
 				}
 			}
+			enableContextParameters()
 		}
 	}
 }

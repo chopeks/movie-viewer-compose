@@ -4,6 +4,7 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.invoke
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import utils.enableContextParameters
 import utils.libs
 
 val NamedDomainObjectContainer<KotlinSourceSet>.desktopMain: KotlinSourceSet
@@ -39,6 +40,7 @@ abstract class DesktopLibraryConventionPlugin : Plugin<Project> {
 					}
 				}
 			}
+			enableContextParameters()
 		}
 	}
 }

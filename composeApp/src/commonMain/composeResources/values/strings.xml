@@ -76,6 +76,8 @@
     <string name="confirmation_remove_title">Do you really want to delete this file?</string>
     <string name="confirmation_remove_desc">%1$s will be deleted from hard-drive. This operation can't be reversed.</string>
 
+    <string name="feature_desc_a_engine">fpcalc or other supported engine</string>
+    <string name="feature_desc_v_engine">ffmpeg or other supported engine</string>
     <string name="feature_desc_vmaf">VMAF (Visual Quality Measurement)</string>
     <string name="feature_desc_hevc_amd">AMD GPU HEVC Encoding</string>
     <string name="feature_desc_hevc_nvidia">NVIDIA GPU HEVC Encoding</string>
