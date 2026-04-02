@@ -13,6 +13,7 @@ import pl.chopeks.core.ffmpeg.FfmpegManager
 import pl.chopeks.core.ffmpeg.VideoComparator
 import pl.chopeks.core.model.EncodeStatus
 import java.io.File
+import kotlin.math.abs
 
 class EncoderRepository(
 	private val settingsLocalDataSource: SettingsLocalDataSource,
@@ -121,16 +122,23 @@ class EncoderRepository(
 
 		val duration = ffmpegManager.getVideoDuration(file)
 		val expectedDuration = ffmpegManager.getVideoDuration(targetFile)
-		val durationCheck = duration == expectedDuration
+		val durationDiff = abs(expectedDuration - duration)
+		val durationCheck = durationDiff <= 1000
 		if (!durationCheck) {
-			println("durationCheck failed for file ${file.name}")
+			println("durationCheck failed for file ${file.name} -> $duration!=$expectedDuration, diff=${abs(expectedDuration - duration)}")
 		}
 		val compareResult = videoComparator.compareVideos(file, targetFile)
 		val compareCheck = compareResult.ssim > 0.9 && compareResult.psnr > 20.0
 		if (!compareCheck) {
 			println("compareCheck failed for file ${file.name} -> $compareResult")
 		}
-		return durationCheck && compareCheck
+
+		if (durationCheck && compareCheck)
+			return true
+
+		val vmafResult = ffmpegManager.getVmafScore(file, targetFile, duration / 2)
+		println("vmaf result for file ${file.name} -> $vmafResult")
+		return vmafResult > 85.0
 	}
 
 	internal fun removeFile(file: File) {

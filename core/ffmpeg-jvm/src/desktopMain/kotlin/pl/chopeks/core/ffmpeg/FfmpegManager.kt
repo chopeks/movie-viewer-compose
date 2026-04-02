@@ -18,7 +18,19 @@ class FfmpegManager(
 		builder(ProcessBuilder(list)).start()
 	}
 ) {
+	companion object {
+		private const val vmafModelName = "vmaf_v0.6.1.json"
+		private val vmafRegex = Regex("VMAF score: (\\d+\\.\\d+)")
+	}
+
+	private val workDir = File(System.getProperty("java.io.tmpdir"), "ffmpeg")
+
 	init {
+		if (!workDir.exists())
+			workDir.mkdirs()
+		val modelFile = File(workDir, vmafModelName)
+		if (!modelFile.exists())
+			Unit.javaClass.getResourceAsStream("/$vmafModelName").use { it.copyTo(modelFile.outputStream()) }
 		println(availableEncoders())
 	}
 
@@ -305,6 +317,74 @@ class FfmpegManager(
 					} else 0f
 				}
 				.forEach { emit(it) }
+		}
+	}
+
+	/**
+	 * Runs a 5-second VMAF quality check comparing an encoded video to its source.
+	 * Uses fast-seeking for speed and a normalized filter chain for accuracy.
+	 *
+	 * @param original The source video file.
+	 * @param output The encoded HEVC file.
+	 * @param startTimeMs The timestamp to jump to for the sample (e.g., middle of video).
+	 * @return The VMAF score as a Double, or 0.0 if the check fails.
+	 */
+	fun getVmafScore(
+		original: File,
+		output: File,
+		startTimeMs: Long
+	): Double {
+		val width = getResolutionEntry(output, "width") ?: return 0.0
+		val height = getResolutionEntry(output, "height") ?: return 0.0
+
+		val ffmpegCmd = listOf(
+			"ffmpeg",
+			"-ss", formatDurationToFfmpegFormat(startTimeMs), "-t", "10", "-i", output.absolutePath,
+			"-ss", formatDurationToFfmpegFormat(startTimeMs), "-t", "10", "-i", original.absolutePath,
+			"-filter_complex",
+			"[0:v]scale=$width:$height:flags=neighbor,setsar=1,format=yuv420p[dist];" +
+				"[1:v]scale=$width:$height:flags=neighbor,setsar=1,format=yuv420p[ref];" +
+				"[dist][ref]libvmaf=model='path=$vmafModelName':n_threads=4",
+			"-f", "null", "-"
+		)
+		println("vmaf command ${ffmpegCmd.joinToString(" ")}")
+
+		return try {
+			val process = processFactory(ffmpegCmd) {
+				directory(workDir)
+				redirectError(ProcessBuilder.Redirect.PIPE)
+			}
+
+			val outputText = process.errorStream.bufferedReader().readText()
+			process.waitFor()
+
+			val match = vmafRegex.find(outputText)
+
+			match?.groupValues?.get(1)?.toDouble() ?: 0.0
+		} catch (e: Exception) {
+			0.0
+		}
+	}
+
+	/**
+	 * Helper to get specific video stream metadata (width/height) using ffprobe.
+	 */
+	private fun getResolutionEntry(video: File, entry: String): Int? {
+		val cmd = listOf(
+			"ffprobe", "-v", "error",
+			"-select_streams", "v:0",
+			"-show_entries", "stream=$entry",
+			"-of", "default=noprint_wrappers=1:nokey=1",
+			video.absolutePath
+		)
+
+		return try {
+			val process = Runtime.getRuntime().exec(cmd.toTypedArray())
+			val result = process.inputStream.bufferedReader().readText().trim()
+			process.waitFor()
+			result.toIntOrNull()
+		} catch (e: Exception) {
+			null
 		}
 	}
 }

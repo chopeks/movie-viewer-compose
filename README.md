@@ -3,8 +3,6 @@
 - `ffprobe` (for obtaining duration)
 - `fpcalc` (for audio comparison)
 
-There are also some python requirements you gotta install [requirements.txt](composeApp/src/desktopMain/resources/scripts/requirements.txt)
-
 ### This is a Kotlin Multiplatform project targeting Web, Desktop.
 
 * `/composeApp` is for code that will be shared across your Compose Multiplatform applications.
@@ -24,3 +22,7 @@ You can open the web application by running the `:composeApp:wasmJsBrowserDevelo
 ### Tests
 
 `./gradlew allTests` - unit tests from all modules
+
+### Credits
+
+This project utilizes VMAF technology and models provided by Netflix under the BSD-2-Clause-Patent license.
