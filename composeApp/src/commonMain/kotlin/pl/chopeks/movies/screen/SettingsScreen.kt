@@ -55,11 +55,9 @@ class SettingsScreen : Screen {
 		ScreenSkeleton(
 			title = stringResource(Res.string.screen_settings)
 		) {
-			val apps by screenModel.externalApps.collectAsState()
-			val capabilities by screenModel.capabilities.collectAsState()
-			val settings by screenModel.settings.collectAsState()
-			val paths by screenModel.paths.collectAsState()
+			val state by screenModel.uiState.collectAsState()
 
+			val settings = state.settings
 			var browser by remember(settings) { mutableStateOf(settings?.browser ?: "") }
 			var moviePlayer by remember(settings) { mutableStateOf(settings?.moviePlayer ?: "") }
 			var encoderSource by remember(settings) { mutableStateOf(settings?.encoderSource ?: "") }
@@ -80,7 +78,7 @@ class SettingsScreen : Screen {
 						}
 					}
 				}
-				items(paths) { path ->
+				items(state.paths) { path ->
 					SettingsDirectory(path, onRemoveClick = { screenModel.removePath(it) })
 				}
 
@@ -134,7 +132,7 @@ class SettingsScreen : Screen {
 						IconButton(onClick = { screenModel.refreshApps() }) { Icon(Icons.Default.Refresh, contentDescription = "refresh") }
 					}
 				}
-				items(apps.entries.toList(), { it.key }) { item ->
+				items(state.externalApps.entries.toList(), { it.key }) { item ->
 					SettingsExternalSoftwareCard(item.key, item.value.version)
 				}
 
@@ -144,7 +142,7 @@ class SettingsScreen : Screen {
 						IconButton(onClick = { screenModel.refreshApps() }) { Icon(Icons.Default.Refresh, contentDescription = "refresh") }
 					}
 				}
-				items(capabilities.entries.toList(), { it.key }) { item ->
+				items(state.capabilities.entries.toList(), { it.key }) { item ->
 					SettingsCapabilityCard(item.key.name, item.key.description(), isAvailable = item.value)
 				}
 			}

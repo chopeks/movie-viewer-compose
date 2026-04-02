@@ -11,6 +11,7 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
 
+
 /**
  * Manages interaction with `ffmpeg` and `ffprobe` tools for media processing.
  */
@@ -20,10 +21,10 @@ class FfmpegManager(
 	}
 ) {
 	companion object {
-		private const val vmafModelName = "vmaf_v0.6.1.json"
-		private val vmafRegex = Regex("VMAF score: (\\d+\\.\\d+)")
-		private val ffmpegVersionRegex = Regex("version (\\d+\\.\\d+)")
-
+		private const val FFMPEG_COMMAND = "ffmpeg"
+		private const val VAMF_MODEL_FILE = "vmaf_v0.6.1.json"
+		private val VMAF_REGEX = Regex("VMAF score: (\\d+\\.\\d+)")
+		private val FFMPEG_VERSION_REGEX = Regex("version (\\d+\\.\\d+)")
 	}
 
 	private val workDir = File(System.getProperty("java.io.tmpdir"), "ffmpeg")
@@ -31,9 +32,9 @@ class FfmpegManager(
 	init {
 		if (!workDir.exists())
 			workDir.mkdirs()
-		val modelFile = File(workDir, vmafModelName)
+		val modelFile = File(workDir, VAMF_MODEL_FILE)
 		if (!modelFile.exists())
-			Unit.javaClass.getResourceAsStream("/$vmafModelName").use { it.copyTo(modelFile.outputStream()) }
+			Unit.javaClass.getResourceAsStream("/$VAMF_MODEL_FILE").use { it.copyTo(modelFile.outputStream()) }
 		println(availableEncoders())
 	}
 
@@ -46,7 +47,7 @@ class FfmpegManager(
 	 * @return The started `Process`.
 	 */
 	fun getFingerprintStream(video: File, start: Int? = null, duration: Int? = null): Process {
-		val ffmpegCmd = mutableListOf("ffmpeg")
+		val ffmpegCmd = mutableListOf(FFMPEG_COMMAND)
 		if (start != null)
 			ffmpegCmd += listOf("-ss", formatDurationToFfmpegFormat(start.toLong()))
 
@@ -131,7 +132,7 @@ class FfmpegManager(
 	 */
 	fun isFfmpegAvailable(): Boolean {
 		return try {
-			val process = processFactory(listOf("ffmpeg", "-version")) {
+			val process = processFactory(listOf(FFMPEG_COMMAND, "-version")) {
 				redirectError(ProcessBuilder.Redirect.DISCARD)
 			}
 			process.waitFor() == 0
@@ -142,14 +143,14 @@ class FfmpegManager(
 
 	fun getFfmpegCapabilities(): FfmpegCapabilities? {
 		return try {
-			val process = processFactory(listOf("ffmpeg", "-version")) {
+			val process = processFactory(listOf(FFMPEG_COMMAND, "-version")) {
 				redirectError(ProcessBuilder.Redirect.DISCARD)
 			}
 			val output = process.inputStream.bufferedReader().use { it.readText()}
 
 			process.destroy()
 
-			val versionMatch = ffmpegVersionRegex.find(output)?.groupValues?.get(1) ?: "unknown"
+			val versionMatch = FFMPEG_VERSION_REGEX.find(output)?.groupValues?.get(1) ?: "unknown"
 
 			val configLine = output.lines().find { it.startsWith("configuration:") } ?: ""
 
@@ -184,12 +185,12 @@ class FfmpegManager(
 
 	fun getFfprobeVersion(): String? {
 		return try {
-			val process = processFactory(listOf("ffmpeg", "-version")) {
+			val process = processFactory(listOf(FFMPEG_COMMAND, "-version")) {
 				redirectError(ProcessBuilder.Redirect.DISCARD)
 			}
 			val output = process.inputStream.bufferedReader().use { it.readText() }
 			process.destroy()
-			ffmpegVersionRegex.find(output)?.groupValues?.get(1)
+			FFMPEG_VERSION_REGEX.find(output)?.groupValues?.get(1)
 		} catch (e: Exception) {
 			null
 		}
@@ -236,7 +237,7 @@ class FfmpegManager(
 	internal fun getFrame(video: File, permille: Long, width: Int = 0, height: Int = 0): BufferedImage? {
 		val timestampMs = (getVideoDuration(video) * permille) / 1000L
 		val cmd = mutableListOf(
-			"ffmpeg",
+			FFMPEG_COMMAND,
 			"-ss", formatDurationToFfmpegFormat(timestampMs),
 			"-i", video.absolutePath,
 			"-vframes", "1"
@@ -266,7 +267,7 @@ class FfmpegManager(
 	}
 
 	fun availableEncoders(): List<String> {
-		val process = processFactory(listOf("ffmpeg", "-encoders")) {
+		val process = processFactory(listOf(FFMPEG_COMMAND, "-encoders")) {
 			redirectError(ProcessBuilder.Redirect.DISCARD)
 		}
 		val output = process.inputStream.bufferedReader().readText()
@@ -294,7 +295,7 @@ class FfmpegManager(
 
 	internal fun isEncoderActuallyWorking(encoder: String): Boolean {
 		val cmd = mutableListOf(
-			"ffmpeg", "-y",
+			FFMPEG_COMMAND, "-y",
 			"-t", "0.1",
 			"-f", "lavfi", "-i", "color=c=black:s=1280x720:r=24",
 			"-pix_fmt", "yuv420p",
@@ -325,7 +326,7 @@ class FfmpegManager(
 
 	fun encodeWithProgress(file: File, newFile: File) = flow {
 		val totalDurationUs = getVideoDuration(file) * 1000L
-		val cmd = mutableListOf("ffmpeg", "-y", "-i", file.absolutePath).apply {
+		val cmd = mutableListOf(FFMPEG_COMMAND, "-y", "-i", file.absolutePath).apply {
 			addAll(
 				listOf(
 					"-vf", "scale=-2:min(720\\,ih)",
@@ -378,13 +379,13 @@ class FfmpegManager(
 		val height = getResolutionEntry(output, "height") ?: return 0.0
 
 		val ffmpegCmd = listOf(
-			"ffmpeg",
+			FFMPEG_COMMAND,
 			"-ss", formatDurationToFfmpegFormat(startTimeMs), "-t", "10", "-i", output.absolutePath,
 			"-ss", formatDurationToFfmpegFormat(startTimeMs), "-t", "10", "-i", original.absolutePath,
 			"-filter_complex",
 			"[0:v]scale=$width:$height:flags=neighbor,setsar=1,format=yuv420p[dist];" +
 				"[1:v]scale=$width:$height:flags=neighbor,setsar=1,format=yuv420p[ref];" +
-				"[dist][ref]libvmaf=model='path=$vmafModelName':n_threads=4",
+				"[dist][ref]libvmaf=model='path=$VAMF_MODEL_FILE':n_threads=4",
 			"-f", "null", "-"
 		)
 		println("vmaf command ${ffmpegCmd.joinToString(" ")}")
@@ -398,7 +399,7 @@ class FfmpegManager(
 			val outputText = process.errorStream.bufferedReader().readText()
 			process.waitFor()
 
-			val match = vmafRegex.find(outputText)
+			val match = VMAF_REGEX.find(outputText)
 
 			match?.groupValues?.get(1)?.toDouble() ?: 0.0
 		} catch (e: Exception) {
