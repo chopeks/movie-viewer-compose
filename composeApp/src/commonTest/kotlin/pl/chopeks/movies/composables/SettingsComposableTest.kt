@@ -20,7 +20,7 @@ class SettingsComposableTest : StringSpec({
 	"SettingsDirectory should display path" {
 		runComposeUiTest {
 			setContent {
-				SettingsDirectory(Path(path = "my/path", count = 0), onRemove = {})
+				SettingsDirectory(Path(path = "my/path", count = 0), onRemoveClick = {})
 			}
 
 			onNodeWithText("my/path").assertExists()
@@ -32,7 +32,7 @@ class SettingsComposableTest : StringSpec({
 		val path = Path(path = "my/path", count = 0)
 		runComposeUiTest {
 			setContent {
-				SettingsDirectory(path, onRemove = { removedPath = it })
+				SettingsDirectory(path, onRemoveClick = { removedPath = it })
 			}
 
 			onNodeWithContentDescription("Delete").performClick()

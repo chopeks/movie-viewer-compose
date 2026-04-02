@@ -3,8 +3,11 @@ package pl.chopeks.movies.composables.cards
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,11 +24,14 @@ fun SettingsExternalSoftwareCard(
 	modifier: Modifier = Modifier
 ) {
 	val isInstalled = version != null
-
 	TriStateCard(
 		modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
 		state = version != null
 	) {
+		val version = if (version != null && version != software.recommendedVersion) {
+			"${version}(!), recommended is ${software.recommendedVersion}"
+		} else version
+
 		Row(
 			modifier = Modifier.padding(12.dp),
 			verticalAlignment = Alignment.CenterVertically,
@@ -43,7 +49,7 @@ fun SettingsExternalSoftwareCard(
 					fontWeight = FontWeight.Bold
 				)
 			}
-			Column {
+			Column(Modifier.weight(1f)) {
 				Text(
 					text = software.visibleName,
 					style = MaterialTheme.typography.body1,
@@ -54,6 +60,13 @@ fun SettingsExternalSoftwareCard(
 					style = MaterialTheme.typography.body2,
 					fontFamily = FontFamily.Monospace,
 					color = if (isInstalled) Color(0xFF81C784) else Color(0xFFE57373)
+				)
+			}
+			if (software.recommendedVersion != version) {
+				Icon(
+					imageVector = Icons.Default.Warning,
+					contentDescription = "Warning",
+					tint = Color(0xFFCF9619)
 				)
 			}
 		}

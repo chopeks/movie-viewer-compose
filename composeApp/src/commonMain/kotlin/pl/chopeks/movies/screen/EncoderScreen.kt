@@ -61,7 +61,7 @@ class EncoderScreen : Screen {
 				is UiState.Error -> Text("Error: ${current.message}")
 				is UiState.Success -> {
 					LazyVerticalGrid(
-						columns = GridCells.Fixed(2),
+						columns = GridCells.Adaptive(minSize = 500.dp),
 						contentPadding = PaddingValues(horizontal = 16.dp),
 						modifier = Modifier.fillMaxWidth(),
 						verticalArrangement = Arrangement.spacedBy(8.dp),

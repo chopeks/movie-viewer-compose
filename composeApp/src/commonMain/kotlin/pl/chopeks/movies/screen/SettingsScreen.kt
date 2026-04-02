@@ -1,12 +1,16 @@
 package pl.chopeks.movies.screen
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -16,6 +20,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.kodein.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import movieviewer.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.kodein.di.compose.rememberInstance
 import pl.chopeks.movies.composables.ScreenSkeleton
@@ -25,6 +30,7 @@ import pl.chopeks.movies.composables.StyledTextField
 import pl.chopeks.movies.composables.cards.SettingsCapabilityCard
 import pl.chopeks.movies.composables.cards.SettingsExternalSoftwareCard
 import pl.chopeks.movies.composables.state.rememberAlertDialogState
+import pl.chopeks.movies.mapping.description
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
 import pl.chopeks.screenmodel.SettingsScreenModel
@@ -54,6 +60,11 @@ class SettingsScreen : Screen {
 			val settings by screenModel.settings.collectAsState()
 			val paths by screenModel.paths.collectAsState()
 
+			var browser by remember(settings) { mutableStateOf(settings?.browser ?: "") }
+			var moviePlayer by remember(settings) { mutableStateOf(settings?.moviePlayer ?: "") }
+			var encoderSource by remember(settings) { mutableStateOf(settings?.encoderSource ?: "") }
+			var encoderSink by remember(settings) { mutableStateOf(settings?.encoderSink ?: "") }
+
 			LazyVerticalGrid(
 				columns = GridCells.Adaptive(minSize = 500.dp),
 				contentPadding = PaddingValues(16.dp),
@@ -62,84 +73,79 @@ class SettingsScreen : Screen {
 				modifier = Modifier.fillMaxWidth(),
 			) {
 				item(span = { GridItemSpan(maxLineSpan) }) {
-					SettingsHeaderText(stringResource(Res.string.label_directories))
+					Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+						SettingsHeaderText(stringResource(Res.string.label_directories))
+						IconButton(onClick = { addDialogState.show() }) {
+							Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.button_add))
+						}
+					}
 				}
 				items(paths) { path ->
-					SettingsDirectory(path) {
-						screenModel.removePath(it)
-					}
+					SettingsDirectory(path, onRemoveClick = { screenModel.removePath(it) })
 				}
-				item(span = { GridItemSpan(maxLineSpan) }) {
-					Button(onClick = { addDialogState.show() }) {
-						Text(stringResource(Res.string.button_add))
-					}
-				}
-				item(span = { GridItemSpan(maxLineSpan) }) {
-					SettingsHeaderText(stringResource(Res.string.label_settings))
-				}
-				item {
-					settings?.let { currentSettings ->
-						var browser by remember(currentSettings) { mutableStateOf(currentSettings.browser) }
-						var moviePlayer by remember(currentSettings) { mutableStateOf(currentSettings.moviePlayer) }
-						var encoderSource by remember(currentSettings) { mutableStateOf(currentSettings.encoderSource) }
-						var encoderSink by remember(currentSettings) { mutableStateOf(currentSettings.encoderSink) }
 
-						Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-							StyledTextField(
-								value = browser,
-								onValueChange = { browser = it },
-								label = stringResource(Res.string.label_browser),
-								modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()
-							)
-							StyledTextField(
-								value = moviePlayer,
-								onValueChange = { moviePlayer = it },
-								label = stringResource(Res.string.label_player),
-								modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()
-							)
-							StyledTextField(
-								value = encoderSource,
-								onValueChange = { encoderSource = it },
-								label = stringResource(Res.string.label_encoder_source),
-								modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()
-							)
-							StyledTextField(
-								value = encoderSink,
-								onValueChange = { encoderSink = it },
-								label = stringResource(Res.string.label_encoder_sink),
-								modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()
-							)
-
-							Button(onClick = {
-								screenModel.saveSettings(browser, moviePlayer, encoderSource, encoderSink)
-							}) {
-								Text(stringResource(Res.string.button_save))
+				if (settings != null) {
+					item(span = { GridItemSpan(maxLineSpan) }) {
+						Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+							SettingsHeaderText(stringResource(Res.string.label_settings))
+							IconButton(onClick = { screenModel.saveSettings(browser, moviePlayer, encoderSource, encoderSink) }) {
+								Icon(painterResource(Res.drawable.content_save), contentDescription = stringResource(Res.string.button_save))
 							}
 						}
+					}
+
+					item {
+						StyledTextField(
+							value = browser,
+							onValueChange = { browser = it },
+							label = stringResource(Res.string.label_browser),
+							modifier = Modifier.fillMaxWidth()
+						)
+					}
+					item {
+						StyledTextField(
+							value = moviePlayer,
+							onValueChange = { moviePlayer = it },
+							label = stringResource(Res.string.label_player),
+							modifier = Modifier.fillMaxWidth()
+						)
+					}
+					item {
+						StyledTextField(
+							value = encoderSource,
+							onValueChange = { encoderSource = it },
+							label = stringResource(Res.string.label_encoder_source),
+							modifier = Modifier.fillMaxWidth()
+						)
+					}
+					item {
+						StyledTextField(
+							value = encoderSink,
+							onValueChange = { encoderSink = it },
+							label = stringResource(Res.string.label_encoder_sink),
+							modifier = Modifier.fillMaxWidth()
+						)
 					}
 				}
 
 				item(span = { GridItemSpan(maxLineSpan) }) {
 					Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-						SettingsHeaderText("System Engines")
+						SettingsHeaderText(stringResource(Res.string.label_external_apps))
 						IconButton(onClick = { screenModel.refreshApps() }) { Icon(Icons.Default.Refresh, contentDescription = "refresh") }
 					}
 				}
 				items(apps.entries.toList(), { it.key }) { item ->
 					SettingsExternalSoftwareCard(item.key, item.value.version)
 				}
+
 				item(span = { GridItemSpan(maxLineSpan) }) {
 					Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-						SettingsHeaderText("Available Features")
+						SettingsHeaderText(stringResource(Res.string.label_available_features))
 						IconButton(onClick = { screenModel.refreshApps() }) { Icon(Icons.Default.Refresh, contentDescription = "refresh") }
 					}
 				}
 				items(capabilities.entries.toList(), { it.key }) { item ->
-					SettingsCapabilityCard(item.key.name, "does sth", isAvailable = item.value)
-				}
-
-				item(span = { GridItemSpan(maxLineSpan) }) {
-					SettingsHeaderText("")
+					SettingsCapabilityCard(item.key.name, item.key.description(), isAvailable = item.value)
 				}
 			}
 

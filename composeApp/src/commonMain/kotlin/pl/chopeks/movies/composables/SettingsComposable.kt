@@ -23,9 +23,9 @@ fun SettingsHeaderText(text: String) {
 }
 
 @Composable
-fun SettingsDirectory(path: Path, onRemove: (Path) -> Unit) {
+fun SettingsDirectory(path: Path, onRemoveClick: (Path) -> Unit) {
 	Row(verticalAlignment = Alignment.CenterVertically) {
-		IconButton({ onRemove(path) }) {
+		IconButton({ onRemoveClick(path) }) {
 			Icon(Icons.Default.Delete, contentDescription = stringResource(Res.string.button_desc_delete))
 		}
 		Text(path.path)
