@@ -1,6 +1,7 @@
 package pl.chopeks.core.ffmpeg
 
 import kotlinx.coroutines.flow.flow
+import pl.chopeks.core.ffmpeg.model.FfmpegCapabilities
 import pl.chopeks.core.ffmpeg.utils.formatDurationToFfmpegFormat
 import pl.chopeks.core.ffmpeg.utils.runCancellable
 import java.awt.image.BufferedImage
@@ -21,6 +22,8 @@ class FfmpegManager(
 	companion object {
 		private const val vmafModelName = "vmaf_v0.6.1.json"
 		private val vmafRegex = Regex("VMAF score: (\\d+\\.\\d+)")
+		private val ffmpegVersionRegex = Regex("version (\\d+\\.\\d+)")
+
 	}
 
 	private val workDir = File(System.getProperty("java.io.tmpdir"), "ffmpeg")
@@ -85,7 +88,7 @@ class FfmpegManager(
 			redirectError(ProcessBuilder.Redirect.DISCARD)
 		}
 
-		val output = process.inputStream.bufferedReader().readText().trim()
+		val output = process.inputStream.bufferedReader().use { it.readText()}.trim()
 		process.waitFor()
 
 		if (output.isBlank() || output == "N/A")
@@ -129,12 +132,36 @@ class FfmpegManager(
 	fun isFfmpegAvailable(): Boolean {
 		return try {
 			val process = processFactory(listOf("ffmpeg", "-version")) {
-				redirectOutput(ProcessBuilder.Redirect.DISCARD)
-					.redirectError(ProcessBuilder.Redirect.DISCARD)
+				redirectError(ProcessBuilder.Redirect.DISCARD)
 			}
 			process.waitFor() == 0
 		} catch (e: IOException) {
 			false
+		}
+	}
+
+	fun getFfmpegCapabilities(): FfmpegCapabilities? {
+		return try {
+			val process = processFactory(listOf("ffmpeg", "-version")) {
+				redirectError(ProcessBuilder.Redirect.DISCARD)
+			}
+			val output = process.inputStream.bufferedReader().use { it.readText()}
+
+			process.destroy()
+
+			val versionMatch = ffmpegVersionRegex.find(output)?.groupValues?.get(1) ?: "unknown"
+
+			val configLine = output.lines().find { it.startsWith("configuration:") } ?: ""
+
+			FfmpegCapabilities(
+				version = versionMatch,
+				hasVmaf = configLine.contains("--enable-libvmaf"),
+				hasAmf = configLine.contains("--enable-amf"),
+				hasNvenc = configLine.contains("--enable-nvenc"),
+				hasLibx265 = configLine.contains("--enable-libx265")
+			)
+		} catch (e: Exception) {
+			null
 		}
 	}
 
@@ -155,6 +182,19 @@ class FfmpegManager(
 		}
 	}
 
+	fun getFfprobeVersion(): String? {
+		return try {
+			val process = processFactory(listOf("ffmpeg", "-version")) {
+				redirectError(ProcessBuilder.Redirect.DISCARD)
+			}
+			val output = process.inputStream.bufferedReader().use { it.readText() }
+			process.destroy()
+			ffmpegVersionRegex.find(output)?.groupValues?.get(1)
+		} catch (e: Exception) {
+			null
+		}
+	}
+
 	private fun List<String>.executeCommand(workingDir: File): String? {
 		return try {
 			val proc = processFactory(this) {
@@ -163,7 +203,7 @@ class FfmpegManager(
 					.redirectError(ProcessBuilder.Redirect.PIPE)
 			}
 			proc.waitFor(5, TimeUnit.SECONDS)
-			proc.inputStream.bufferedReader().readText()
+			proc.inputStream.bufferedReader().use { it.readText() }
 		} catch (e: IOException) {
 			e.printStackTrace()
 			null

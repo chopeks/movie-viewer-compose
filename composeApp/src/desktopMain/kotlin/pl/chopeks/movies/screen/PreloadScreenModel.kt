@@ -11,11 +11,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.sql.Database
 import pl.chopeks.core.data.ITaskManager
+import pl.chopeks.core.data.service.ISystemCapabilityService
 import pl.chopeks.core.database.DatabaseHelper
 
 class PreloadScreenModel(
+	private val capabilityService: ISystemCapabilityService,
 	private val database: Lazy<Database>,
-	private val taskManager: Lazy<ITaskManager>
+	private val taskManager: Lazy<ITaskManager>,
 ) : ScreenModel {
 
 	var isDone by mutableStateOf(false)
@@ -24,10 +26,12 @@ class PreloadScreenModel(
 	fun init() {
 		screenModelScope.launch {
 			withContext(Dispatchers.IO) {
-				val db = database.value
-				events.add("Database connected, schema updated.")
-				DatabaseHelper.clean(db)
-				events.add("Removed files purged.")
+				capabilityService.discover()
+				with(database.value) {
+					events.add("Database connected, schema updated.")
+					DatabaseHelper.clean(this)
+					events.add("Removed files purged.")
+				}
 			}
 			taskManager.value.start(events::add)
 			isDone = true

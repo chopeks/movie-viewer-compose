@@ -7,7 +7,9 @@ import org.kodein.di.bindProvider
 import org.kodein.di.bindSingleton
 import org.kodein.di.instance
 import pl.chopeks.core.data.repository.*
+import pl.chopeks.core.data.service.ISystemCapabilityService
 import pl.chopeks.core.data.service.IVideoEncodingService
+import pl.chopeks.core.data.service.SystemCapabilityService
 import pl.chopeks.core.data.service.VideoEncodingService
 import pl.chopeks.core.database.databaseModule
 
@@ -20,9 +22,11 @@ val dataModule = DI.Module("data-di") {
 	bindSingleton<ICategoryRepository> { CategoryRepository(instance()) }
 	bindSingleton<IVideoRepository> { VideoRepository(instance(), instance()) }
 	bindSingleton<IDuplicateRepository> { DuplicateRepository(instance()) }
+	bindSingleton<ISystemCapabilityRepository> { SystemCapabilityRepository() }
 	bindSingleton<EncoderRepository> { EncoderRepository(instance(), instance(), instance(), instance()) }
 	bindProvider<IEncoderRepository> { instance<EncoderRepository>() }
 
 	// services
 	bindSingleton<IVideoEncodingService> { VideoEncodingService(instance(), instance(), instance()) }
+	bindProvider<ISystemCapabilityService> { SystemCapabilityService(instance(), instance(), instance()) }
 }

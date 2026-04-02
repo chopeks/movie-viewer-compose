@@ -3,14 +3,11 @@ package pl.chopeks.movies.screen
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.MaterialTheme
@@ -36,6 +33,7 @@ import org.kodein.di.compose.rememberInstance
 import pl.chopeks.core.model.EncodeStatus
 import pl.chopeks.movies.composables.ProgressIndicator
 import pl.chopeks.movies.composables.ScreenSkeleton
+import pl.chopeks.movies.composables.cards.TriStateCard
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
 import pl.chopeks.screenmodel.EncoderScreenModel
@@ -62,8 +60,14 @@ class EncoderScreen : Screen {
 				is UiState.Loading -> ProgressIndicator()
 				is UiState.Error -> Text("Error: ${current.message}")
 				is UiState.Success -> {
-					LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.fillMaxWidth()) {
-						item(span = { GridItemSpan(2) }, key = "SCROLL_ANCHOR") {
+					LazyVerticalGrid(
+						columns = GridCells.Fixed(2),
+						contentPadding = PaddingValues(horizontal = 16.dp),
+						modifier = Modifier.fillMaxWidth(),
+						verticalArrangement = Arrangement.spacedBy(8.dp),
+						horizontalArrangement = Arrangement.spacedBy(8.dp)
+					) {
+						item(span = { GridItemSpan(maxLineSpan) }, key = "SCROLL_ANCHOR") {
 							Spacer(modifier = Modifier.height(1.dp).fillMaxWidth())
 						}
 						items(current.data.encoder.toList(), { it.first }) { pair ->
@@ -71,77 +75,86 @@ class EncoderScreen : Screen {
 
 							val color = when (item) {
 								is EncodeStatus.Processing -> MaterialTheme.colors.primary
-								is EncodeStatus.Finished,
+								is EncodeStatus.Finished -> successGreen
 								is EncodeStatus.FinishedAndRemoved -> successGreen
-
 								is EncodeStatus.Error -> MaterialTheme.colors.error
 								is EncodeStatus.Waiting -> Color.Gray
 							}
 
-							Column(
+
+							TriStateCard(
+								state = when (pair.second) {
+									is EncodeStatus.Error -> false
+									EncodeStatus.Finished -> true
+									EncodeStatus.FinishedAndRemoved -> true
+									else -> null
+								},
 								modifier = Modifier
 									.animateItem()
-									.fillMaxWidth()
-									.padding(4.dp)
-									.background(MaterialTheme.colors.surface, RoundedCornerShape(8.dp))
-									.border(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
-									.padding(16.dp)
+									.fillMaxWidth(),
 							) {
-								Row(
-									modifier = Modifier.fillMaxWidth(),
-									horizontalArrangement = Arrangement.SpaceBetween
+								Column(
+									modifier = Modifier
+										.fillMaxWidth()
+										.padding(16.dp)
 								) {
-									Text(
-										text = pair.first,
-										style = MaterialTheme.typography.subtitle1,
-										maxLines = 1,
-										overflow = TextOverflow.Ellipsis,
-										modifier = Modifier.weight(1f)
+									Row(
+										modifier = Modifier.fillMaxWidth(),
+										horizontalArrangement = Arrangement.SpaceBetween
+									) {
+										Text(
+											text = pair.first,
+											style = MaterialTheme.typography.subtitle1,
+											maxLines = 1,
+											overflow = TextOverflow.Ellipsis,
+											modifier = Modifier.weight(1f)
+										)
+
+										when (item) {
+											is EncodeStatus.FinishedAndRemoved ->
+												Text("Done", style = MaterialTheme.typography.caption)
+
+											is EncodeStatus.Finished ->
+												Text("100%", style = MaterialTheme.typography.caption)
+
+											is EncodeStatus.Processing ->
+												Text("${(item.progress * 100).toInt()}%", color = color, style = MaterialTheme.typography.caption)
+
+											is EncodeStatus.Waiting ->
+												Text("In Queue", style = MaterialTheme.typography.caption)
+
+											is EncodeStatus.Error ->
+												Icon(Icons.Default.Warning, "Error", tint = color)
+										}
+									}
+
+									Spacer(modifier = Modifier.height(12.dp))
+
+									val animatedProgress by animateFloatAsState(
+										targetValue = when (item) {
+											is EncodeStatus.Waiting -> 0f
+											is EncodeStatus.Processing -> item.progress
+											is EncodeStatus.FinishedAndRemoved,
+											is EncodeStatus.Finished -> 1f
+
+											is EncodeStatus.Error -> 0f
+										},
+										animationSpec = tween(durationMillis = 250, easing = LinearEasing),
+										label = "progressAnimation"
 									)
 
-									when (item) {
-										is EncodeStatus.FinishedAndRemoved ->
-											Text("Done", style = MaterialTheme.typography.caption)
-
-										is EncodeStatus.Finished ->
-											Text("100%", style = MaterialTheme.typography.caption)
-
-										is EncodeStatus.Processing ->
-											Text("${(item.progress * 100).toInt()}%", color = color, style = MaterialTheme.typography.caption)
-
-										is EncodeStatus.Waiting ->
-											Text("In Queue", style = MaterialTheme.typography.caption)
-
-										is EncodeStatus.Error ->
-											Icon(Icons.Default.Warning, "Error", tint = color)
-									}
+									LinearProgressIndicator(
+										progress = animatedProgress,
+										modifier = Modifier.fillMaxWidth().height(8.dp),
+										color = when (item) {
+											is EncodeStatus.Finished -> successGreen
+											is EncodeStatus.Processing -> MaterialTheme.colors.primary
+											else -> successGreen.copy(alpha = 0.5f)
+										},
+										backgroundColor = MaterialTheme.colors.onSurface.copy(alpha = 0.1f),
+										strokeCap = StrokeCap.Round
+									)
 								}
-
-								Spacer(modifier = Modifier.height(12.dp))
-
-								val animatedProgress by animateFloatAsState(
-									targetValue = when (item) {
-										is EncodeStatus.Waiting -> 0f
-										is EncodeStatus.Processing -> item.progress
-										is EncodeStatus.FinishedAndRemoved,
-										is EncodeStatus.Finished -> 1f
-										is EncodeStatus.Error -> 0f
-									},
-									animationSpec = tween(durationMillis = 250, easing = LinearEasing),
-									label = "progressAnimation"
-								)
-
-								LinearProgressIndicator(
-									progress = animatedProgress,
-									modifier = Modifier.fillMaxWidth().height(8.dp),
-									color = when (item) {
-										is EncodeStatus.Finished -> successGreen
-										is EncodeStatus.Processing -> MaterialTheme.colors.primary
-										else -> successGreen.copy(alpha = 0.5f)
-									},
-									backgroundColor = MaterialTheme.colors.onSurface.copy(alpha = 0.1f),
-									strokeCap = StrokeCap.Round
-								)
 							}
 						}
 					}

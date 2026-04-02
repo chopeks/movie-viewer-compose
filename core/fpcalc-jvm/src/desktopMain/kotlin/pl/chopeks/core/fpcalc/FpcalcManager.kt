@@ -16,6 +16,10 @@ class FpcalcManager(
 		builder(ProcessBuilder(list)).start()
 	}
 ) {
+	companion object {
+		val fpcalcVersionRegex = Regex("""fpcalc\s+version\s+([^(\s\n]+)""")
+	}
+
 	/**
 	 * Generates an audio fingerprint for the given video file.
 	 *
@@ -86,6 +90,21 @@ class FpcalcManager(
 			process.waitFor() == 0
 		} catch (e: IOException) {
 			false
+		}
+	}
+
+	fun getFpcalcVersion(): String? {
+		return try {
+			val process = processFactory(listOf("fpcalc", "-version")) {
+				redirectError(ProcessBuilder.Redirect.DISCARD)
+			}
+			val output = process.inputStream.bufferedReader().use { it.readText() }
+			process.destroy()
+
+			// Using the specialized fpcalc regex
+			fpcalcVersionRegex.find(output)?.groupValues?.get(1)?.trim()
+		} catch (e: Exception) {
+			null
 		}
 	}
 
