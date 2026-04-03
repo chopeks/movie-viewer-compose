@@ -109,50 +109,55 @@ class VideosScreen(
 				}
 			}
 		) {
-			ScreenSkeleton(title = "", leftActions = {
-				GreenTextButton(stringResource(Res.string.button_start).uppercase()) {
-					screenModel.handleIntent(ChangePage(Int.MIN_VALUE))
-				}
-				GreenTextButton("-10".uppercase()) {
-					screenModel.handleIntent(ChangePage(-10))
-				}
-				GreenTextButton("-1".uppercase()) {
-					screenModel.handleIntent(ChangePage(-1))
-				}
-				GreenTextButton("+1".uppercase()) {
-					screenModel.handleIntent(ChangePage(1))
-				}
-				GreenTextButton("+10".uppercase()) {
-					screenModel.handleIntent(ChangePage(10))
-				}
+			ScreenSkeleton(
+				title = "",
+				leftActions = {
+					GreenTextButton(stringResource(Res.string.button_start).uppercase()) {
+						screenModel.handleIntent(ChangePage(Int.MIN_VALUE))
+					}
+					GreenTextButton("-10".uppercase()) {
+						screenModel.handleIntent(ChangePage(-10))
+					}
+					GreenTextButton("-1".uppercase()) {
+						screenModel.handleIntent(ChangePage(-1))
+					}
+					GreenTextButton("+1".uppercase()) {
+						screenModel.handleIntent(ChangePage(1))
+					}
+					GreenTextButton("+10".uppercase()) {
+						screenModel.handleIntent(ChangePage(10))
+					}
 
-				TextButton(onClick = { openSheet(SheetType.ACTORS_FILTER) }) {
-					Text(stringResource(Res.string.button_actors), color = Color.Gray)
-				}
-				TextButton(onClick = { openSheet(SheetType.CATEGORIES_FILTER) }) {
-					Text(stringResource(Res.string.button_categories), color = Color.Gray)
-				}
+					TextButton(onClick = { openSheet(SheetType.ACTORS_FILTER) }) {
+						Text(stringResource(Res.string.button_actors), color = Color.Gray)
+					}
+					TextButton(onClick = { openSheet(SheetType.CATEGORIES_FILTER) }) {
+						Text(stringResource(Res.string.button_categories), color = Color.Gray)
+					}
 
-				TextButton(onClick = { screenModel.handleIntent(ToggleSortFilter) }) {
-					val filterType = state.filters.filterType
+					TextButton(onClick = { screenModel.handleIntent(ToggleSortFilter) }) {
+						val filterType = state.filters.filterType
+						Text(
+							text = listOf(
+								stringResource(Res.string.label_sort_by_date),
+								stringResource(Res.string.label_sort_by_duration)
+							)[filterType],
+							color = Color.Gray
+						)
+					}
+				},
+				rightActions = {
 					Text(
-						text = listOf(
-							stringResource(Res.string.label_sort_by_date),
-							stringResource(Res.string.label_sort_by_duration)
-						)[filterType],
-						color = Color.Gray
+						text = stringResource(
+							Res.string.label_video_pager,
+							state.videosPage.currentPage + 1,
+							state.videosPage.pageCount + 1
+						),
+						color = Color.Green.copy(alpha = 0.6f)
 					)
-				}
-			}, rightActions = {
-				Text(
-					text = stringResource(
-						Res.string.label_video_pager,
-						state.videosPage.currentPage + 1,
-						state.videosPage.pageCount + 1
-					),
-					color = Color.Green.copy(alpha = 0.6f)
-				)
-			}) {
+				},
+				screenModel = screenModel
+			) {
 				if (state.isLoading) {
 					ProgressIndicator()
 				} else if (state.error != null) {

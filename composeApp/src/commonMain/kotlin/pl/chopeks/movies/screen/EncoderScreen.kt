@@ -53,7 +53,8 @@ class EncoderScreen : Screen {
 		}
 
 		ScreenSkeleton(
-			title = stringResource(Res.string.screen_encoder)
+			title = stringResource(Res.string.screen_encoder),
+			screenModel = screenModel
 		) {
 			if (state.isLoading) {
 				ProgressIndicator()

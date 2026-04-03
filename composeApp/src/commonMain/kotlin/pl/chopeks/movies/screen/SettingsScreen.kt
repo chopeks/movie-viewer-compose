@@ -54,7 +54,8 @@ class SettingsScreen : Screen {
 		}
 
 		ScreenSkeleton(
-			title = stringResource(Res.string.screen_settings)
+			title = stringResource(Res.string.screen_settings),
+			screenModel = screenModel
 		) {
 			val state by screenModel.state.collectAsState()
 

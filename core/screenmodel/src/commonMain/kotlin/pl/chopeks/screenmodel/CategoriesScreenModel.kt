@@ -1,6 +1,5 @@
 package pl.chopeks.screenmodel
 
-import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.*
@@ -11,6 +10,7 @@ import pl.chopeks.core.data.repository.ICategoryRepository
 import pl.chopeks.core.model.Category
 import pl.chopeks.core.model.IntRect
 import pl.chopeks.core.utils.runIf
+import pl.chopeks.screenmodel.model.UiEffect
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -18,7 +18,7 @@ class CategoriesScreenModel(
 	private val repository: ICategoryRepository,
 	private val imageConverter: IImageConverter,
 	private val dispatcher: CoroutineDispatcher = bestConcurrencyDispatcher()
-) : ScreenModel {
+) : BaseScreenModel() {
 	sealed class Intent {
 		object LoadCategories : Intent()
 		data class UpdateSearch(val query: String) : Intent()
@@ -116,5 +116,9 @@ class CategoriesScreenModel(
 				}
 			}
 		}
+	}
+
+	override suspend fun emitEffect(throwable: Throwable) {
+		emitEffect(UiEffect.Toast(throwable.message ?: "Unknown Error"))
 	}
 }

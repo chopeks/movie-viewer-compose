@@ -52,7 +52,8 @@ class DuplicatesScreen : Screen {
 					stringResource(Res.string.label_left_to_check, state.count),
 					color = Color.LightGray
 				)
-			}
+			},
+			screenModel = screenModel
 		) {
 			if (state.isLoading) {
 				ProgressIndicator()

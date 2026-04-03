@@ -61,7 +61,8 @@ class CategoriesScreen : Screen {
 					query = state.searchFilter,
 					onQueryChange = { screenModel.handleIntent(Intent.UpdateSearch(it)) },
 				)
-			}
+			},
+			screenModel = screenModel
 		) {
 			if (state.isLoading) {
 				ProgressIndicator()

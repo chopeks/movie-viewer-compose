@@ -1,6 +1,5 @@
 package pl.chopeks.screenmodel
 
-import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.*
@@ -13,6 +12,7 @@ import pl.chopeks.core.data.repository.IDuplicateRepository
 import pl.chopeks.core.model.Actor
 import pl.chopeks.core.model.IntRect
 import pl.chopeks.core.utils.runIf
+import pl.chopeks.screenmodel.model.UiEffect
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -22,9 +22,10 @@ class ActorsScreenModel(
 	private val imageConverter: IImageConverter,
 	private val taskManager: ITaskManager,
 	private val dispatcher: CoroutineDispatcher = bestConcurrencyDispatcher()
-) : ScreenModel {
+) : BaseScreenModel() {
+
 	sealed class Intent {
-		object LoadActors : Intent()
+		data object LoadActors : Intent()
 		data class UpdateSearch(val query: String) : Intent()
 		data class AddActor(val name: String, val imageBytes: ByteArray? = null, val rect: IntRect) : Intent()
 		data class EditActor(val actor: Actor, val name: String, val imageBytes: ByteArray? = null, val rect: IntRect) : Intent()
@@ -79,13 +80,11 @@ class ActorsScreenModel(
 	}
 
 	private fun load() {
-		screenModelScope.launch {
+		launchSafe {
 			_isLoading.value = true
 			val fetched = repository.getActors().sortedBy { it.name.lowercase() }
 			_rawActors.value = fetched
 			_isLoading.value = false
-
-			// Background Image Loading
 			fetched.forEach { actor ->
 				launch { fetchImage(actor) }
 			}
@@ -93,7 +92,7 @@ class ActorsScreenModel(
 	}
 
 	private fun add(name: String, imageBytes: ByteArray?, rect: IntRect) {
-		screenModelScope.launch {
+		launchSafe {
 			val image = imageBytes?.let { imageConverter.bytesToBase64(it, 269, 384, rect) }
 			repository.add(name, image)
 			load()
@@ -101,7 +100,7 @@ class ActorsScreenModel(
 	}
 
 	private fun edit(actor: Actor, name: String, imageBytes: ByteArray?, rect: IntRect) {
-		screenModelScope.launch {
+		launchSafe {
 			val image = imageBytes?.let { imageConverter.bytesToBase64(it, 269, 384, rect) }
 			repository.edit(actor.id, name, image)
 			load()
@@ -109,14 +108,14 @@ class ActorsScreenModel(
 	}
 
 	private fun remove(actor: Actor) {
-		screenModelScope.launch {
+		launchSafe {
 			repository.delete(actor)
 			load()
 		}
 	}
 
 	private fun deduplicate(actor: Actor) {
-		screenModelScope.launch {
+		launchSafe {
 			duplicatesRepository.deduplicate(actor)
 			taskManager.startDedupTask()
 		}
@@ -132,5 +131,9 @@ class ActorsScreenModel(
 				}
 			}
 		}
+	}
+
+	override suspend fun emitEffect(throwable: Throwable) {
+		emitEffect(UiEffect.Toast(throwable.message ?: "Unknown Error"))
 	}
 }

@@ -43,7 +43,10 @@ class LogScreen : Screen {
 			}
 		}
 
-		ScreenSkeleton(title = stringResource(Res.string.screen_logs)) {
+		ScreenSkeleton(
+			title = stringResource(Res.string.screen_logs),
+			screenModel = null
+		) {
 			SelectionContainer {
 				LazyColumn(state = listState, modifier = Modifier.padding(8.dp)) {
 					items(logs) { line ->

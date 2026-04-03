@@ -1,7 +1,5 @@
 package pl.chopeks.screenmodel
 
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import pl.chopeks.core.data.repository.ISettingsRepository
@@ -11,12 +9,13 @@ import pl.chopeks.core.model.Path
 import pl.chopeks.core.model.Settings
 import pl.chopeks.core.model.capability.Capability
 import pl.chopeks.core.model.capability.ExternalSoftware
+import pl.chopeks.screenmodel.model.UiEffect
 
 class SettingsScreenModel(
 	private val repository: ISettingsRepository,
 	private val capabilityRepository: ISystemCapabilityRepository,
 	private val capabilityService: ISystemCapabilityService,
-) : ScreenModel {
+) : BaseScreenModel() {
 
 	sealed class Intent {
 		data object Init : Intent()
@@ -72,7 +71,7 @@ class SettingsScreenModel(
 	}
 
 	private fun init() {
-		screenModelScope.launch {
+		launchSafe {
 			launch {
 				repository.getSettings().collectLatest { settings ->
 					_state.update { it.copy(settings = settings) }
@@ -93,7 +92,7 @@ class SettingsScreenModel(
 	}
 
 	private fun saveSettings() {
-		screenModelScope.launch {
+		launchSafe {
 			_state.value.settings?.let {
 				repository.setSettings(it)
 			}
@@ -101,7 +100,7 @@ class SettingsScreenModel(
 	}
 
 	private fun removePath(path: Path) {
-		screenModelScope.launch {
+		launchSafe {
 			repository.removePath(path)
 			val paths = repository.getPaths()
 			_state.update { it.copy(paths = paths) }
@@ -109,7 +108,7 @@ class SettingsScreenModel(
 	}
 
 	private fun addPath(path: String) {
-		screenModelScope.launch {
+		launchSafe {
 			repository.addPath(path)
 			val paths = repository.getPaths()
 			_state.update { it.copy(paths = paths) }
@@ -117,12 +116,16 @@ class SettingsScreenModel(
 	}
 
 	private fun refreshApps() {
-		screenModelScope.launch {
+		launchSafe {
 			capabilityService.discover()
 			val capabilities = Capability.entries.associateWith {
 				capabilityRepository.hasCapability(it)
 			}
 			_state.update { it.copy(capabilities = capabilities) }
 		}
+	}
+
+	override suspend fun emitEffect(throwable: Throwable) {
+		emitEffect(UiEffect.Toast(throwable.message ?: "Unknown Error"))
 	}
 }
