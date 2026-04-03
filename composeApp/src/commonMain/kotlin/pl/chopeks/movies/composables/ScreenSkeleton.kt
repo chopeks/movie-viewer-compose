@@ -19,10 +19,10 @@ import pl.chopeks.screenmodel.model.UiEffect
 @Composable
 fun ScreenSkeleton(
 	title: String,
+	screenModel: BaseScreenModel?,
 	leftActions: @Composable RowScope.() -> Unit = {},
 	rightActions: @Composable RowScope.() -> Unit = {},
 	onKeyEvent: (KeyEvent) -> Boolean = { false },
-	screenModel: BaseScreenModel?,
 	content: @Composable (scope: CoroutineScope) -> Unit
 ) {
 	val drawerState = rememberDrawerState(DrawerValue.Closed)

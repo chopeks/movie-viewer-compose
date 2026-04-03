@@ -109,8 +109,11 @@ class EncoderRepository(
 
 	internal suspend fun getFilesFromSource(): List<File> {
 		val settings = settingsLocalDataSource.get().first()
+		if (settings.encoderSource.isBlank())
+			return emptyList()
 		val dir = File(settings.encoderSource)
-		if (!dir.exists() || !dir.isDirectory) return emptyList()
+		if (!dir.exists() || !dir.isDirectory)
+			return emptyList()
 		return dir.listFiles()?.filter { it.isFile } ?: emptyList()
 	}
 

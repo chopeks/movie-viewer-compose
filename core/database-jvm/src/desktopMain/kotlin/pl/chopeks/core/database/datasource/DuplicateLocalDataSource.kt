@@ -35,7 +35,7 @@ class DuplicateLocalDataSource(
 						alias[MovieTable.duration],
 						alias[MovieTable.path],
 					)
-					.limit(8)
+					.limit(20)
 				query.map { row ->
 					Duplicates(
 						list = listOf(
@@ -46,6 +46,8 @@ class DuplicateLocalDataSource(
 						otherTimestamp = row[DetectedDuplicatesTable.otherTimestamp]
 					)
 				}
+					.distinctBy { it.list.first().id }
+					.take(8)
 			}
 		}
 	}
