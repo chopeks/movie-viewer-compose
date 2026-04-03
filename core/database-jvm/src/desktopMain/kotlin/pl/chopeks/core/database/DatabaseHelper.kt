@@ -12,7 +12,7 @@ import java.sql.Connection
 
 object DatabaseHelper {
 	internal val defaultUrl: String
-		get() = "jdbc:sqlite:${findDatabase().absolutePath}"
+		get() = "jdbc:sqlite:${findDatabase().absolutePath}?foreign_keys=on"
 	internal const val defaultDriver: String = "org.sqlite.JDBC"
 
 	fun clean(db: Database) {
@@ -36,6 +36,10 @@ object DatabaseHelper {
 		TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED
 
 		transaction(db) {
+			addLogger(StdOutSqlLogger)
+
+			val currentVersion = 6 // Update this manually as you add versions
+
 			SchemaUtils.create(SchemaVerionsTable)
 			if (SchemaVerionsTable.selectAll().count() == 0L) {
 				SchemaVerionsTable.insert {
@@ -45,8 +49,14 @@ object DatabaseHelper {
 			loop@ while (true) {
 				when (SchemaVerionsTable.selectAll().first()[version]) {
 					1 -> {
-						SchemaUtils.create(CategoryTable, ActorTable, MovieTable, MovieCategories, MovieActors, PathsTable)
-						SchemaVerionsTable.inc()
+						SchemaUtils.create(
+							CategoryTable, ActorTable, MovieTable,
+							MovieCategories, MovieActors, PathsTable,
+							MoviesToBeCheckedTable, AudioToBeCheckedTable,
+							DetectedDuplicatesTable, SchemaVerionsTable
+						)
+						SchemaVerionsTable.set(currentVersion)
+						return@transaction
 					}
 
 					2 -> { // add file count for each path
@@ -69,23 +79,62 @@ object DatabaseHelper {
 						SchemaVerionsTable.inc()
 					}
 
+					6 -> {
+						SchemaUtils.createMissingTablesAndColumns(MoviesToBeCheckedTable)
+						exec("DELETE FROM movie_category WHERE movie NOT IN (SELECT id FROM movie)")
+						exec("DELETE FROM movie_actor WHERE movie NOT IN (SELECT id FROM movie)")
+						exec("DELETE FROM tbc WHERE vid NOT IN (SELECT id FROM movie)")
+						exec("DELETE FROM atbc WHERE vid NOT IN (SELECT id FROM movie)")
+						exec("DELETE FROM dup WHERE movie NOT IN (SELECT id FROM movie) OR other NOT IN (SELECT id FROM movie)")
+						SchemaVerionsTable.inc()
+					}
+
 					else -> break@loop
 				}
 			}
 		}
 
 		transaction(db) {
-			SchemaUtils.addMissingColumnsStatements(MovieTable).forEach(::exec)
+			addLogger(StdOutSqlLogger)
+			SchemaUtils.addMissingColumnsStatements(MovieTable, MovieActors, MovieCategories).forEach(::exec)
 			SchemaUtils.addMissingColumnsStatements(AudioToBeCheckedTable).forEach(::exec)
 		}
 
-		transaction(db) { // idk why isn't it working with exposed apis, but this works somehow
+		transaction(db) {
 			exec("CREATE INDEX IF NOT EXISTS idx_movie_categories_movie ON movie_category (movie)")
 			exec("CREATE INDEX IF NOT EXISTS idx_movie_categories_cat ON movie_category (category)")
 			exec("CREATE INDEX IF NOT EXISTS idx_movie_actors_movie ON movie_actor (movie)")
 			exec("CREATE INDEX IF NOT EXISTS idx_movie_actors_actor ON movie_actor (actor)")
-		}
 
+			val triggers = listOf(
+				"movie_category" to "movie",
+				"movie_actor" to "movie",
+				"tbc" to "vid",
+				"atbc" to "vid"
+			)
+
+			triggers.forEach { (table, column) ->
+				exec(
+					"""
+            CREATE TRIGGER IF NOT EXISTS t_clean_${table}_on_movie_del
+            AFTER DELETE ON movie
+            BEGIN
+                DELETE FROM $table WHERE $column = OLD.id;
+            END;
+        """
+				)
+			}
+
+			exec(
+				"""
+        CREATE TRIGGER IF NOT EXISTS t_clean_dup_on_movie_del
+        AFTER DELETE ON movie
+        BEGIN
+            DELETE FROM dup WHERE movie = OLD.id OR other = OLD.id;
+        END;
+    """
+			)
+		}
 		return db
 	}
 

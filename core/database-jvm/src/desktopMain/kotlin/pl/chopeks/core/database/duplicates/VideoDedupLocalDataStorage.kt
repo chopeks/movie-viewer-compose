@@ -31,13 +31,13 @@ class VideoDedupLocalDataStorage(
 	suspend fun nextVideo(): PossibleDuplicate? = withContext(Dispatchers.IO) {
 		transaction(db) {
 			MoviesToBeCheckedTable
-				.join(MovieTable, JoinType.INNER, onColumn = MoviesToBeCheckedTable.id, otherColumn = MovieTable.id) { MoviesToBeCheckedTable.id eq MovieTable.id }
-				.select(MoviesToBeCheckedTable.id, MovieTable.duration, MovieTable.path)
+				.join(MovieTable, JoinType.INNER, onColumn = MoviesToBeCheckedTable.videoId, otherColumn = MovieTable.id) { MoviesToBeCheckedTable.id eq MovieTable.id }
+				.select(MoviesToBeCheckedTable.videoId, MovieTable.duration, MovieTable.path)
 				.where { MovieTable.duration.isNotNull() }
-				.orderBy(MoviesToBeCheckedTable.id, SortOrder.DESC)
+				.orderBy(MoviesToBeCheckedTable.videoId, SortOrder.DESC)
 				.limit(1)
 				.singleOrNull()
-				?.let { PossibleDuplicate(it[MoviesToBeCheckedTable.id].value, it[MovieTable.duration]!!, File(it[MovieTable.path])) }
+				?.let { PossibleDuplicate(it[MoviesToBeCheckedTable.videoId], it[MovieTable.duration]!!, File(it[MovieTable.path])) }
 		}
 	}
 
@@ -68,7 +68,7 @@ class VideoDedupLocalDataStorage(
 
 	suspend fun removeDuplicate(id: Int) = withContext(Dispatchers.IO) {
 		transaction(db) {
-			MoviesToBeCheckedTable.deleteWhere { MoviesToBeCheckedTable.id eq id }
+			MoviesToBeCheckedTable.deleteWhere { MoviesToBeCheckedTable.videoId eq id }
 		}
 	}
 
