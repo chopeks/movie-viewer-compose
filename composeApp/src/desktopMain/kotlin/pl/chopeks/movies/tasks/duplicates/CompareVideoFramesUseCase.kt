@@ -1,12 +1,14 @@
 package pl.chopeks.movies.tasks.duplicates
 
 import kotlinx.coroutines.*
+import pl.chopeks.core.data.repository.SystemCapabilityRepository
 import pl.chopeks.core.database.duplicates.VideoDedupLocalDataStorage
 import pl.chopeks.core.ffmpeg.VideoComparator
 import pl.chopeks.movies.utils.AppLogger
 import java.io.File
 
 class CompareVideoFramesUseCase(
+	private val capabilityRepository: SystemCapabilityRepository,
 	private val datasource: VideoDedupLocalDataStorage,
 	private val videoComparator: VideoComparator
 ) {
@@ -26,24 +28,31 @@ class CompareVideoFramesUseCase(
 
 		AppLogger.log("found ${candidates.size} possible duplicates for ${video.path.absolutePath}, checking now")
 
-		return@withContext checkMovie(video.copy(candidates = candidates))
+		try {
+			return@withContext checkMovie(video.copy(candidates = candidates))
+		} catch (e: Throwable) {
+			e.printStackTrace()
+			return@withContext false
+		}
 	}
 
 	@OptIn(DelicateCoroutinesApi::class)
 	private suspend fun checkMovie(model: VideoDedupLocalDataStorage.PossibleDuplicate): Boolean = withContext(Dispatchers.Default) {
-		val mainPath = datasource.getPath(model.id)!!
-		if (model.candidates.isNotEmpty()) {
-			model.candidates.map { candidate ->
-				async {
-					val path = datasource.getPath(candidate) ?: return@async
-					val result = videoComparator.compareVideos(File(mainPath), File(path))
-					AppLogger.log("for $candidate $result")
-					if (result.isValid) {
-						datasource.addDuplicate(model.id, candidate)
-						AppLogger.log("added ${model.id} -> $candidate to possible duplicates")
+		with(capabilityRepository::contains) {
+			val mainPath = datasource.getPath(model.id)!!
+			if (model.candidates.isNotEmpty()) {
+				model.candidates.map { candidate ->
+					async {
+						val path = datasource.getPath(candidate) ?: return@async
+						val result = videoComparator.compareVideos(File(mainPath), File(path))
+						AppLogger.log("for $candidate $result")
+						if (result.isValid) {
+							datasource.addDuplicate(model.id, candidate)
+							AppLogger.log("added ${model.id} -> $candidate to possible duplicates")
+						}
 					}
-				}
-			}.awaitAll()
+				}.awaitAll()
+			}
 		}
 		return@withContext cleanUp(model.id)
 	}

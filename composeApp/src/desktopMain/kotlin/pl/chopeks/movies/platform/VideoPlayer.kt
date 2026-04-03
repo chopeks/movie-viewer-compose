@@ -27,7 +27,7 @@ class VideoPlayer(
 	private fun Array<String>.runCommand(workingDir: File, errorRedirect: ProcessBuilder.Redirect = ProcessBuilder.Redirect.INHERIT) {
 		processFactory(toList()) {
 			directory(workingDir)
-				.redirectOutput(ProcessBuilder.Redirect.INHERIT)
+				.redirectOutput(ProcessBuilder.Redirect.DISCARD)
 				.redirectError(errorRedirect)
 		}.waitFor()
 	}

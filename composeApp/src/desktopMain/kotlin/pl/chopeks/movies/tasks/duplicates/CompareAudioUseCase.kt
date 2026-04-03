@@ -68,7 +68,7 @@ class CompareAudioUseCase(
 		val result = searchThisInOther(needle, longerVideos) +
 			searchOtherInThis(haystack, shorterVideos)
 
-		result.filter { it.confidence > 0.9 }
+		result.filter { it.confidence > 0.85 }
 			.distinctBy { it.id }
 			.forEach { match ->
 				AppLogger.log("found duplicate for ${video.id} -> ${match.id} (${match.confidence})")

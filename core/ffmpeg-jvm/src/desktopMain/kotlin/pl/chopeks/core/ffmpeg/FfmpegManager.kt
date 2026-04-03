@@ -38,7 +38,6 @@ class FfmpegManager(
 		val modelFile = File(workDir, VAMF_MODEL_FILE)
 		if (!modelFile.exists())
 			Unit.javaClass.getResourceAsStream("/$VAMF_MODEL_FILE").use { it.copyTo(modelFile.outputStream()) }
-		println(availableEncoders())
 	}
 
 	/**
@@ -224,6 +223,8 @@ class FfmpegManager(
 	 * @param permille The permille of the video duration where the screenshot should be taken
 	 * @return The screenshot image data as a byte array.
 	 */
+
+	context(guard: CapabilityGuard)
 	fun makeScreenshot(video: File, permille: Long = 110): ByteArray {
 		return getFrame(video, permille)?.let {
 			ByteArrayOutputStream().use { outputStream ->
@@ -240,7 +241,10 @@ class FfmpegManager(
 	 * @param permille The permille of the video duration where the screenshot should be taken
 	 * @return The screenshot in form of buffered image.
 	 */
+	context(guard: CapabilityGuard)
 	internal fun getFrame(video: File, permille: Long, width: Int = 0, height: Int = 0): BufferedImage? {
+		ensure(Capability.VIDEO_ENGINE)
+
 		val timestampMs = (getVideoDuration(video) * permille) / 1000L
 		val cmd = mutableListOf(
 			FFMPEG_COMMAND,
@@ -272,7 +276,10 @@ class FfmpegManager(
 		}
 	}
 
+	context(guard: CapabilityGuard)
 	fun availableEncoders(): List<String> {
+		ensure(Capability.VIDEO_ENGINE)
+
 		val process = processFactory(listOf(FFMPEG_COMMAND, "-encoders")) {
 			redirectError(ProcessBuilder.Redirect.DISCARD)
 		}
@@ -376,11 +383,14 @@ class FfmpegManager(
 	 * @param startTimeMs The timestamp to jump to for the sample (e.g., middle of video).
 	 * @return The VMAF score as a Double, or 0.0 if the check fails.
 	 */
+	context(guard: CapabilityGuard)
 	fun getVmafScore(
 		original: File,
 		output: File,
 		startTimeMs: Long
 	): Double {
+		ensure(Capability.VIDEO_VMAF)
+
 		val width = getResolutionEntry(output, "width") ?: return 0.0
 		val height = getResolutionEntry(output, "height") ?: return 0.0
 

@@ -12,10 +12,12 @@ import pl.chopeks.core.database.datasource.SettingsLocalDataSource
 import pl.chopeks.core.ffmpeg.FfmpegManager
 import pl.chopeks.core.ffmpeg.VideoComparator
 import pl.chopeks.core.model.EncodeStatus
+import pl.chopeks.core.model.capability.FeatureNotSupportedException
 import java.io.File
 import kotlin.math.abs
 
 class EncoderRepository(
+	private val capabilityRepository: SystemCapabilityRepository,
 	private val settingsLocalDataSource: SettingsLocalDataSource,
 	private val ffmpegManager: FfmpegManager,
 	private val videoComparator: VideoComparator,
@@ -119,43 +121,41 @@ class EncoderRepository(
 
 	internal suspend fun verifyEncodedFile(file: File): Boolean {
 		val targetFile = File(getSink(), "${file.nameWithoutExtension}.HEVC.mp4")
+		try {
+			with(capabilityRepository::contains) {
+				val duration = ffmpegManager.getVideoDuration(file)
+				val expectedDuration = ffmpegManager.getVideoDuration(targetFile)
+				val durationDiff = abs(expectedDuration - duration)
+				val durationCheck = durationDiff <= 2000
+				if (!durationCheck) {
+					println("durationCheck failed for file ${file.name} -> $duration!=$expectedDuration, diff=${abs(expectedDuration - duration)}")
+				}
+				// compare videos is fast but brittle, so call it
+				val compareResult = videoComparator.compareVideos(file, targetFile)
+				val compareCheck = compareResult.ssim > 0.9 && compareResult.psnr > 20.0
+				if (!compareCheck) {
+					println("compareCheck failed for file ${file.name} -> $compareResult")
+				}
 
-		val duration = ffmpegManager.getVideoDuration(file)
-		val expectedDuration = ffmpegManager.getVideoDuration(targetFile)
-		val durationDiff = abs(expectedDuration - duration)
-		val durationCheck = durationDiff <= 1000
-		if (!durationCheck) {
-			println("durationCheck failed for file ${file.name} -> $duration!=$expectedDuration, diff=${abs(expectedDuration - duration)}")
+				if (durationCheck && compareCheck)
+					return true
+
+				// vmaf is kinda slow, call it as last resort
+				val vmafResult = ffmpegManager.getVmafScore(file, targetFile, duration / 2)
+				println("vmaf result for file ${file.name} -> $vmafResult")
+				return vmafResult > 85.0
+			}
+		} catch (e: FeatureNotSupportedException) {
+			e.printStackTrace()
+			return false
+		} catch (e: Throwable) {
+			e.printStackTrace()
+			return false
 		}
-		val compareResult = videoComparator.compareVideos(file, targetFile)
-		val compareCheck = compareResult.ssim > 0.9 && compareResult.psnr > 20.0
-		if (!compareCheck) {
-			println("compareCheck failed for file ${file.name} -> $compareResult")
-		}
-
-		if (durationCheck && compareCheck)
-			return true
-
-		val vmafResult = ffmpegManager.getVmafScore(file, targetFile, duration / 2)
-		println("vmaf result for file ${file.name} -> $vmafResult")
-		return vmafResult > 85.0
 	}
 
 	internal fun removeFile(file: File) {
-		// todo though do not remove for now, until 100% certain it works
-		val dumpDir = File(file.parent, ".dump")
-		if (!dumpDir.exists()) {
-			dumpDir.mkdirs()
-		}
-
-		val target = File(dumpDir, file.name)
-		if (target.exists())
-			target.delete()
-
-		val success = file.renameTo(target)
-		if (!success) {
-			// Fallback if rename fails (e.g., across different partitions)
-			file.copyTo(target, overwrite = true)
+		if (file.exists() && file.isFile) {
 			file.delete()
 		}
 	}

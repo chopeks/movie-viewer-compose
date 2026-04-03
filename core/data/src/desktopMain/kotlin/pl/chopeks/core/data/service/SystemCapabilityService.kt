@@ -2,14 +2,14 @@ package pl.chopeks.core.data.service
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import pl.chopeks.core.data.repository.ISystemCapabilityRepository
+import pl.chopeks.core.data.repository.SystemCapabilityRepository
 import pl.chopeks.core.ffmpeg.FfmpegManager
 import pl.chopeks.core.fpcalc.FpcalcManager
 import pl.chopeks.core.model.capability.Capability
 import pl.chopeks.core.model.capability.ExternalSoftware
 
 class SystemCapabilityService(
-	private val repository: ISystemCapabilityRepository,
+	private val repository: SystemCapabilityRepository,
 	private val ffmpegManager: FfmpegManager,
 	private val fpcalcManager: FpcalcManager,
 ): ISystemCapabilityService {
@@ -28,12 +28,14 @@ class SystemCapabilityService(
 			if (ffmpegCapabilities.hasVmaf)
 				repository.addCapability(Capability.VIDEO_VMAF)
 
-			ffmpegManager.availableEncoders().forEach { encoder ->
-				when (encoder) {
-					"hevc_amf" -> repository.addCapability(Capability.HEVC_AMD)
-					"hevc_nvenc" -> repository.addCapability(Capability.HEVC_NVIDIA)
-					"hevc_qsv" -> repository.addCapability(Capability.HEVC_INTEL)
-					"libx265" -> repository.addCapability(Capability.HEVC_SOFTWARE)
+			with(repository::contains) {
+				ffmpegManager.availableEncoders().forEach { encoder ->
+					when (encoder) {
+						"hevc_amf" -> repository.addCapability(Capability.HEVC_AMD)
+						"hevc_nvenc" -> repository.addCapability(Capability.HEVC_NVIDIA)
+						"hevc_qsv" -> repository.addCapability(Capability.HEVC_INTEL)
+						"libx265" -> repository.addCapability(Capability.HEVC_SOFTWARE)
+					}
 				}
 			}
 		}

@@ -26,7 +26,7 @@ val dataModule = DI.Module("data-di") {
 	bindSingleton<SystemCapabilityRepository> { SystemCapabilityRepository() }
 	bindProvider<ISystemCapabilityRepository> { instance<SystemCapabilityRepository>() }
 
-	bindSingleton<EncoderRepository> { EncoderRepository(instance(), instance(), instance(), instance()) }
+	bindSingleton<EncoderRepository> { EncoderRepository(instance(), instance(), instance(), instance(), instance()) }
 	bindProvider<IEncoderRepository> { instance<EncoderRepository>() }
 
 	// services

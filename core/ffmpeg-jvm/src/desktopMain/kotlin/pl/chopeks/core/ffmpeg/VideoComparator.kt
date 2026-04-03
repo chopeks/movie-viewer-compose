@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
+import pl.chopeks.core.model.capability.CapabilityGuard
 import pl.chopeks.core.model.comparator.VideoCompareResult
 import java.awt.image.BufferedImage
 import java.io.File
@@ -14,6 +15,8 @@ import kotlin.math.sqrt
 class VideoComparator(
 	private val ffmpeg: FfmpegManager
 ) {
+
+	context(guard: CapabilityGuard)
 	suspend fun compareVideos(
 		originalFile: File,
 		candidateFile: File,
@@ -48,7 +51,7 @@ class VideoComparator(
 		)
 	}
 
-	fun calculatePSNR(img1: BufferedImage, img2: BufferedImage): Double {
+	internal fun calculatePSNR(img1: BufferedImage, img2: BufferedImage): Double {
 		var mse = 0.0
 		val w = img1.width
 		val h = img1.height
@@ -78,7 +81,7 @@ class VideoComparator(
 		return 20.0 * log10(255.0 / sqrt(mse))
 	}
 
-	fun calculateSSIM(img1: BufferedImage, img2: BufferedImage): Double {
+	internal fun calculateSSIM(img1: BufferedImage, img2: BufferedImage): Double {
 		val l1 = getLuminanceArray(img1)
 		val l2 = getLuminanceArray(img2)
 		val n = l1.size.toDouble()

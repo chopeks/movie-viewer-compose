@@ -2,6 +2,7 @@ package pl.chopeks.movies.platform
 
 import org.jetbrains.skia.*
 import pl.chopeks.core.data.IImageConverter
+import pl.chopeks.core.data.repository.SystemCapabilityRepository
 import pl.chopeks.core.ffmpeg.FfmpegManager
 import pl.chopeks.core.model.IntRect
 import pl.chopeks.movies.utils.imageBytesToBase64
@@ -10,6 +11,7 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 class ImageConverter(
+	private val capabilityRepository: SystemCapabilityRepository,
 	private val ffmpegManager: FfmpegManager
 ) : IImageConverter {
 	override suspend fun bytesToBase64(bytes: ByteArray, targetWidth: Int, targetHeight: Int, rect: IntRect): String? {
@@ -22,7 +24,14 @@ class ImageConverter(
 	}
 
 	override fun makeScreenshot(path: String, permille: Long): ByteArray {
-		return ffmpegManager.makeScreenshot(File(path), permille)
+		try {
+			return with(capabilityRepository::contains) {
+				ffmpegManager.makeScreenshot(File(path), permille)
+			}
+		} catch (e: Throwable) {
+			e.printStackTrace()
+			return byteArrayOf()
+		}
 	}
 
 	@OptIn(ExperimentalEncodingApi::class)
