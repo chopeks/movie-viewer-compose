@@ -5,7 +5,10 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
-import pl.chopeks.core.database.*
+import pl.chopeks.core.database.MovieActors
+import pl.chopeks.core.database.MovieCategories
+import pl.chopeks.core.database.MovieTable
+import pl.chopeks.core.database.MoviesToBeCheckedTable
 import pl.chopeks.core.model.*
 import java.io.File
 import java.nio.file.Files
@@ -126,12 +129,6 @@ class VideoLocalDataSource(
 		val path = transaction(db) {
 			val ret = MovieTable.selectAll().where { MovieTable.id eq video.id }.first()[MovieTable.path]
 			MovieTable.deleteWhere { MovieTable.id eq video.id }
-			MovieActors.deleteWhere { MovieActors.movie eq video.id }
-			MovieCategories.deleteWhere { MovieCategories.movie eq video.id }
-			DetectedDuplicatesTable.deleteWhere { DetectedDuplicatesTable.movie eq video.id }
-			DetectedDuplicatesTable.deleteWhere { DetectedDuplicatesTable.otherMovie eq video.id }
-			MoviesToBeCheckedTable.deleteWhere { MoviesToBeCheckedTable.videoId eq video.id }
-			AudioToBeCheckedTable.deleteWhere { AudioToBeCheckedTable.videoId eq video.id }
 			ret
 		}
 		val file = File(path)

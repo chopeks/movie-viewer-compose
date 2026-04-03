@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import pl.chopeks.core.data.IImageConverter
+import pl.chopeks.core.data.ITaskManager
 import pl.chopeks.core.data.bestConcurrencyDispatcher
 import pl.chopeks.core.data.repository.IActorRepository
 import pl.chopeks.core.data.repository.IDuplicateRepository
@@ -19,6 +20,7 @@ class ActorsScreenModel(
 	private val repository: IActorRepository,
 	private val duplicatesRepository: IDuplicateRepository,
 	private val imageConverter: IImageConverter,
+	private val taskManager: ITaskManager,
 	private val dispatcher: CoroutineDispatcher = bestConcurrencyDispatcher()
 ) : ScreenModel {
 	sealed class Intent {
@@ -116,6 +118,7 @@ class ActorsScreenModel(
 	private fun deduplicate(actor: Actor) {
 		screenModelScope.launch {
 			duplicatesRepository.deduplicate(actor)
+			taskManager.startDedupTask()
 		}
 	}
 

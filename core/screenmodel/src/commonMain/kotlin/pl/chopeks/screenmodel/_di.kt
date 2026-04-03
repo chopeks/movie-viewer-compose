@@ -7,7 +7,7 @@ import pl.chopeks.usecase.useCaseModule
 
 val screenModelModule = DI.Module(name = "screenModel") {
 	import(useCaseModule)
-	bindProvider { ActorsScreenModel(instance(), instance(), instance()) }
+	bindProvider { ActorsScreenModel(instance(), instance(), instance(), instance()) }
 	bindProvider { CategoriesScreenModel(instance(), instance()) }
 	bindProvider { VideosScreenModel(instance(), instance(), instance(), instance(), instance(), instance()) }
 	bindProvider { DuplicatesScreenModel(instance(), instance(), instance(), instance()) }
