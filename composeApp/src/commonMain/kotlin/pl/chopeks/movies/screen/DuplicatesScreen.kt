@@ -25,7 +25,7 @@ import pl.chopeks.movies.composables.cards.DuplicateCard
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
 import pl.chopeks.screenmodel.DuplicatesScreenModel
-import pl.chopeks.screenmodel.model.UiState
+import pl.chopeks.screenmodel.DuplicatesScreenModel.Intent.*
 
 class DuplicatesScreen : Screen {
 	@Composable
@@ -39,24 +39,31 @@ class DuplicatesScreen : Screen {
 			onDispose { keyEventManager.setListener(null) }
 		}
 
+		val state by screenModel.state.collectAsState()
+
 		ScreenSkeleton(
 			title = stringResource(Res.string.screen_duplicates),
 			rightActions = {
 				GreenTextButton(text = stringResource(Res.string.button_deduplicate_all), onClick = {
-					screenModel.deduplicate()
+					screenModel.handleIntent(DeduplicateAll)
 				})
 				Spacer(Modifier.width(32.dp))
-				val count by screenModel.count.collectAsState()
-				Text(stringResource(Res.string.label_left_to_check, count), color = Color.LightGray)
+				Text(
+					stringResource(Res.string.label_left_to_check, state.count),
+					color = Color.LightGray
+				)
 			}
 		) {
-			val state by screenModel.duplicates.collectAsState()
-			when (val current = state) {
-				is UiState.Success -> Column(
+			if (state.isLoading) {
+				ProgressIndicator()
+			} else if (state.error != null) {
+				Text("Error: ${state.error}")
+			} else {
+				Column(
 					modifier = Modifier.fillMaxSize().padding(4.dp),
 					verticalArrangement = Arrangement.spacedBy(8.dp)
 				) {
-					val chunks = current.data.chunked(2)
+					val chunks = state.duplicates.chunked(2)
 					chunks.forEach { chunk ->
 						Row(
 							modifier = Modifier.fillMaxWidth().weight(1f),
@@ -66,10 +73,18 @@ class DuplicatesScreen : Screen {
 								Box(modifier = Modifier.fillMaxSize().weight(1f)) {
 									DuplicateCard(
 										videos = videos,
-										onClick = screenModel::play,
-										onRemoveClick = screenModel::remove,
-										onDumpClick = screenModel::dump,
-										onCancelClick = screenModel::cancel
+										onClick = {
+											screenModel.handleIntent(Play(it))
+										},
+										onRemoveClick = {
+											screenModel.handleIntent(Remove(it))
+										},
+										onDumpClick = {
+											screenModel.handleIntent(Dump(it))
+										},
+										onCancelClick = {
+											screenModel.handleIntent(Cancel(it))
+										}
 									)
 								}
 							}
@@ -82,9 +97,6 @@ class DuplicatesScreen : Screen {
 						Spacer(modifier = Modifier.weight(1f))
 					}
 				}
-
-				is UiState.Loading -> ProgressIndicator()
-				is UiState.Error -> Text("Error: ${current.message}")
 			}
 		}
 	}

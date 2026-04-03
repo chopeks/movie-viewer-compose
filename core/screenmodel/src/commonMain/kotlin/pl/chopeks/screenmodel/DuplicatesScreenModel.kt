@@ -1,9 +1,11 @@
 package pl.chopeks.screenmodel
 
 import cafe.adriel.voyager.core.model.screenModelScope
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import pl.chopeks.core.data.IVideoPlayer
@@ -13,7 +15,6 @@ import pl.chopeks.core.data.repository.IVideoRepository
 import pl.chopeks.core.model.Duplicates
 import pl.chopeks.core.model.Video
 import pl.chopeks.screenmodel.model.UiEffect
-import pl.chopeks.screenmodel.model.UiState
 import pl.chopeks.usecase.video.GetDuplicatesUseCase
 
 class DuplicatesScreenModel(
@@ -22,69 +23,95 @@ class DuplicatesScreenModel(
 	private val duplicatesRepository: IDuplicateRepository,
 	private val getDuplicatesUseCase: GetDuplicatesUseCase,
 ) : BaseScreenModel() {
-	private val updateTrigger = MutableStateFlow(0)
 
-	private val _count = MutableStateFlow(0)
-	val count = _count.asStateFlow()
+	sealed class Intent {
+		data object Init : Intent()
+		data class Cancel(val model: Duplicates) : Intent()
+		data class Remove(val video: Video) : Intent()
+		data class Dump(val video: Video) : Intent()
+		data class Play(val video: Video) : Intent()
+		data object DeduplicateAll : Intent()
+	}
 
-	val duplicates = updateTrigger
-		.buffer(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-		.transform {
-			emit(UiState.Loading)
-			emit(UiState.Success(getDuplicatesUseCase()))
-		}
-		.catch { e -> emit(UiState.Error(e.message ?: "Unknown Error")) }
-		.flowOn(bestConcurrencyDispatcher())
-		.stateIn(
-			scope = screenModelScope,
-			started = SharingStarted.WhileSubscribed(5000),
-			initialValue = UiState.Loading
-		)
+	data class UiState(
+		val isLoading: Boolean = false,
+		val duplicates: List<Duplicates> = emptyList(),
+		val count: Int = 0,
+		val error: String? = null
+	)
+
+	private val _state = MutableStateFlow(UiState())
+	val state: StateFlow<UiState> = _state.asStateFlow()
 
 	init {
 		screenModelScope.launch(bestConcurrencyDispatcher()) {
 			while (isActive) {
-				_count.value = duplicatesRepository.count()
-				if ((duplicates.value !is UiState.Success) || (duplicates.value as UiState.Success).data.isEmpty()) {
-					updateTrigger.value++
+				val count = duplicatesRepository.count()
+				_state.update { it.copy(count = count) }
+				if (_state.value.duplicates.isEmpty()) {
+					loadDuplicates()
 				}
 				delay(5000)
 			}
 		}
 	}
 
-	fun cancel(model: Duplicates) {
+	fun handleIntent(intent: Intent) {
+		when (intent) {
+			is Intent.Init -> loadDuplicates()
+			is Intent.Cancel -> cancel(intent.model)
+			is Intent.Remove -> remove(intent.video)
+			is Intent.Dump -> dump(intent.video)
+			is Intent.Play -> play(intent.video)
+			is Intent.DeduplicateAll -> deduplicate()
+		}
+	}
+
+	private fun loadDuplicates() {
+		launchSafe {
+			_state.update { it.copy(isLoading = true, error = null) }
+			try {
+				val result = getDuplicatesUseCase()
+				_state.update { it.copy(isLoading = false, duplicates = result) }
+			} catch (e: Exception) {
+				_state.update { it.copy(isLoading = false, error = e.message ?: "Unknown Error") }
+			}
+		}
+	}
+
+	private fun cancel(model: Duplicates) {
 		launchAndUpdate {
 			duplicatesRepository.cancel(model)
 		}
 	}
 
-	fun remove(model: Video) {
+	private fun remove(video: Video) {
 		launchAndUpdate {
-			videoRepository.remove(model)
+			videoRepository.remove(video)
 		}
 	}
 
-	fun dump(video: Video) {
+	private fun dump(video: Video) {
 		launchAndUpdate {
 			videoRepository.moveToDump(video)
 		}
 	}
 
-	fun play(video: Video) {
+	private fun play(video: Video) {
 		launchSafe {
 			videoPlayer.play(video)
 		}
 	}
 
-	fun deduplicate() {
+	private fun deduplicate() {
 		launchSafe {
 			duplicatesRepository.deduplicateAll()
 		}
 	}
 
 	private fun launchAndUpdate(block: suspend () -> Unit) = launchSafe {
-		block(); updateTrigger.value++
+		block()
+		loadDuplicates()
 	}
 
 	override suspend fun emitEffect(throwable: Throwable) = when (throwable) {
