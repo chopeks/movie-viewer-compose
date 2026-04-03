@@ -17,6 +17,21 @@ class SettingsScreenModel(
 	private val capabilityRepository: ISystemCapabilityRepository,
 	private val capabilityService: ISystemCapabilityService,
 ) : ScreenModel {
+
+	sealed class Intent {
+		data object Init : Intent()
+		data class SaveSettings(
+			val browser: String,
+			val moviePlayer: String,
+			val encoderSource: String,
+			val encoderSink: String
+		) : Intent()
+
+		data class RemovePath(val path: Path) : Intent()
+		data class AddPath(val path: String) : Intent()
+		data object RefreshApps : Intent()
+	}
+
 	data class ExternalAppState(
 		val name: String,
 		val version: String?
@@ -29,70 +44,83 @@ class SettingsScreenModel(
 		val capabilities: Map<Capability, Boolean> = emptyMap()
 	)
 
-	private val _externalApps = MutableStateFlow<Map<ExternalSoftware, ExternalAppState>>(emptyMap())
-	private val _settings = MutableStateFlow<Settings?>(null)
-	private val _paths = MutableStateFlow<List<Path>>(emptyList())
-	private val _capabilities = MutableStateFlow<Map<Capability, Boolean>>(emptyMap())
+	private val _state = MutableStateFlow(UiState())
+	val state: StateFlow<UiState> = _state.asStateFlow()
 
-	val uiState = combine(
-		_externalApps,
-		_settings,
-		_paths,
-		_capabilities
-	) { externalApps, settings, paths, capabilities ->
-		UiState(externalApps, settings, paths, capabilities)
-	}.stateIn(
-		scope = screenModelScope,
-		started = SharingStarted.WhileSubscribed(5000),
-		initialValue = UiState()
-	)
+	fun handleIntent(intent: Intent) {
+		when (intent) {
+			is Intent.Init -> init()
+			is Intent.SaveSettings -> saveSettings(
+				intent.browser,
+				intent.moviePlayer,
+				intent.encoderSource,
+				intent.encoderSink
+			)
 
-	fun init() {
+			is Intent.RemovePath -> removePath(intent.path)
+			is Intent.AddPath -> addPath(intent.path)
+			is Intent.RefreshApps -> refreshApps()
+		}
+	}
+
+	private fun init() {
 		screenModelScope.launch {
 			launch {
-				repository.getSettings().collectLatest {
-					_settings.emit(it)
+				repository.getSettings().collectLatest { settings ->
+					_state.update { it.copy(settings = settings) }
 				}
 			}
-			_externalApps.emit(ExternalSoftware.entries.associateWith {
-				ExternalAppState(it.visibleName, capabilityRepository.getVersion(it))
-			})
-			_capabilities.emit(Capability.entries.associateWith {
-				capabilityRepository.hasCapability(it)
-			})
-			_paths.emit(repository.getPaths())
-		}
-	}
-
-	fun saveSettings(browser: String, moviePlayer: String, encoderSource: String, encoderSink: String) {
-		screenModelScope.launch {
-			repository.setSettings(Settings(browser, moviePlayer, encoderSource, encoderSink))
-			repository.getSettings().collectLatest {
-				_settings.emit(it)
+			_state.update {
+				it.copy(
+					externalApps = ExternalSoftware.entries.associateWith {
+						ExternalAppState(it.visibleName, capabilityRepository.getVersion(it))
+					},
+					capabilities = Capability.entries.associateWith {
+						capabilityRepository.hasCapability(it)
+					},
+					paths = repository.getPaths()
+				)
 			}
 		}
 	}
 
-	fun removePath(path: Path) {
+	private fun saveSettings(
+		browser: String,
+		moviePlayer: String,
+		encoderSource: String,
+		encoderSink: String
+	) {
+		screenModelScope.launch {
+			repository.setSettings(Settings(browser, moviePlayer, encoderSource, encoderSink))
+			repository.getSettings().collectLatest { settings ->
+				_state.update { it.copy(settings = settings) }
+			}
+		}
+	}
+
+	private fun removePath(path: Path) {
 		screenModelScope.launch {
 			repository.removePath(path)
-			_paths.emit(repository.getPaths())
+			val paths = repository.getPaths()
+			_state.update { it.copy(paths = paths) }
 		}
 	}
 
-	fun addPath(path: String) {
+	private fun addPath(path: String) {
 		screenModelScope.launch {
 			repository.addPath(path)
-			_paths.emit(repository.getPaths())
+			val paths = repository.getPaths()
+			_state.update { it.copy(paths = paths) }
 		}
 	}
 
-	fun refreshApps() {
+	private fun refreshApps() {
 		screenModelScope.launch {
 			capabilityService.discover()
-			_capabilities.emit(Capability.entries.associateWith {
+			val capabilities = Capability.entries.associateWith {
 				capabilityRepository.hasCapability(it)
-			})
+			}
+			_state.update { it.copy(capabilities = capabilities) }
 		}
 	}
 }

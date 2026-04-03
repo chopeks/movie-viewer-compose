@@ -49,13 +49,13 @@ class SettingsScreen : Screen {
 		}
 
 		LaunchedEffect(screenModel) {
-			screenModel.init()
+			screenModel.handleIntent(SettingsScreenModel.Intent.Init)
 		}
 
 		ScreenSkeleton(
 			title = stringResource(Res.string.screen_settings)
 		) {
-			val state by screenModel.uiState.collectAsState()
+			val state by screenModel.state.collectAsState()
 
 			val settings = state.settings
 			var browser by remember(settings) { mutableStateOf(settings?.browser ?: "") }
@@ -79,15 +79,29 @@ class SettingsScreen : Screen {
 					}
 				}
 				items(state.paths) { path ->
-					SettingsDirectory(path, onRemoveClick = { screenModel.removePath(it) })
+					SettingsDirectory(path, onRemoveClick = {
+						screenModel.handleIntent(SettingsScreenModel.Intent.RemovePath(it))
+					})
 				}
 
 				if (settings != null) {
 					item(span = { GridItemSpan(maxLineSpan) }) {
 						Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
 							SettingsHeaderText(stringResource(Res.string.label_settings))
-							IconButton(onClick = { screenModel.saveSettings(browser, moviePlayer, encoderSource, encoderSink) }) {
-								Icon(painterResource(Res.drawable.content_save), contentDescription = stringResource(Res.string.button_save))
+							IconButton(onClick = {
+								screenModel.handleIntent(
+									SettingsScreenModel.Intent.SaveSettings(
+										browser,
+										moviePlayer,
+										encoderSource,
+										encoderSink
+									)
+								)
+							}) {
+								Icon(
+									painterResource(Res.drawable.content_save),
+									contentDescription = stringResource(Res.string.button_save)
+								)
 							}
 						}
 					}
@@ -129,7 +143,12 @@ class SettingsScreen : Screen {
 				item(span = { GridItemSpan(maxLineSpan) }) {
 					Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
 						SettingsHeaderText(stringResource(Res.string.label_external_apps))
-						IconButton(onClick = { screenModel.refreshApps() }) { Icon(Icons.Default.Refresh, contentDescription = "refresh") }
+						IconButton(onClick = { screenModel.handleIntent(SettingsScreenModel.Intent.RefreshApps) }) {
+							Icon(
+								Icons.Default.Refresh,
+								contentDescription = "refresh"
+							)
+						}
 					}
 				}
 				items(state.externalApps.entries.toList(), { it.key }) { item ->
@@ -139,7 +158,12 @@ class SettingsScreen : Screen {
 				item(span = { GridItemSpan(maxLineSpan) }) {
 					Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
 						SettingsHeaderText(stringResource(Res.string.label_available_features))
-						IconButton(onClick = { screenModel.refreshApps() }) { Icon(Icons.Default.Refresh, contentDescription = "refresh") }
+						IconButton(onClick = { screenModel.handleIntent(SettingsScreenModel.Intent.RefreshApps) }) {
+							Icon(
+								Icons.Default.Refresh,
+								contentDescription = "refresh"
+							)
+						}
 					}
 				}
 				items(state.capabilities.entries.toList(), { it.key }) { item ->
@@ -151,7 +175,7 @@ class SettingsScreen : Screen {
 				isVisible = addDialogState.isVisible,
 				onDismiss = { addDialogState.hide() },
 				onConfirm = { path ->
-					screenModel.addPath(path)
+					screenModel.handleIntent(SettingsScreenModel.Intent.AddPath(path))
 					addDialogState.hide()
 				}
 			)
