@@ -20,13 +20,11 @@ class SettingsScreenModel(
 
 	sealed class Intent {
 		data object Init : Intent()
-		data class SaveSettings(
-			val browser: String,
-			val moviePlayer: String,
-			val encoderSource: String,
-			val encoderSink: String
-		) : Intent()
-
+		data class UpdateBrowser(val value: String) : Intent()
+		data class UpdateMoviePlayer(val value: String) : Intent()
+		data class UpdateEncoderSource(val value: String) : Intent()
+		data class UpdateEncoderSink(val value: String) : Intent()
+		data object SaveSettings : Intent()
 		data class RemovePath(val path: Path) : Intent()
 		data class AddPath(val path: String) : Intent()
 		data object RefreshApps : Intent()
@@ -50,13 +48,23 @@ class SettingsScreenModel(
 	fun handleIntent(intent: Intent) {
 		when (intent) {
 			is Intent.Init -> init()
-			is Intent.SaveSettings -> saveSettings(
-				intent.browser,
-				intent.moviePlayer,
-				intent.encoderSource,
-				intent.encoderSink
-			)
+			is Intent.UpdateBrowser -> _state.update {
+				it.copy(settings = it.settings?.copy(browser = intent.value))
+			}
 
+			is Intent.UpdateMoviePlayer -> _state.update {
+				it.copy(settings = it.settings?.copy(moviePlayer = intent.value))
+			}
+
+			is Intent.UpdateEncoderSource -> _state.update {
+				it.copy(settings = it.settings?.copy(encoderSource = intent.value))
+			}
+
+			is Intent.UpdateEncoderSink -> _state.update {
+				it.copy(settings = it.settings?.copy(encoderSink = intent.value))
+			}
+
+			is Intent.SaveSettings -> saveSettings()
 			is Intent.RemovePath -> removePath(intent.path)
 			is Intent.AddPath -> addPath(intent.path)
 			is Intent.RefreshApps -> refreshApps()
@@ -84,16 +92,10 @@ class SettingsScreenModel(
 		}
 	}
 
-	private fun saveSettings(
-		browser: String,
-		moviePlayer: String,
-		encoderSource: String,
-		encoderSink: String
-	) {
+	private fun saveSettings() {
 		screenModelScope.launch {
-			repository.setSettings(Settings(browser, moviePlayer, encoderSource, encoderSink))
-			repository.getSettings().collectLatest { settings ->
-				_state.update { it.copy(settings = settings) }
+			_state.value.settings?.let {
+				repository.setSettings(it)
 			}
 		}
 	}

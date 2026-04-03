@@ -95,7 +95,6 @@ object DatabaseHelper {
 		}
 
 		transaction(db) {
-			addLogger(StdOutSqlLogger)
 			SchemaUtils.addMissingColumnsStatements(MovieTable, MovieActors, MovieCategories).forEach(::exec)
 			SchemaUtils.addMissingColumnsStatements(AudioToBeCheckedTable).forEach(::exec)
 		}

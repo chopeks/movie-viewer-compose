@@ -34,6 +34,7 @@ import pl.chopeks.movies.mapping.description
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
 import pl.chopeks.screenmodel.SettingsScreenModel
+import pl.chopeks.screenmodel.SettingsScreenModel.Intent.*
 
 class SettingsScreen : Screen {
 	@Composable
@@ -49,7 +50,7 @@ class SettingsScreen : Screen {
 		}
 
 		LaunchedEffect(screenModel) {
-			screenModel.handleIntent(SettingsScreenModel.Intent.Init)
+			screenModel.handleIntent(Init)
 		}
 
 		ScreenSkeleton(
@@ -58,10 +59,6 @@ class SettingsScreen : Screen {
 			val state by screenModel.state.collectAsState()
 
 			val settings = state.settings
-			var browser by remember(settings) { mutableStateOf(settings?.browser ?: "") }
-			var moviePlayer by remember(settings) { mutableStateOf(settings?.moviePlayer ?: "") }
-			var encoderSource by remember(settings) { mutableStateOf(settings?.encoderSource ?: "") }
-			var encoderSink by remember(settings) { mutableStateOf(settings?.encoderSink ?: "") }
 
 			LazyVerticalGrid(
 				columns = GridCells.Adaptive(minSize = 500.dp),
@@ -80,7 +77,7 @@ class SettingsScreen : Screen {
 				}
 				items(state.paths) { path ->
 					SettingsDirectory(path, onRemoveClick = {
-						screenModel.handleIntent(SettingsScreenModel.Intent.RemovePath(it))
+						screenModel.handleIntent(RemovePath(it))
 					})
 				}
 
@@ -89,14 +86,7 @@ class SettingsScreen : Screen {
 						Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
 							SettingsHeaderText(stringResource(Res.string.label_settings))
 							IconButton(onClick = {
-								screenModel.handleIntent(
-									SettingsScreenModel.Intent.SaveSettings(
-										browser,
-										moviePlayer,
-										encoderSource,
-										encoderSink
-									)
-								)
+								screenModel.handleIntent(SaveSettings)
 							}) {
 								Icon(
 									painterResource(Res.drawable.content_save),
@@ -108,32 +98,40 @@ class SettingsScreen : Screen {
 
 					item {
 						StyledTextField(
-							value = browser,
-							onValueChange = { browser = it },
+							value = settings.browser,
+							onValueChange = {
+								screenModel.handleIntent(UpdateBrowser(it))
+							},
 							label = stringResource(Res.string.label_browser),
 							modifier = Modifier.fillMaxWidth()
 						)
 					}
 					item {
 						StyledTextField(
-							value = moviePlayer,
-							onValueChange = { moviePlayer = it },
+							value = settings.moviePlayer,
+							onValueChange = {
+								screenModel.handleIntent(UpdateMoviePlayer(it))
+							},
 							label = stringResource(Res.string.label_player),
 							modifier = Modifier.fillMaxWidth()
 						)
 					}
 					item {
 						StyledTextField(
-							value = encoderSource,
-							onValueChange = { encoderSource = it },
+							value = settings.encoderSource,
+							onValueChange = {
+								screenModel.handleIntent(UpdateEncoderSource(it))
+							},
 							label = stringResource(Res.string.label_encoder_source),
 							modifier = Modifier.fillMaxWidth()
 						)
 					}
 					item {
 						StyledTextField(
-							value = encoderSink,
-							onValueChange = { encoderSink = it },
+							value = settings.encoderSink,
+							onValueChange = {
+								screenModel.handleIntent(UpdateEncoderSink(it))
+							},
 							label = stringResource(Res.string.label_encoder_sink),
 							modifier = Modifier.fillMaxWidth()
 						)
@@ -143,7 +141,7 @@ class SettingsScreen : Screen {
 				item(span = { GridItemSpan(maxLineSpan) }) {
 					Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
 						SettingsHeaderText(stringResource(Res.string.label_external_apps))
-						IconButton(onClick = { screenModel.handleIntent(SettingsScreenModel.Intent.RefreshApps) }) {
+						IconButton(onClick = { screenModel.handleIntent(RefreshApps) }) {
 							Icon(
 								Icons.Default.Refresh,
 								contentDescription = "refresh"
@@ -158,7 +156,7 @@ class SettingsScreen : Screen {
 				item(span = { GridItemSpan(maxLineSpan) }) {
 					Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
 						SettingsHeaderText(stringResource(Res.string.label_available_features))
-						IconButton(onClick = { screenModel.handleIntent(SettingsScreenModel.Intent.RefreshApps) }) {
+						IconButton(onClick = { screenModel.handleIntent(RefreshApps) }) {
 							Icon(
 								Icons.Default.Refresh,
 								contentDescription = "refresh"
@@ -175,7 +173,7 @@ class SettingsScreen : Screen {
 				isVisible = addDialogState.isVisible,
 				onDismiss = { addDialogState.hide() },
 				onConfirm = { path ->
-					screenModel.handleIntent(SettingsScreenModel.Intent.AddPath(path))
+					screenModel.handleIntent(AddPath(path))
 					addDialogState.hide()
 				}
 			)
