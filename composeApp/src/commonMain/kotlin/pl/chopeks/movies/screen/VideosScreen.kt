@@ -34,9 +34,8 @@ import pl.chopeks.movies.composables.cards.VideoCard
 import pl.chopeks.movies.composables.state.rememberAlertDialogState
 import pl.chopeks.movies.utils.KeyEventManager
 import pl.chopeks.movies.utils.KeyEventNavigation
-import pl.chopeks.movies.utils.collectAsSuccessState
 import pl.chopeks.screenmodel.VideosScreenModel
-import pl.chopeks.screenmodel.model.UiState
+import pl.chopeks.screenmodel.VideosScreenModel.Intent.*
 
 class VideosScreen(
 	private val actor: Actor? = null,
@@ -63,7 +62,7 @@ class VideosScreen(
 			skipHalfExpanded = true,
 			confirmValueChange = {
 				if (it == ModalBottomSheetValue.Hidden)
-					screenModel.setEditing(null)
+					screenModel.handleIntent(SetEditing(null))
 				true
 			})
 		val openSheet: (SheetType) -> Unit = { type ->
@@ -79,50 +78,53 @@ class VideosScreen(
 		}
 
 		LaunchedEffect(screenModel) {
-			screenModel.init(actor, category)
+			screenModel.handleIntent(Init(actor, category))
 		}
 
-		val state by screenModel.uiState.collectAsState()
+		val state by screenModel.state.collectAsState()
 
 		ModalBottomSheetLayout(
 			sheetState = sheetState,
 			sheetGesturesEnabled = false,
 			sheetContent = {
-				val toolbarState by screenModel.toolbarState.collectAsState()
-				when (val current = toolbarState) {
-					is UiState.Error -> Text("Error: ${current.message}")
-					UiState.Loading -> ProgressIndicator()
-					is UiState.Success -> {
-						Column {
-							Row(
-								modifier = Modifier.background(Color.Black).fillMaxWidth(),
-								horizontalArrangement = Arrangement.End
-							) {
-								IconButton(onClick = { scope.launch { sheetState.hide() } }) {
-									Icon(
-										imageVector = Icons.Default.Close,
-										contentDescription = stringResource(Res.string.button_close)
-									)
-								}
-							}
-							when (currentSheet) {
-								SheetType.ACTORS_FILTER -> ActorsSheet(current.data, screenModel, actorsScrollState)
-								SheetType.CATEGORIES_FILTER -> CategoriesSheet(current.data, screenModel, categoriesScrollState)
-								SheetType.EDIT_ACTORS -> EditActorsSheet(current.data, screenModel, editActorsScrollState)
-								SheetType.EDIT_CATEGORIES -> EditCategoriesSheet(current.data, screenModel, editCategoriesScrollState)
-								SheetType.NONE -> Box(Modifier.size(0.dp))
-							}
+				Column {
+					Row(
+						modifier = Modifier.background(Color.Black).fillMaxWidth(),
+						horizontalArrangement = Arrangement.End
+					) {
+						IconButton(onClick = { scope.launch { sheetState.hide() } }) {
+							Icon(
+								imageVector = Icons.Default.Close,
+								contentDescription = stringResource(Res.string.button_close)
+							)
 						}
+					}
+					when (currentSheet) {
+						SheetType.ACTORS_FILTER -> ActorsSheet(state, screenModel, actorsScrollState)
+						SheetType.CATEGORIES_FILTER -> CategoriesSheet(state, screenModel, categoriesScrollState)
+						SheetType.EDIT_ACTORS -> EditActorsSheet(state, screenModel, editActorsScrollState)
+						SheetType.EDIT_CATEGORIES -> EditCategoriesSheet(state, screenModel, editCategoriesScrollState)
+						SheetType.NONE -> Box(Modifier.size(0.dp))
 					}
 				}
 			}
 		) {
 			ScreenSkeleton(title = "", leftActions = {
-				GreenTextButton(stringResource(Res.string.button_start).uppercase()) { screenModel.changePage(Int.MIN_VALUE) }
-				GreenTextButton("-10".uppercase()) { screenModel.changePage(-10) }
-				GreenTextButton("-1".uppercase()) { screenModel.changePage(-1) }
-				GreenTextButton("+1".uppercase()) { screenModel.changePage(1) }
-				GreenTextButton("+10".uppercase()) { screenModel.changePage(10) }
+				GreenTextButton(stringResource(Res.string.button_start).uppercase()) {
+					screenModel.handleIntent(ChangePage(Int.MIN_VALUE))
+				}
+				GreenTextButton("-10".uppercase()) {
+					screenModel.handleIntent(ChangePage(-10))
+				}
+				GreenTextButton("-1".uppercase()) {
+					screenModel.handleIntent(ChangePage(-1))
+				}
+				GreenTextButton("+1".uppercase()) {
+					screenModel.handleIntent(ChangePage(1))
+				}
+				GreenTextButton("+10".uppercase()) {
+					screenModel.handleIntent(ChangePage(10))
+				}
 
 				TextButton(onClick = { openSheet(SheetType.ACTORS_FILTER) }) {
 					Text(stringResource(Res.string.button_actors), color = Color.Gray)
@@ -131,8 +133,8 @@ class VideosScreen(
 					Text(stringResource(Res.string.button_categories), color = Color.Gray)
 				}
 
-				TextButton(onClick = screenModel::toggleSortFilter) {
-					val filterType = screenModel.toolbarState.collectAsSuccessState(initial = 0) { it.filters.filterType }
+				TextButton(onClick = { screenModel.handleIntent(ToggleSortFilter) }) {
+					val filterType = state.filters.filterType
 					Text(
 						text = listOf(
 							stringResource(Res.string.label_sort_by_date),
@@ -142,16 +144,21 @@ class VideosScreen(
 					)
 				}
 			}, rightActions = {
-				val page = screenModel.uiState.collectAsSuccessState(initial = null) { it }
-				if (page != null) {
-					Text(
-						text = stringResource(Res.string.label_video_pager, page.currentPage + 1, page.pageCount + 1),
-						color = Color.Green.copy(alpha = 0.6f)
-					)
-				}
+				Text(
+					text = stringResource(
+						Res.string.label_video_pager,
+						state.videosPage.currentPage + 1,
+						state.videosPage.pageCount + 1
+					),
+					color = Color.Green.copy(alpha = 0.6f)
+				)
 			}) {
-				when (val current = state) {
-					is UiState.Success -> Column(
+				if (state.isLoading) {
+					ProgressIndicator()
+				} else if (state.error != null) {
+					Text("Error: ${state.error}")
+				} else {
+					Column(
 						modifier = Modifier.fillMaxSize(),
 						verticalArrangement = Arrangement.spacedBy(2.dp)
 					) {
@@ -162,29 +169,31 @@ class VideosScreen(
 							) {
 								for (columnIndex in 0 until 5) {
 									val itemIndex = rowIndex * 5 + columnIndex
-									val video = current.data.items.getOrNull(itemIndex)
+									val video = state.videosPage.items.getOrNull(itemIndex)
 									Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
 										if (video != null) {
 											VideoCard(
 												video = video,
-												onClick = { screenModel.play(it) },
+												onClick = {
+													screenModel.handleIntent(Play(it))
+												},
 												onActorChipClick = {
-													screenModel.setEditing(video)
+													screenModel.handleIntent(SetEditing(video))
 													openSheet(SheetType.EDIT_ACTORS)
 												},
 												onCategoryChipClick = {
-													screenModel.setEditing(video)
+													screenModel.handleIntent(SetEditing(video))
 													openSheet(SheetType.EDIT_CATEGORIES)
 												},
 												onThumbnailClick = {
-													screenModel.generateThumbnail(video)
+													screenModel.handleIntent(GenerateThumbnail(video))
 												},
 												onRemoveClick = {
-													screenModel.setEditing(video)
+													screenModel.handleIntent(SetEditing(video))
 													removeConfirmDialogState.show()
 												},
 												onDumpClick = {
-													screenModel.dump(video)
+													screenModel.handleIntent(Dump(video))
 												}
 											)
 										} else {
@@ -195,19 +204,16 @@ class VideosScreen(
 							}
 						}
 					}
-
-					is UiState.Loading -> ProgressIndicator()
-					is UiState.Error -> Text("Error: ${current.message}")
 				}
 
 				RemoveVideoDialog(
 					isVisible = removeConfirmDialogState.isVisible,
 					onDismiss = { removeConfirmDialogState.hide() },
 					onConfirm = { video ->
-						screenModel.remove(video)
+						screenModel.handleIntent(Remove(video))
 						removeConfirmDialogState.hide()
 					},
-					editingVideo = screenModel.editingVideo.collectAsState().value
+					editingVideo = state.editingVideo
 				)
 			}
 		}
@@ -215,7 +221,7 @@ class VideosScreen(
 
 	@Composable
 	fun ActorsSheet(
-		state: VideosScreenModel.ToolbarState,
+		state: VideosScreenModel.UiState,
 		screenModel: VideosScreenModel,
 		scrollState: LazyGridState
 	) {
@@ -232,7 +238,9 @@ class VideosScreen(
 					derivedStateOf { state.filters.selectedActors.any { it.id == actor.id } }
 				}
 				Row(verticalAlignment = Alignment.CenterVertically) {
-					Checkbox(isSelected, onCheckedChange = { screenModel.toggleSelection(actor) })
+					Checkbox(isSelected, onCheckedChange = {
+						screenModel.handleIntent(ToggleActorSelection(actor))
+					})
 					Text(actor.name)
 				}
 			}
@@ -241,7 +249,7 @@ class VideosScreen(
 
 	@Composable
 	fun CategoriesSheet(
-		state: VideosScreenModel.ToolbarState,
+		state: VideosScreenModel.UiState,
 		screenModel: VideosScreenModel,
 		scrollState: LazyGridState
 	) {
@@ -259,7 +267,9 @@ class VideosScreen(
 					derivedStateOf { state.filters.selectedCategories.any { it.id == category.id } }
 				}
 				Row(verticalAlignment = Alignment.CenterVertically) {
-					Checkbox(isSelected, onCheckedChange = { screenModel.toggleSelection(category) })
+					Checkbox(isSelected, onCheckedChange = {
+						screenModel.handleIntent(ToggleCategorySelection(category))
+					})
 					Text(category.name)
 				}
 			}
@@ -268,17 +278,17 @@ class VideosScreen(
 
 	@Composable
 	fun EditActorsSheet(
-		state: VideosScreenModel.ToolbarState,
+		state: VideosScreenModel.UiState,
 		screenModel: VideosScreenModel,
 		scrollState: LazyGridState
 	) {
-		EditGridSheet(screenModel, scrollState, state.actors) { video, actor ->
+		EditGridSheet(state, scrollState, state.actors) { video, actor ->
 			val isSelected by remember(actor.id, video.chips?.actors) {
 				derivedStateOf { video.chips?.actors?.any { it.id == actor.id } == true }
 			}
 			Row(verticalAlignment = Alignment.CenterVertically) {
 				Checkbox(isSelected, onCheckedChange = {
-					screenModel.toggleBinding(video, actor)
+					screenModel.handleIntent(ToggleActorBinding(video, actor))
 				})
 				Text(actor.name)
 			}
@@ -287,17 +297,17 @@ class VideosScreen(
 
 	@Composable
 	fun EditCategoriesSheet(
-		state: VideosScreenModel.ToolbarState,
+		state: VideosScreenModel.UiState,
 		screenModel: VideosScreenModel,
 		scrollState: LazyGridState
 	) {
-		EditGridSheet(screenModel, scrollState, state.categories) { video, category ->
+		EditGridSheet(state, scrollState, state.categories) { video, category ->
 			val isSelected by remember(category.id, video.chips?.categories) {
 				derivedStateOf { video.chips?.categories?.any { it.id == category.id } == true }
 			}
 			Row(verticalAlignment = Alignment.CenterVertically) {
 				Checkbox(isSelected, onCheckedChange = {
-					screenModel.toggleBinding(video, category)
+					screenModel.handleIntent(ToggleCategoryBinding(video, category))
 				})
 				Text(category.name)
 			}
@@ -338,12 +348,12 @@ class VideosScreen(
 
 	@Composable
 	private fun <T> EditGridSheet(
-		screenModel: VideosScreenModel,
+		state: VideosScreenModel.UiState,
 		scrollState: LazyGridState,
 		container: List<T>,
 		item: @Composable (Video, T) -> Unit
 	) {
-		val video by screenModel.editingVideo.collectAsState()
+		val video = state.editingVideo
 		video?.let { currentVideo ->
 			LazyVerticalGrid(
 				columns = Fixed(3),
@@ -357,7 +367,7 @@ class VideosScreen(
 	}
 
 	private fun shortCutPlayVideo(index: Int, screenModel: VideosScreenModel): Boolean {
-		screenModel.playVideoAtIndex(index)
+		screenModel.handleIntent(PlayVideoAtIndex(index))
 		return true
 	}
 
@@ -371,12 +381,12 @@ class VideosScreen(
 		if (event.isShiftPressed) {
 			when (event.key) {
 				Key.DirectionLeft, Key.Z -> {
-					screenModel.changePage(-10)
+					screenModel.handleIntent(ChangePage(-10))
 					return true
 				}
 
 				Key.DirectionRight, Key.X -> {
-					screenModel.changePage(10)
+					screenModel.handleIntent(ChangePage(10))
 					return true
 				}
 			}
@@ -399,12 +409,12 @@ class VideosScreen(
 			Key.G -> return shortCutPlayVideo(14, screenModel)
 
 			Key.DirectionLeft, Key.Z -> {
-				screenModel.changePage(-1)
+				screenModel.handleIntent(ChangePage(-1))
 				return true
 			}
 
 			Key.DirectionRight, Key.X -> {
-				screenModel.changePage(1)
+				screenModel.handleIntent(ChangePage(1))
 				return true
 			}
 		}

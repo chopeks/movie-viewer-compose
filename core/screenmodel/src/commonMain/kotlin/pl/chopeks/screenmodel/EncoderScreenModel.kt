@@ -1,55 +1,57 @@
 package pl.chopeks.screenmodel
 
-import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import pl.chopeks.core.data.repository.IEncoderRepository
 import pl.chopeks.core.model.EncodeStatus
 import pl.chopeks.core.model.priority
-import pl.chopeks.screenmodel.model.UiState
+import pl.chopeks.screenmodel.model.UiEffect
 
 class EncoderScreenModel(
 	private val encoderRepository: IEncoderRepository
-) : ScreenModel {
-	data class Page(
-		val encoder: Map<String, EncodeStatus> = mapOf()
+) : BaseScreenModel() {
+
+	sealed class Intent {
+	}
+
+	data class UiState(
+		val isLoading: Boolean = false,
+		val encoder: Map<String, EncodeStatus> = emptyMap(),
+		val error: String? = null
 	)
 
-	val uiState = MutableStateFlow<UiState<Page>>(UiState.Loading)
+	private val _state = MutableStateFlow(UiState())
+	val state: StateFlow<UiState> = _state.asStateFlow()
 
 	init {
 		screenModelScope.launch {
-			uiState.emit(
-				UiState.Success(
-					Page(
-						encoder = emptyMap()
-					)
-				)
-			)
-			encoderRepository.observeEncodingStatus().collect {
-				launchWithState { state ->
-					uiState.emit(
-						value = UiState.Success(
-							data = state.copy(
-								encoder = it.entries
-									.sortedBy { it.value.priority() }
-									.associate { it.key to it.value }
-							)
+			_state.update { it.copy(isLoading = true) }
+			encoderRepository.observeEncodingStatus()
+				.onEach { status ->
+					_state.update {
+						it.copy(
+							isLoading = false,
+							encoder = status.entries
+								.sortedBy { it.value.priority() }
+								.associate { it.key to it.value }
 						)
-					)
+					}
 				}
-			}
+				.catch { e ->
+					_state.update { it.copy(isLoading = false, error = e.message ?: "Unknown Error") }
+				}
+				.launchIn(screenModelScope)
 		}
 	}
 
-	private fun launchWithState(block: suspend CoroutineScope.(Page) -> Unit): Job {
-		return screenModelScope.launch {
-			val state = uiState.value as? UiState.Success
-				?: return@launch
-			block(state.data)
+	fun handleIntent(intent: Intent) {
+		when (intent) {
+			else -> {}
 		}
+	}
+
+	override suspend fun emitEffect(throwable: Throwable) {
+		emitEffect(UiEffect.Toast(throwable.message ?: "Unknown Error"))
 	}
 }
