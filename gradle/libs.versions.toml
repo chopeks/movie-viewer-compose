@@ -18,12 +18,6 @@ turbine = "1.2.1"
 materialIcons = "1.7.3"
 androidx-datastore = "1.2.1"
 
-javaccp = "1.5.10"
-javacv = "1.5.13"
-opencv = "4.13.0-1.5.13"
-openblas = "0.3.9-1.5.13"
-ffmpeg = "8.0.1-1.5.13"
-
 [libraries]
 kotest-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
 kotest-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
@@ -123,7 +117,6 @@ kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", versio
 kotlinxRpc = { id = "org.jetbrains.kotlinx.rpc.plugin", version.ref = "kotlinx-rpc" }
 kotest = { id = "io.kotest", version.ref = "kotest" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-javaccp = { id = "org.bytedeco.gradle-javacpp-platform", version.ref = "javaccp"}
 
 # Convention plugins
 mv-desktop-library = { id = "mv.desktop.library" }
