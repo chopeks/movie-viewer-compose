@@ -44,12 +44,7 @@ fun Application.module(di: DI) {
 	}
 
 	routing {
-		static("/") {
-			resource("index.html")
-			resource("manifest.json")
-			resource("service-worker.js")
-			default("index.html")
-		}
+		staticResources("/", "webapp", "index.html")
 		get("/") {
 			call.respondRedirect("/index.html", true)
 		}

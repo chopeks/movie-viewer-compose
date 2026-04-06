@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import pl.chopeks.core.data.ITaskManager
 import pl.chopeks.core.data.IVideoPlayer
-import pl.chopeks.core.data.bestConcurrencyDispatcher
 import pl.chopeks.core.data.repository.IActorRepository
 import pl.chopeks.core.data.repository.ICategoryRepository
 import pl.chopeks.core.data.repository.IVideoRepository
@@ -220,43 +219,47 @@ class VideosScreenModel(
 	}
 
 	private fun toggleSelection(actor: Actor) {
-		_state.update { current ->
-			val newSelection = if (current.filters.selectedActors.any { it.id == actor.id }) {
-				current.filters.selectedActors.filter { it.id != actor.id }
-			} else {
-				current.filters.selectedActors + actor
+		launchSafe {
+			_state.update { current ->
+				val newSelection = if (current.filters.selectedActors.any { it.id == actor.id }) {
+					current.filters.selectedActors.filter { it.id != actor.id }
+				} else {
+					current.filters.selectedActors + actor
+				}
+				current.copy(filters = current.filters.copy(selectedActors = newSelection, page = 0))
 			}
-			current.copy(filters = current.filters.copy(selectedActors = newSelection, page = 0))
 		}
 	}
 
 	private fun toggleSelection(category: Category) {
-		_state.update { current ->
-			val newSelection = if (current.filters.selectedCategories.any { it.id == category.id }) {
-				current.filters.selectedCategories.filter { it.id != category.id }
-			} else {
-				current.filters.selectedCategories + category
+		launchSafe {
+			_state.update { current ->
+				val newSelection = if (current.filters.selectedCategories.any { it.id == category.id }) {
+					current.filters.selectedCategories.filter { it.id != category.id }
+				} else {
+					current.filters.selectedCategories + category
+				}
+				current.copy(filters = current.filters.copy(selectedCategories = newSelection, page = 0))
 			}
-			current.copy(filters = current.filters.copy(selectedCategories = newSelection, page = 0))
 		}
 	}
 
 	private fun generateThumbnail(video: Video) {
-		screenModelScope.launch(bestConcurrencyDispatcher()) {
+		launchSafe {
 			val newVideo = video.copy(image = videoRepository.refreshImage(video))
 			localVideoUpdate.update { it + (newVideo.id to newVideo) }
 		}
 	}
 
 	private fun remove(video: Video) {
-		screenModelScope.launch(bestConcurrencyDispatcher()) {
+		launchSafe {
 			videoRepository.remove(video)
 			refreshData()
 		}
 	}
 
 	private fun dump(video: Video) {
-		screenModelScope.launch(bestConcurrencyDispatcher()) {
+		launchSafe {
 			videoRepository.moveToDump(video)
 			refreshData()
 		}

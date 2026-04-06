@@ -13,8 +13,8 @@ class TaskManager(
 	val job = Job()
 	val scope = CoroutineScope(Dispatchers.Main + job)
 
-	override suspend fun start(onEvent: (String) -> Unit) { // this is kinda fire once and forget
-		withContext(Dispatchers.IO + job) {
+	override suspend fun start(onEvent: (String) -> Unit) = coroutineScope { // this is kinda fire once and forget
+		withContext(Dispatchers.IO) {
 			videoLookupTask.run {
 				AppLogger.log(it)
 				onEvent(it)

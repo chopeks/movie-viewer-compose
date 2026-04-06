@@ -86,3 +86,19 @@ compose.desktop {
 		}
 	}
 }
+
+val copyWasmToDesktopResources = tasks.register("copyWasmToDesktopResources",Copy::class, ) {
+	val webDir = layout.projectDirectory.dir("src/desktopMain/resources/webapp")
+	doFirst {
+		if (webDir.asFile.exists()) {
+			webDir.asFile.deleteRecursively()
+		}
+		webDir.asFile.mkdirs()
+	}
+	from(layout.projectDirectory.dir("build/dist/wasmJs/productionExecutable"))
+	into(webDir)
+}
+
+tasks.named("wasmJsBrowserDistribution") {
+	finalizedBy(copyWasmToDesktopResources)
+}

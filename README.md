@@ -16,6 +16,15 @@ Web version is still a little bit wonky and not included in jvm build yet.
 
 You can open the web application by running the `:composeApp:wasmJsBrowserDevelopmentRun` Gradle task.
 
+
+To build wasm package to bundle for desktop app: 
+
+`./gradlew composeApp:wasmJsBrowserDistribution`
+
+To build desktop jar (if you want wasm included, call previous command first):
+
+`./gradlew composeApp:packageUberJarForCurrentOS`
+
 ### Tests
 
 `./gradlew allTests` - unit tests from all modules

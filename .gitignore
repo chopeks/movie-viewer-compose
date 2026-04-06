@@ -21,7 +21,11 @@ kotlin-js-store/wasm/yarn.lock
 
 composeApp/scripts/
 composeApp/src/desktopMain/kotlin/pl/chopeks/movies/preview.kt
+composeApp/src/desktopMain/resources/webapp/
+
 settings.json
 *.jar
 /scripts
 run.bat
+
+
