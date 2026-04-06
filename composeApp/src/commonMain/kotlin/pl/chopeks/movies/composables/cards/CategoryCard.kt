@@ -24,7 +24,6 @@ import movieviewer.composeapp.generated.resources.Res
 import movieviewer.composeapp.generated.resources.button_desc_edit
 import org.jetbrains.compose.resources.stringResource
 import pl.chopeks.core.model.Category
-import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 
@@ -39,15 +38,13 @@ fun CategoryCard(
     Box(Modifier.fillMaxWidth().aspectRatio(1.77f)) {
       val context = LocalPlatformContext.current
       AsyncImage(
-        model = category.image?.let {
-          ImageRequest.Builder(context)
-            .data(it.let(Base64.Mime::decode))
-            .size(Size.ORIGINAL)
-            .build()
-        },
+        model = ImageRequest.Builder(context)
+          .data(category.imageBytes ?: category.image)
+          .size(Size.ORIGINAL)
+          .build(),
         contentDescription = category.name,
         contentScale = ContentScale.Crop,
-        modifier = Modifier.fillMaxWidth().aspectRatio(1.77f)
+        modifier = Modifier.fillMaxWidth().aspectRatio(0.7f)
       )
       Row(
         modifier = Modifier.fillMaxWidth()

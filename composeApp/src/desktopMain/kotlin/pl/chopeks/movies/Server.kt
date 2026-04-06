@@ -18,6 +18,7 @@ import org.kodein.di.instance
 import pl.chopeks.core.data.IVideoPlayer
 import pl.chopeks.core.data.repository.*
 import pl.chopeks.core.model.Actor
+import pl.chopeks.core.model.Category
 import java.text.DateFormat
 import kotlin.time.Duration.Companion.days
 
@@ -70,6 +71,16 @@ fun Application.module(di: DI) {
 		get("/api/image/{id}/actor") { // for some reason, this works better with browsers rather than streaming bytes over rpc
 			val id = call.parameters["id"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest)
 			val bytes = di.direct.instance<IActorRepository>().getImageBytes(Actor(id))
+			if (bytes != null) {
+				call.respondBytes(bytes, contentType = ContentType.Image.Any)
+			} else {
+				call.respond(HttpStatusCode.NotFound)
+			}
+		}
+
+		get("/api/image/{id}/category") { // for some reason, this works better with browsers rather than streaming bytes over rpc
+			val id = call.parameters["id"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest)
+			val bytes = di.direct.instance<ICategoryRepository>().getImageBytes(Category(id))
 			if (bytes != null) {
 				call.respondBytes(bytes, contentType = ContentType.Image.Any)
 			} else {

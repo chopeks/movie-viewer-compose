@@ -16,6 +16,10 @@ class CategoryRepository(
 
 	override suspend fun getImage(category: Category): String? = null
 
+	override suspend fun getImageBytes(category: Category): ByteArray? = rpc {
+		delegate.getImageBytes(category)
+	}
+
 	override suspend fun bind(category: Category, video: Video) = rpc {
 		delegate.bind(category, video)
 	}

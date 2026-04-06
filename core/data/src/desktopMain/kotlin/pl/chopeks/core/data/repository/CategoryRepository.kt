@@ -3,6 +3,8 @@ package pl.chopeks.core.data.repository
 import pl.chopeks.core.database.datasource.CategoriesDataSource
 import pl.chopeks.core.model.Category
 import pl.chopeks.core.model.Video
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 class CategoryRepository(
 	private val dataSource: CategoriesDataSource,
@@ -13,6 +15,11 @@ class CategoryRepository(
 
 	override suspend fun getImage(category: Category): String? {
 		return dataSource.getImage(category)
+	}
+
+	@OptIn(ExperimentalEncodingApi::class)
+	override suspend fun getImageBytes(category: Category): ByteArray? {
+		return getImage(category)?.let { Base64.Mime.decode(it) }
 	}
 
 	override suspend fun bind(category: Category, video: Video) {

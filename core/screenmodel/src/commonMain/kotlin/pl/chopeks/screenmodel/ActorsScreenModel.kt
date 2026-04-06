@@ -43,12 +43,13 @@ class ActorsScreenModel(
 	private val _searchQuery = MutableStateFlow("")
 	private val _isLoading = MutableStateFlow(false)
 
-	val filteredActors: Flow<List<Actor>> =
-		combine(_rawActors, _searchQuery) { actors, query ->
-			actors.runIf(query.isNotBlank()) {
-				filter { it.name.contains(query, ignoreCase = true) }
-			}
-		}.flowOn(dispatcher)
+	private val filteredActors: Flow<List<Actor>> = _rawActors.combine(
+		_searchQuery
+	) { actors, query ->
+		actors.runIf(query.isNotBlank()) {
+			filter { it.name.contains(query, ignoreCase = true) }
+		}
+	}.flowOn(dispatcher)
 
 	val state: StateFlow<UiState> = combine(
 		filteredActors,

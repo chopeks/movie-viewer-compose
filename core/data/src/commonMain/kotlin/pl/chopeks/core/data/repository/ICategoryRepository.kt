@@ -8,6 +8,7 @@ import pl.chopeks.core.model.Video
 interface ICategoryRepository {
 	suspend fun getCategories(): List<Category>
 	suspend fun getImage(category: Category): String?
+	suspend fun getImageBytes(category: Category): ByteArray?
 	suspend fun bind(category: Category, video: Video)
 	suspend fun unbind(category: Category, video: Video)
 	suspend fun add(name: String, image: String?)
