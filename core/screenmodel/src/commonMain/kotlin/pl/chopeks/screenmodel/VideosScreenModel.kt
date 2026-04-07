@@ -1,9 +1,7 @@
 package pl.chopeks.screenmodel
 
 import cafe.adriel.voyager.core.model.screenModelScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import pl.chopeks.core.data.ITaskManager
 import pl.chopeks.core.data.IVideoPlayer
 import pl.chopeks.core.data.repository.IActorRepository
@@ -57,13 +55,18 @@ class VideosScreenModel(
 	)
 
 	data class UiState(
-		val isLoading: Boolean = false,
-		val videosPage: VideosPage = VideosPage(),
+		// lookups
+		internal val isLookupReady: Boolean = false,
 		val actors: List<Actor> = emptyList(),
 		val categories: List<Category> = emptyList(),
+		// filter state
 		val filters: FilterParams = FilterParams(),
-		val editingVideo: Video? = null,
-		val error: String? = null
+		// page state
+		val isLoading: Boolean = false,
+		val videosPage: VideosPage = VideosPage(),
+		val error: String? = null,
+		// dialogs
+		val editingVideo: Video? = null
 	)
 
 	private val _state = MutableStateFlow(UiState())
@@ -74,25 +77,38 @@ class VideosScreenModel(
 	private var categoryLookup = emptyMap<Int, Category>()
 
 	init {
-		screenModelScope.launch {
+		launchSafe {
 			val actors = actorRepository.getActors()
 			val categories = categoryRepository.getCategories()
 			actorLookup = actors.associateBy { it.id }
 			categoryLookup = categories.associateBy { it.id }
-			_state.update { it.copy(actors = actors, categories = categories) }
+			_state.update {
+				it.copy(
+					actors = actors,
+					categories = categories,
+					isLookupReady = true
+				)
+			}
 		}
 
-		observeVideos()
-	}
-
-	@OptIn(ExperimentalCoroutinesApi::class)
-	private fun observeVideos() {
-		_state.map { it.filters }
-			.distinctUntilChanged()
+		combine(
+			_state.map { it.filters }.distinctUntilChanged(),
+			_state.map { it.isLookupReady }.distinctUntilChanged()
+		) { filters, isReady ->
+			if (isReady) filters else null
+		}
+			.filterNotNull()
 			.flatMapLatest { filter ->
-				flow {
+				val currentActors = actorLookup
+				val currentCategories = categoryLookup
+
+				val fetchFlow =flow {
 					emit(Result.Loading)
-					val page = with(getVideosUseCase({ actorLookup[it] }, { categoryLookup[it] }) {
+					val page = with(
+						getVideosUseCase(
+						actorLookup = { currentActors[it] },
+						categoryLookup = { currentCategories[it] }
+					) {
 						page = filter.page
 						selectedActors = filter.selectedActors
 						selectedCategories = filter.selectedCategories
@@ -104,32 +120,29 @@ class VideosScreenModel(
 							pageCount = (count - 1) / pageSize
 						)
 					}
+					localVideoUpdate.value = emptyMap()
 					emit(Result.Success(page))
 				}.catch { emit(Result.Error(it.message ?: "Unknown Error")) }
+
+				combine(fetchFlow, localVideoUpdate) { result, updates ->
+					if (result is Result.Success && updates.isNotEmpty()) {
+						val patchedItems = result.data.items.map { updates[it.id] ?: it }
+						Result.Success(result.data.copy(items = patchedItems))
+					} else {
+						result
+					}
+				}
 			}
 			.onEach { result ->
 				_state.update {
 					when (result) {
-						is Result.Loading -> it.copy(isLoading = true)
+						is Result.Loading -> it.copy(isLoading = true, error = null)
 						is Result.Success -> it.copy(isLoading = false, videosPage = result.data, error = null)
 						is Result.Error -> it.copy(isLoading = false, error = result.message)
 					}
 				}
 			}
 			.launchIn(screenModelScope)
-
-		localVideoUpdate.onEach { updates ->
-			_state.update { state ->
-				if (updates.isNotEmpty()) {
-					val patchedItems = state.videosPage.items.map { video ->
-						updates[video.id] ?: video
-					}
-					state.copy(videosPage = state.videosPage.copy(items = patchedItems))
-				} else {
-					state
-				}
-			}
-		}.launchIn(screenModelScope)
 	}
 
 	fun handleIntent(intent: Intent) {
@@ -152,27 +165,35 @@ class VideosScreenModel(
 	}
 
 	private fun init(actor: Actor?, category: Category?) {
-		_state.update { current ->
-			current.copy(
-				filters = current.filters.copy(
-					selectedActors = actor?.let(::listOf) ?: emptyList(),
-					selectedCategories = category?.let(::listOf) ?: emptyList()
+		launchSafe {
+			_state.first { it.isLookupReady } // wait for lookups
+			_state.update { current ->
+				current.copy(
+					filters = current.filters.copy(
+						selectedActors = actor?.let(::listOf) ?: emptyList(),
+						selectedCategories = category?.let(::listOf) ?: emptyList()
+					)
 				)
-			)
+			}
 		}
 	}
 
 	private fun changePage(page: Int) {
-		localVideoUpdate.value = emptyMap()
-		_state.update { current ->
-			val maxPage = current.videosPage.pageCount
-			current.copy(filters = current.filters.copy(page = (current.filters.page + page).coerceIn(0, maxPage), version = current.filters.version + 1))
+		launchSafe {
+			localVideoUpdate.value = emptyMap()
+			_state.update { current ->
+				val maxPage = current.videosPage.pageCount
+				current.copy(filters = current.filters.copy(page = (current.filters.page + page).coerceIn(0, maxPage), version = current.filters.version + 1))
+			}
 		}
 	}
 
 	private fun toggleSortFilter() {
-		_state.update { current ->
-			current.copy(filters = current.filters.copy(filterType = (current.filters.filterType + 1) % 2, page = 0))
+		launchSafe {
+			localVideoUpdate.value = emptyMap()
+			_state.update { current ->
+				current.copy(filters = current.filters.copy(filterType = (current.filters.filterType + 1) % 2, page = 0))
+			}
 		}
 	}
 
@@ -183,9 +204,11 @@ class VideosScreenModel(
 	}
 
 	private fun playVideoAtIndex(index: Int) {
-		val items = _state.value.videosPage.items
-		if (index in items.indices) {
-			play(items[index])
+		launchSafe {
+			val items = _state.value.videosPage.items
+			if (index in items.indices) {
+				play(items[index])
+			}
 		}
 	}
 
