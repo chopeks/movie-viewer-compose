@@ -57,9 +57,7 @@ class ActorsScreenModel(
 		_isLoading
 	) { actors, query, loading ->
 		UiState(
-			actors = actors.runIf(query.isNotBlank()) {
-				filter { it.name.contains(query, ignoreCase = true) }
-			},
+			actors = actors,
 			searchFilter = query,
 			isLoading = loading
 		)
