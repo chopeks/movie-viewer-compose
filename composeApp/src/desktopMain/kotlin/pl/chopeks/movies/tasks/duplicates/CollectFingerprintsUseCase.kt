@@ -1,11 +1,8 @@
 package pl.chopeks.movies.tasks.duplicates
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import kotlinx.coroutines.withContext
 import pl.chopeks.core.database.duplicates.FingerprintLocalDataSource
 import pl.chopeks.core.fpcalc.FpcalcManager
 import pl.chopeks.core.model.capability.CapabilityGuard
@@ -38,42 +35,44 @@ class CollectFingerprintsUseCase(
 			return@withContext false
 		}
 		val time = measureTimeMillis {
-			entries = entries.map {
-				async {
-					var entry = it
-					val file = File(it.path)
+			entries = coroutineScope {
+				entries.map {
+					async {
+						var entry = it
+						val file = File(it.path)
 
-					if (it.fingerprint == null) {
-						val fingerprint = diskSemaphore.withPermit {
-							fpcalc.getFingerprint(file)
-						}?.toByteArray() ?: byteArrayOf()
+						if (it.fingerprint == null) {
+							val fingerprint = diskSemaphore.withPermit {
+								fpcalc.getFingerprint(file)
+							}?.toByteArray() ?: byteArrayOf()
 
-						entry = if (isSilent(fingerprint)) {
-							it.copy(fingerprint = byteArrayOf())
-						} else {
-							it.copy(fingerprint = fingerprint)
+							entry = if (isSilent(fingerprint)) {
+								it.copy(fingerprint = byteArrayOf(), needle = byteArrayOf())
+							} else {
+								it.copy(fingerprint = fingerprint)
+							}
 						}
-					}
 
-					if (it.needle == null) {
-						val duration = it.duration
-						val sampleLen = min(duration, 60_000)
-						val middle = duration / 2
-						val fragmentStart = (middle - sampleLen / 2).toDouble()
+						if (it.needle == null && entry.needle == null) {
+							val duration = it.duration
+							val sampleLen = min(duration, 60_000)
+							val middle = duration / 2
+							val fragmentStart = (middle - sampleLen / 2).toDouble()
 
-						val needle = diskSemaphore.withPermit {
-							fpcalc.getFingerprint(file, fragmentStart.toInt(), sampleLen)
-						}?.toByteArray() ?: byteArrayOf()
-						entry = if (isSilent(needle)) {
-							it.copy(needle = byteArrayOf())
-						} else {
-							it.copy(needle = needle)
+							val needle = diskSemaphore.withPermit {
+								fpcalc.getFingerprint(file, fragmentStart.toInt(), sampleLen)
+							}?.toByteArray() ?: byteArrayOf()
+							entry = if (isSilent(needle)) {
+								it.copy(needle = byteArrayOf())
+							} else {
+								it.copy(needle = needle)
+							}
 						}
-					}
 
-					entry
-				}
-			}.awaitAll()
+						entry
+					}
+				}.awaitAll()
+			}
 		}
 
 		if (entries.isEmpty())

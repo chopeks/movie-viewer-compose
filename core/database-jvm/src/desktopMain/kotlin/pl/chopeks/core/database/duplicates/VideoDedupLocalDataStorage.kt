@@ -29,7 +29,7 @@ class VideoDedupLocalDataStorage(
 	 * Returns next video to process or null if there are no requests pending
 	 */
 	suspend fun nextVideo(): PossibleDuplicate? = withContext(Dispatchers.IO) {
-		transaction(db) {
+		val ret = transaction(db) {
 			MoviesToBeCheckedTable
 				.join(MovieTable, JoinType.INNER, onColumn = MoviesToBeCheckedTable.videoId, otherColumn = MovieTable.id) { MoviesToBeCheckedTable.id eq MovieTable.id }
 				.select(MoviesToBeCheckedTable.videoId, MovieTable.duration, MovieTable.path)
@@ -39,6 +39,12 @@ class VideoDedupLocalDataStorage(
 				.singleOrNull()
 				?.let { PossibleDuplicate(it[MoviesToBeCheckedTable.videoId], it[MovieTable.duration]!!, File(it[MovieTable.path])) }
 		}
+		if (ret == null) {
+			transaction(db) {
+				MoviesToBeCheckedTable.deleteAll()
+			}
+		}
+		ret
 	}
 
 	suspend fun getCandidates(video: PossibleDuplicate, threshold: Int) = withContext(Dispatchers.IO) {
